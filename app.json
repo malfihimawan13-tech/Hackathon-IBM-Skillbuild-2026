@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "myCITA",
+    "slug": "cita-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.cita.app"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#0F4C47",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "package": "com.cita.app"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "description": "CITA - Capai Impian, Tentukan Arah. AI financial life-planning companion.",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0F4C47"
+    }
+  }
+}
