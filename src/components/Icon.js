@@ -1,4 +1,5 @@
 import React from 'react';
+import { Platform } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 // Ikon garis sederhana (stroke), konsisten dengan mockup desain.
@@ -46,8 +47,12 @@ export function iconForCategory(kat) {
 export default function Icon({ name, size = 22, color = '#14211F', strokeWidth = 1.9 }) {
   const parts = ICONS[name] || ICONS.flag;
   const common = { stroke: color, strokeWidth, strokeLinecap: 'round', strokeLinejoin: 'round', fill: 'none' };
+  // accessibilityElementsHidden / importantForAccessibility são props nativas; não existem no DOM web
+  const a11yProps = Platform.OS !== 'web'
+    ? { accessibilityElementsHidden: true, importantForAccessibility: 'no' }
+    : { 'aria-hidden': true };
   return (
-    <Svg width={size} height={size} viewBox="0 0 24 24" accessibilityElementsHidden importantForAccessibility="no">
+    <Svg width={size} height={size} viewBox="0 0 24 24" {...a11yProps}>
       {parts.map((p, i) => {
         if (p.t === 'c') return <Circle key={i} cx={p.cx} cy={p.cy} r={p.r} {...common} />;
         if (p.t === 'r') return <Rect key={i} x={p.x} y={p.y} width={p.w} height={p.h} rx={p.rx} {...common} />;

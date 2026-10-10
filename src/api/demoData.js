@@ -906,6 +906,161 @@ export const DEMO = {
   "pesan": "Eksplorasi karier selesai: Data Analyst, Supply Chain Analyst, Data Engineer.",
   "rekomendasi": [
    {
+    "id": "data_scientist",
+    "profesi": "Data Scientist",
+    "bidang": "Teknologi & Data",
+    "skor_kecocokan": 71,
+    "target_pengguna": true,
+    "alasan": [
+     "Cocok dengan minatmu: angka, komputer, data.",
+     "Kamu sudah punya 3 dari 5 skill wajib (Python, SQL, statistik dasar).",
+     "Pengalaman sebagai Software Engineer memperkuat jalur pindah karier ini."
+    ],
+    "deskripsi": "Mengolah data besar menjadi model prediktif dan insight strategis menggunakan statistik dan machine learning.",
+    "jenjang_karier": [
+     "Junior Data Scientist",
+     "Data Scientist",
+     "Senior Data Scientist",
+     "Lead / Principal Data Scientist",
+     "Head of Data Science / Chief Data Officer"
+    ],
+    "pendidikan_umum": "S1 Statistik, Matematika, Informatika, atau Sistem Informasi; banyak career switcher masuk lewat bootcamp + portofolio",
+    "skill_sudah_dimiliki": [
+     "Python (pandas, numpy)",
+     "SQL",
+     "statistik dasar"
+    ],
+    "skill_gap_wajib": [
+     "statistik & probabilitas",
+     "machine learning"
+    ],
+    "skill_gap_pendukung": [
+     "deep learning",
+     "visualisasi data (Tableau/Looker Studio)",
+     "komunikasi insight ke stakeholder non-teknis"
+    ],
+    "jalur_pendapatan": {
+     "tahapan": [
+      {
+       "tahap": "entry",
+       "rentang_min": 7000000,
+       "rentang_max": 11000000,
+       "nilai_tengah": 9000000,
+       "perkiraan_tahun_ke": "0-2",
+       "sumber": [
+        "HRBS Global - Average Salary in Indonesia 2026 (2026)"
+       ]
+      },
+      {
+       "tahap": "mid",
+       "rentang_min": 8000000,
+       "rentang_max": 19000000,
+       "nilai_tengah": 13500000,
+       "perkiraan_tahun_ke": "2-5",
+       "sumber": [
+        "Glassdoor - Data Scientist Jakarta (Oktober 2026)"
+       ]
+      },
+      {
+       "tahap": "senior",
+       "rentang_min": 20000000,
+       "rentang_max": 35000000,
+       "nilai_tengah": 27500000,
+       "perkiraan_tahun_ke": "5-seterusnya",
+       "sumber": [
+        "HRBS Global - Average Salary in Indonesia 2026 (2026)"
+       ]
+      }
+     ]
+    },
+    "jalur_belajar": {
+     "jalur_utama": [
+      {
+       "program": "Bootcamp Data Science (umum)",
+       "jenis": "Bootcamp",
+       "biaya_min": 3000000,
+       "biaya_max": 45000000,
+       "satuan": "per program",
+       "durasi": "3-6 bulan",
+       "sumber": "tempatbelajar.id (2026)"
+      },
+      {
+       "program": "DeepLearning.AI - Machine Learning Specialization (Coursera)",
+       "jenis": "Kursus online bersertifikat",
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "±USD 49 per bulan",
+       "durasi": "3-4 bulan, mandiri",
+       "sumber": "Coursera (2026)"
+      }
+     ],
+     "opsional_jangka_panjang": [
+      {
+       "program": "Universitas Terbuka - S1 Sains Data",
+       "jenis": "Kuliah jarak jauh",
+       "biaya_min": 1900000,
+       "biaya_max": 1900000,
+       "satuan": "per semester",
+       "durasi": "±8 semester",
+       "sumber": "Kompas.com Edu (2026)"
+      }
+     ],
+     "estimasi_biaya_jalur_utama": {
+      "min": 3000000,
+      "max": 45000000
+     },
+     "catatan": []
+    },
+    "perkiraan_persiapan_bulan": 9,
+    "jadwal_pendapatan_untuk_simulasi": [
+     {
+      "mulai_bulan": 0,
+      "penghasilan": 7000000,
+      "keterangan": "penghasilan pekerjaan utama saat ini"
+     },
+     {
+      "mulai_bulan": 9,
+      "penghasilan": 9000000,
+      "keterangan": "perkiraan tahap entry (nilai tengah rentang)"
+     },
+     {
+      "mulai_bulan": 33,
+      "penghasilan": 13500000,
+      "keterangan": "perkiraan tahap mid (nilai tengah rentang)"
+     },
+     {
+      "mulai_bulan": 69,
+      "penghasilan": 27500000,
+      "keterangan": "perkiraan tahap senior (nilai tengah rentang)"
+     }
+    ],
+    "simulasi_siap_pakai": {
+     "jadwal_pendapatan": [
+      {
+       "mulai_bulan": 0,
+       "penghasilan": 7000000,
+       "keterangan": "penghasilan pekerjaan utama saat ini"
+      },
+      {
+       "mulai_bulan": 9,
+       "penghasilan": 9000000,
+       "keterangan": "perkiraan tahap entry (nilai tengah rentang)"
+      },
+      {
+       "mulai_bulan": 33,
+       "penghasilan": 13500000,
+       "keterangan": "perkiraan tahap mid (nilai tengah rentang)"
+      },
+      {
+       "mulai_bulan": 69,
+       "penghasilan": 27500000,
+       "keterangan": "perkiraan tahap senior (nilai tengah rentang)"
+      }
+     ]
+    },
+    "selisih_tahap_awal_vs_sekarang": 2000000
+   },
+   {
     "id": "data_analyst",
     "profesi": "Data Analyst",
     "bidang": "Teknologi & Data",
@@ -1347,6 +1502,78 @@ export const DEMO = {
   "disclaimer": "Rekomendasi adalah gambaran awal berdasarkan data yang kamu isi dan data referensi pasar. Keputusan tetap di tanganmu."
  },
  "karier_simulasi": {
+  "data_scientist": {
+   "sebelum": {
+    "sisa": 2650000,
+    "skor": 70,
+    "target": {
+     "Toyota Avanza": "7 tahun 8 bulan",
+     "Menikah (intimate)": "13 tahun"
+    }
+   },
+   "sesudah": {
+    "sisa": 2650000,
+    "skor": 70,
+    "target": {
+     "Toyota Avanza": "5 tahun 6 bulan",
+     "Menikah (intimate)": "4 tahun 1 bulan"
+    }
+   }
+  },
+  "data_scientist_kopi_pesimis": {
+   "sebelum": {
+    "sisa": 2650000,
+    "skor": 70,
+    "target": {
+     "Toyota Avanza": "7 tahun 8 bulan",
+     "Menikah (intimate)": "13 tahun"
+    }
+   },
+   "sesudah": {
+    "sisa": 2650000,
+    "skor": 70,
+    "target": {
+     "Toyota Avanza": "4 tahun 1 bulan",
+     "Menikah (intimate)": "2 tahun 8 bulan"
+    }
+   }
+  },
+  "data_scientist_kopi_moderat": {
+   "sebelum": {
+    "sisa": 2650000,
+    "skor": 70,
+    "target": {
+     "Toyota Avanza": "7 tahun 8 bulan",
+     "Menikah (intimate)": "13 tahun"
+    }
+   },
+   "sesudah": {
+    "sisa": 2650000,
+    "skor": 70,
+    "target": {
+     "Toyota Avanza": "3 tahun 4 bulan",
+     "Menikah (intimate)": "2 tahun 1 bulan"
+    }
+   }
+  },
+  "kopi_pesimis": {
+   "sebelum": {
+    "sisa": 2650000,
+    "skor": 70,
+    "target": {
+     "Toyota Avanza": "7 tahun 8 bulan",
+     "Menikah (intimate)": "13 tahun"
+    }
+   },
+   "sesudah": {
+    "sisa": 2650000,
+    "skor": 70,
+    "target": {
+     "Toyota Avanza": "6 tahun 11 bulan",
+     "Menikah (intimate)": "7 tahun 5 bulan"
+    }
+   }
+  },
   "data_analyst": {
    "sebelum": {
     "sisa": 2650000,
@@ -1820,7 +2047,247 @@ export const DEMO = {
   "sumber_data": "Database Eksternal myCITA v1.0 (Oktober 2026)",
   "disclaimer": "Simulasi usaha adalah skenario berdasarkan data referensi, bukan jaminan keuntungan. Hasil nyata sangat bergantung pada lokasi dan pengelolaan."
  },
+ "usaha_kopi": {
+  "status": "ok",
+  "user_id": "budi",
+  "pesan": "Eksplorasi usaha selesai: Kopi keliling, Es teh jumbo, Warkop.",
+  "rekomendasi": [
+   {
+    "id": "kopi_keliling",
+    "usaha": "Kopi keliling",
+    "bidang": "Minuman & Kuliner",
+    "skor_kecocokan": 80,
+    "pilihan_pengguna": false,
+    "alasan": [
+     "Modalmu Rp3 jt melebihi kebutuhan Rp1–2,5 jt; sisanya jadi dana cadangan usaha.",
+     "Sesuai minatmu: kopi, minuman, kuliner.",
+     "Cocok dijalankan sampingan akhir pekan."
+    ],
+    "modal_awal": {
+     "min": 1000000,
+     "max": 2500000,
+     "dipakai_simulasi": 2500000,
+     "kekurangan": 0
+    },
+    "biaya_operasional_bulanan": "Bahan baku harian, bensin",
+    "model_pendapatan": "Kopi Rp5–15 rb per gelas",
+    "skenario": {
+     "pesimis": {
+      "omzet_bulanan_stabil": 8000000,
+      "margin_persen": 30,
+      "laba_bulanan_stabil": 2400000,
+      "laba_tahun_pertama": 23760000,
+      "balik_modal_bulan": 3,
+      "balik_modal": "3 bulan"
+     },
+     "moderat": {
+      "omzet_bulanan_stabil": 14250000,
+      "margin_persen": 30,
+      "laba_bulanan_stabil": 4280000,
+      "laba_tahun_pertama": 42322500,
+      "balik_modal_bulan": 2,
+      "balik_modal": "2 bulan"
+     },
+     "optimis": {
+      "omzet_bulanan_stabil": 22000000,
+      "margin_persen": 30,
+      "laba_bulanan_stabil": 6600000,
+      "laba_tahun_pertama": 65340000,
+      "balik_modal_bulan": 2,
+      "balik_modal": "2 bulan"
+     }
+    },
+    "balik_modal_menurut_sumber": "2-4 bulan",
+    "modal_belum_cukup": false,
+    "skill_sudah_dimiliki": ["pelayanan pelanggan", "komunikasi"],
+    "skill_gap": ["racik kopi", "manajemen stok minuman"],
+    "risiko": ["cuaca (berjualan di luar ruangan)", "izin berjualan di lokasi", "persaingan penjual kopi"],
+    "dasar_angka": "Omzet dihitung dari asumsi 20-50 gelas/hari × Rp5-15 rb × 26 hari (akhir pekan saja lebih kecil). Margin 30% asumsi myCITA. Sumber: Medcom 2026 (data usaha penuh waktu); pakai skenario pesimis sebagai acuan usaha sampingan.",
+    "sumber": "Medcom 2026",
+    "roadmap_usaha": [
+     {
+      "fase": "Bulan 0-1: Persiapan",
+      "langkah": ["Riset lokasi, urus NIB lewat OSS, siapkan alat"]
+     },
+     {
+      "fase": "Bulan 1-3: Uji pasar",
+      "langkah": ["Jualan akhir pekan, catat transaksi harian"]
+     },
+     {
+      "fase": "Bulan 3-6: Stabilkan",
+      "langkah": ["Evaluasi harga & lokasi, bangun pelanggan tetap"]
+     },
+     {
+      "fase": "Bulan 6-12: Kembangkan",
+      "langkah": ["Tambah hari jualan atau titip jual jika laba stabil"]
+     }
+    ],
+    "mode": "sampingan",
+    "simulasi_siap_pakai": {
+     "pendapatan_tambahan_jadwal": [
+      { "mulai_bulan": 0, "nilai": 720000 },
+      { "mulai_bulan": 1, "nilai": 1056000 },
+      { "mulai_bulan": 2, "nilai": 1392000 },
+      { "mulai_bulan": 3, "nilai": 1728000 },
+      { "mulai_bulan": 4, "nilai": 2064000 },
+      { "mulai_bulan": 5, "nilai": 2400000 }
+     ],
+     "biaya_awal": 2500000
+    }
+   },
+   {
+    "id": "es_teh_jumbo",
+    "usaha": "Es teh jumbo",
+    "bidang": "Minuman",
+    "skor_kecocokan": 80,
+    "pilihan_pengguna": false,
+    "alasan": [
+     "Modal Rp3 jt masuk kisaran Rp1–20 jt.",
+     "Sesuai minatmu: minuman, kuliner."
+    ],
+    "modal_awal": { "min": 1000000, "max": 20000000, "dipakai_simulasi": 3000000, "kekurangan": 0 },
+    "biaya_operasional_bulanan": "Bahan baku harian",
+    "model_pendapatan": "Es teh Rp3–8 rb per botol",
+    "skenario": {
+     "pesimis": { "omzet_bulanan_stabil": 6000000, "margin_persen": 35, "laba_bulanan_stabil": 2100000, "laba_tahun_pertama": 20790000, "balik_modal_bulan": 2, "balik_modal": "2 bulan" },
+     "moderat": { "omzet_bulanan_stabil": 10000000, "margin_persen": 35, "laba_bulanan_stabil": 3500000, "laba_tahun_pertama": 34650000, "balik_modal_bulan": 1, "balik_modal": "1 bulan" },
+     "optimis": { "omzet_bulanan_stabil": 15000000, "margin_persen": 35, "laba_bulanan_stabil": 5250000, "laba_tahun_pertama": 51975000, "balik_modal_bulan": 1, "balik_modal": "1 bulan" }
+    },
+    "balik_modal_menurut_sumber": "1-3 bulan",
+    "modal_belum_cukup": false,
+    "skill_sudah_dimiliki": ["pelayanan pelanggan"],
+    "skill_gap": ["racikan minuman", "manajemen stok"],
+    "risiko": ["persaingan tinggi", "cuaca", "ketergantungan lokasi"],
+    "dasar_angka": "Angka asumsi myCITA berdasarkan tren usaha es teh 2026.",
+    "sumber": "myCITA internal estimate 2026",
+    "roadmap_usaha": [
+     { "fase": "Bulan 0-1: Persiapan", "langkah": ["Pilih resep, coba 10-20 porsi di lingkungan sekitar"] },
+     { "fase": "Bulan 1-3: Uji pasar", "langkah": ["Cari titik jual strategis, catat omzet harian"] },
+     { "fase": "Bulan 3-6: Stabilkan", "langkah": ["Buat paket hemat, bangun pelanggan tetap"] },
+     { "fase": "Bulan 6-12: Kembangkan", "langkah": ["Tambah titik jual atau jenis minuman"] }
+    ],
+    "mode": "sampingan",
+    "simulasi_siap_pakai": {
+     "pendapatan_tambahan_jadwal": [
+      { "mulai_bulan": 0, "nilai": 630000 }, { "mulai_bulan": 1, "nilai": 924000 },
+      { "mulai_bulan": 2, "nilai": 1218000 }, { "mulai_bulan": 3, "nilai": 1512000 },
+      { "mulai_bulan": 4, "nilai": 1806000 }, { "mulai_bulan": 5, "nilai": 2100000 }
+     ],
+     "biaya_awal": 3000000
+    }
+   },
+   {
+    "id": "warkop",
+    "usaha": "Warkop",
+    "bidang": "Minuman & Kuliner",
+    "skor_kecocokan": 74,
+    "pilihan_pengguna": false,
+    "alasan": [
+     "Modalmu Rp3 jt kurang dari modal minimal Rp5 jt.",
+     "Sesuai minatmu: kopi, minuman."
+    ],
+    "modal_awal": { "min": 5000000, "max": 10000000, "dipakai_simulasi": 5000000, "kekurangan": 2000000 },
+    "biaya_operasional_bulanan": "Sewa tempat atau gerobak, bahan baku",
+    "model_pendapatan": "Kopi & minuman Rp5–20 rb per gelas + makanan ringan",
+    "skenario": {
+     "pesimis": { "omzet_bulanan_stabil": 6000000, "margin_persen": 25, "laba_bulanan_stabil": 1500000, "laba_tahun_pertama": 14850000, "balik_modal_bulan": 4, "balik_modal": "4 bulan" },
+     "moderat": { "omzet_bulanan_stabil": 10000000, "margin_persen": 30, "laba_bulanan_stabil": 3000000, "laba_tahun_pertama": 29700000, "balik_modal_bulan": 2, "balik_modal": "2 bulan" },
+     "optimis": { "omzet_bulanan_stabil": 15000000, "margin_persen": 35, "laba_bulanan_stabil": 5250000, "laba_tahun_pertama": 51975000, "balik_modal_bulan": 2, "balik_modal": "2 bulan" }
+    },
+    "balik_modal_menurut_sumber": "2-6 bulan",
+    "modal_belum_cukup": true,
+    "skill_sudah_dimiliki": ["pelayanan pelanggan"],
+    "skill_gap": ["racik kopi, manajemen karyawan"],
+    "risiko": ["modal kurang", "butuh tempat tetap", "persaingan"],
+    "dasar_angka": "Angka asumsi myCITA.",
+    "sumber": "myCITA internal estimate 2026",
+    "roadmap_usaha": [
+     { "fase": "Bulan 0-2: Persiapan", "langkah": ["Kumpulkan sisa modal, cari lokasi"] },
+     { "fase": "Bulan 2-4: Buka", "langkah": ["Buka operasional, promosi lokal"] },
+     { "fase": "Bulan 4-6: Stabilkan", "langkah": ["Evaluasi menu dan jam operasional"] },
+     { "fase": "Bulan 6-12: Kembangkan", "langkah": ["Tambah menu makanan ringan"] }
+    ],
+    "mode": "sampingan",
+    "simulasi_siap_pakai": {
+     "pendapatan_tambahan_jadwal": [
+      { "mulai_bulan": 0, "nilai": 450000 }, { "mulai_bulan": 1, "nilai": 660000 },
+      { "mulai_bulan": 2, "nilai": 870000 }, { "mulai_bulan": 3, "nilai": 1080000 },
+      { "mulai_bulan": 4, "nilai": 1290000 }, { "mulai_bulan": 5, "nilai": 1500000 }
+     ],
+     "biaya_awal": 5000000
+    }
+   }
+  ],
+  "mode": "sampingan",
+  "catatan_metode": ["Kecocokan = modal (40) + minat (30) + skill & pengalaman (30). Warkop butuh modal lebih besar; simpan dulu.", "simulasi_siap_pakai bisa langsung dikirim ke analisis_keuangan_mycita."],
+  "catatan_database": "Angka kopi/minuman dari data referensi 2026.",
+  "disclaimer": "Simulasi usaha adalah skenario berdasarkan data referensi, bukan jaminan keuntungan."
+ },
  "usaha_simulasi": {
+ "agus_bengkel_plus20": {
+   "sebelum": {
+    "sisa": 5500000,
+    "skor": 84,
+    "target": {
+     "Rumah Bekasi": "22 tahun 2 bulan"
+    }
+   },
+   "sesudah": {
+    "sisa": 7700000,
+    "skor": 88,
+    "target": {
+     "Rumah Bekasi": "10 tahun"
+    }
+   }
+  },
+  "agus_kelontong_plus25": {
+   "sebelum": {
+    "sisa": 5500000,
+    "skor": 84,
+    "target": {
+     "Rumah Bekasi": "22 tahun 2 bulan"
+    }
+   },
+   "sesudah": {
+    "sisa": 6250000,
+    "skor": 86,
+    "target": {
+     "Rumah Bekasi": "14 tahun 8 bulan"
+    }
+   }
+  },
+  "agus_bengkel_kelontong": {
+   "sebelum": {
+    "sisa": 5500000,
+    "skor": 84,
+    "target": {
+     "Rumah Bekasi": "22 tahun 2 bulan"
+    }
+   },
+   "sesudah": {
+    "sisa": 8450000,
+    "skor": 90,
+    "target": {
+     "Rumah Bekasi": "8 tahun 8 bulan"
+    }
+   }
+  },
+  "agus_bengkel_kelontong_515jt": {
+   "sebelum": {
+    "sisa": 5500000,
+    "skor": 84,
+    "target": {
+     "Rumah Bekasi": "22 tahun 2 bulan"
+    }
+   },
+   "sesudah": {
+    "sisa": 8450000,
+    "skor": 90,
+    "target": {
+     "Rumah Bekasi": "7 tahun"
+    }
+   }
+  },
   "bengkel_rumahan": {
    "sebelum": {
     "sisa": 2650000,

@@ -7,7 +7,7 @@ import Icon from '../components/Icon';
 import { C } from '../theme';
 import { rpShort } from '../utils/format';
 
-export default function Profil({ go, openOnboarding }) {
+export default function Profil({ go, openOnboarding, onLogout }) {
   const app = useApp();
   const [form, setForm] = useState({ baseUrl: app.settings.baseUrl, apiKey: app.settings.apiKey, userId: app.settings.userId, flowIds: app.settings.flowIds || {} });
   const [advanced, setAdvanced] = useState(false);
@@ -47,19 +47,27 @@ export default function Profil({ go, openOnboarding }) {
     ]);
   };
 
+  const handleLogout = () => {
+    if (onLogout) { onLogout(); return; }
+    app.logout();
+  };
+
   return (
     <Screen>
       <ScreenHeader title="Profil" onBack={() => go('home')} />
       <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
         <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: C.gold, alignItems: 'center', justifyContent: 'center' }}>
-          <T w={800} size={20}>{(d?.nama || 'C').charAt(0)}</T>
+          <T w={800} size={20}>{(d?.nama || app.userId?.charAt(0)?.toUpperCase() || 'C')}</T>
         </View>
         <View style={{ flex: 1 }}>
-          <T w={800} size={17}>{d?.nama || 'Belum ada profil'}</T>
-          <T size={13} color={C.muted}>{d ? `Pendapatan ${rpShort(d.pendapatan)}/bln · user ${app.settings.userId || '-'}` : 'Isi data untuk mulai'}</T>
+          <T w={800} size={17}>{d?.nama || app.userId || 'Belum ada profil'}</T>
+          <T size={13} color={C.muted}>{d ? `Pendapatan ${rpShort(d.pendapatan)}/bln · user ${app.userId || '-'}` : 'Isi data untuk mulai'}</T>
         </View>
       </Card>
-      <Button label={d ? 'Ubah data keuangan' : 'Isi data keuangan'} icon="edit" variant="secondary" onPress={openOnboarding} />
+      {openOnboarding ? (
+        <Button label={d ? 'Ubah data keuangan' : 'Isi data keuangan'} icon="edit" variant="secondary" onPress={openOnboarding} />
+      ) : null}
+      <Button label="Ganti pengguna" icon="back" variant="secondary" onPress={handleLogout} />
 
       <T w={800} size={16} style={{ marginTop: 6 }}>Koneksi Langflow</T>
       <Card style={{ gap: 12 }}>

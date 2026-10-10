@@ -4,10 +4,14 @@ import { callTool, checkHealth, runFlow } from '../api/langflow';
 import { DEMO } from '../api/demoData';
 import { rp } from '../utils/format';
 import { EMPTY_KEUANGAN, EMPTY_PROFIL, buildKeuanganPayload, buildProfilPayload } from './payloads';
+import { findPersona } from './persona';
 
 export { EXPENSE_TEMPLATE, sampleDrafts } from './payloads';
 
 const STORE_KEY = 'cita:v1';
+
+// user_id persona contoh — tidak perlu onboarding, data sudah ada di Langflow
+export const DEMO_USER_IDS = ['budi', 'agus', 'dini'];
 
 export const DEFAULT_SETTINGS = {
   baseUrl: '',
@@ -41,6 +45,8 @@ const Ctx = createContext(null);
 
 export function AppProvider({ children }) {
   const [ready, setReady] = useState(false);
+  // activeUserId: null = belum login (tampilkan layar Masuk)
+  const [activeUserId, setActiveUserId] = useState(null);
   const [settings, setSettings] = useState(DEFAULT_SETTINGS);
   const [profilDraft, setProfilDraft] = useState(EMPTY_PROFIL);
   const [keuanganDraft, setKeuanganDraft] = useState(EMPTY_KEUANGAN);
@@ -58,6 +64,7 @@ export function AppProvider({ children }) {
         const raw = await AsyncStorage.getItem(STORE_KEY);
         if (raw) {
           const s = JSON.parse(raw);
+          if (s.activeUserId) setActiveUserId(s.activeUserId);
           if (s.settings) setSettings({ ...DEFAULT_SETTINGS, ...s.settings });
           if (s.profilDraft) setProfilDraft(s.profilDraft);
           if (s.keuanganDraft) setKeuanganDraft(s.keuanganDraft);
@@ -77,12 +84,13 @@ export function AppProvider({ children }) {
   useEffect(() => {
     if (!loaded.current) return;
     AsyncStorage.setItem(STORE_KEY, JSON.stringify({
-      settings, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chat: chat.slice(-40), karier, usaha,
+      activeUserId, settings, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chat: chat.slice(-40), karier, usaha,
     })).catch(() => {});
-  }, [settings, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chat, karier, usaha]);
+  }, [activeUserId, settings, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chat, karier, usaha]);
 
   const live = !settings.demo;
-  const userId = (settings.userId || '').trim().toLowerCase().replace(/\s+/g, '_');
+  // Pengguna aktif: activeUserId (layar Masuk) atau settings.userId (pengaturan manual lama)
+  const userId = (activeUserId || settings.userId || '').trim().toLowerCase().replace(/\s+/g, '_');
 
   const requireUser = useCallback(() => {
     if (!userId) throw new Error('User ID belum diisi. Isi di langkah profil atau tab Profil.');
@@ -170,6 +178,26 @@ export function AppProvider({ children }) {
     return v;
   }, [live, settings, userId]);
 
+  // Untuk Agus: state usaha menyimpan kopi (Budi). Agus memakai persona.js langsung,
+  // tidak perlu state tambahan karena datanya statis dari persona.js.
+  // Untuk Budi: panggil flow 6 dengan input kopi, simpan di usaha state (dipakai Usaha screen).
+  const exploreUsahaKopi = useCallback(async () => {
+    // Jika sudah ada data kopi yang tersimpan, pakai ulang
+    if (usaha?.input?.minat?.[0] === 'kopi') return usaha;
+    const persona = findPersona('budi');
+    const input = persona?.usahaInput || { user_id: 'budi', minat: ['kopi', 'minuman', 'kuliner'], skill: [], modal_tersedia: 3000000, waktu: 'sampingan' };
+    let r;
+    if (!live) {
+      await new Promise((res) => setTimeout(res, 300));
+      r = DEMO.usaha_kopi;
+    } else {
+      r = await callTool(settings, 'usaha', { ...input, user_id: userId || 'budi' });
+    }
+    const v = { input, hasil: r, at: new Date().toISOString() };
+    setUsaha(v);
+    return v;
+  }, [live, settings, userId, usaha]);
+
   // Dampak jalur karier/usaha ke tujuan finansial. demoKey: ['karier'|'usaha', id]
   const simulateRoadmap = useCallback(async (simulasi, demoKey) => {
     if (!live) {
@@ -222,13 +250,80 @@ export function AppProvider({ children }) {
     setProfilDraft(EMPTY_PROFIL); setKeuanganDraft(EMPTY_KEUANGAN); setPsikologi({});
   }, [live, settings, userId]);
 
+  // Masuk sebagai salah satu persona contoh: atur userId, muat analisis dari Langflow.
+  // Untuk persona contoh, mode demo tetap aktif (data demo tersedia tanpa server).
+  const loginAs = useCallback(async (uid) => {
+    const id = uid.trim().toLowerCase().replace(/\s+/g, '_');
+    // reset state sesi sebelumnya
+    setAnalysis(null); setUpdatedAt(null); setChat([]); setKarier(null); setUsaha(null);
+    setProfilDraft(EMPTY_PROFIL); setKeuanganDraft(EMPTY_KEUANGAN); setPsikologi({});
+    setActiveUserId(id);
+    // Muat analisis: pakai mode live jika server dikonfigurasi, fallback ke demo
+    try {
+      const st = settings;
+      const lv = !st.demo && !!st.baseUrl;
+      if (lv) {
+        const a = await callTool(st, 'analisis', { user_id: id });
+        if (a && a.status !== 'data_belum_lengkap') { setAnalysisNow(a); }
+      } else {
+        setAnalysisNow(DEMO.analisis);
+      }
+    } catch (_) {
+      // jaringan gagal — pakai data demo agar layar tetap terisi
+      setAnalysisNow(DEMO.analisis);
+    }
+    // Untuk Budi: otomatis muat data usaha kopi jika belum ada
+    if (id === 'budi') {
+      try {
+        const persona = findPersona('budi');
+        const input = persona?.usahaInput || { minat: ['kopi'], modal_tersedia: 3000000, waktu: 'sampingan' };
+        const lv = !settings.demo && !!settings.baseUrl;
+        let r;
+        if (lv) {
+          r = await callTool(settings, 'usaha', { ...input, user_id: 'budi' });
+        } else {
+          r = DEMO.usaha_kopi;
+        }
+        setUsaha({ input, hasil: r, at: new Date().toISOString() });
+      } catch (_) {
+        setUsaha({ input: {}, hasil: DEMO.usaha_kopi, at: new Date().toISOString() });
+      }
+    }
+    // Untuk Dini: otomatis panggil flow 5_eksplorasi_karier_mycita
+    // sehingga rekomendasi jurusan/karier langsung tersedia di Beranda
+    if (id === 'dini') {
+      try {
+        const persona = findPersona('dini');
+        const st = settings;
+        const lv = !st.demo && !!st.baseUrl;
+        let r;
+        if (lv && persona?.karierInput) {
+          r = await callTool(st, 'karier', persona.karierInput);
+        } else {
+          await new Promise((res) => setTimeout(res, 100));
+          r = DEMO.karier;
+        }
+        setKarier({ input: persona?.karierInput || {}, hasil: r, at: new Date().toISOString() });
+      } catch (_) {
+        setKarier({ input: {}, hasil: DEMO.karier, at: new Date().toISOString() });
+      }
+    }
+  }, [settings, setAnalysisNow]);
+
+  // Kembali ke layar Masuk
+  const logout = useCallback(() => {
+    setActiveUserId(null);
+    setAnalysis(null); setUpdatedAt(null); setChat([]); setKarier(null); setUsaha(null);
+    setProfilDraft(EMPTY_PROFIL); setKeuanganDraft(EMPTY_KEUANGAN); setPsikologi({});
+  }, []);
+
   const value = useMemo(() => ({
-    ready, settings, setSettings, live, userId,
+    ready, settings, setSettings, live, userId, activeUserId,
     profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chat, setChat, karier, usaha,
-    exploreKarier, exploreUsaha, simulateRoadmap, refreshAnalysis, submitOnboarding, searchPrice, addTarget, removeTarget, whatIf, askCoach,
-    testConnection, deleteAllData,
-  }), [ready, settings, live, userId, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chat, karier, usaha,
-    exploreKarier, exploreUsaha, simulateRoadmap, refreshAnalysis, submitOnboarding, searchPrice, addTarget, removeTarget, whatIf, askCoach, testConnection, deleteAllData]);
+    exploreKarier, exploreUsaha, exploreUsahaKopi, simulateRoadmap, refreshAnalysis, submitOnboarding, searchPrice, addTarget, removeTarget, whatIf, askCoach,
+    testConnection, deleteAllData, loginAs, logout,
+  }), [ready, settings, live, userId, activeUserId, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chat, karier, usaha,
+    exploreKarier, exploreUsaha, exploreUsahaKopi, simulateRoadmap, refreshAnalysis, submitOnboarding, searchPrice, addTarget, removeTarget, whatIf, askCoach, testConnection, deleteAllData, loginAs, logout]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
