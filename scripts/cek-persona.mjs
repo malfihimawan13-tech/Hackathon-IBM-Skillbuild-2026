@@ -78,7 +78,7 @@ const budiKarier = await callTool(settings, 'karier', {
   target_profesi: 'Data Scientist',
 });
 const dsReko = (budiKarier?.rekomendasi || []).find((r) => r.id === 'data_scientist');
-const daReko = (budiKarier?.rekomendasi || []).find((r) => r.id === 'data_analyst');
+const daRekoBudi = (budiKarier?.rekomendasi || []).find((r) => r.id === 'data_analyst');
 cekAngka('Budi karier Data Scientist skor', 71, dsReko?.skor_kecocokan);
 
 // [C] Budi usaha kopi
@@ -102,7 +102,7 @@ cek('Budi kopi balik modal optimis', '2 bulan', kopiReko?.skenario?.optimis?.bal
 const kopiPesimis = kopiReko?.simulasi_siap_pakai_per_skenario?.pesimis;
 const kopiModerat = kopiReko?.simulasi_siap_pakai_per_skenario?.moderat;
 const dsSim = dsReko?.simulasi_siap_pakai;
-const daSim = daReko?.simulasi_siap_pakai;
+const daSim = daRekoBudi?.simulasi_siap_pakai;
 
 const [rDS, rDA, rKopiP, rDSKopiP, rDSKopiM] = await Promise.all([
   dsSim ? callTool(settings, 'analisis', { user_id: 'budi', simulasi: dsSim }) : Promise.resolve(null),
@@ -219,7 +219,7 @@ cekAngka('Dini jurusan S1 Sistem Informasi skor', 90, siReko?.skor_kecocokan);
 cekAngka('Dini jurusan S1 Teknik Informatika skor', 89, tiReko?.skor_kecocokan);
 
 // Karier
-const daReko = (diniKarier?.rekomendasi || []).find(
+const daRekoDini = (diniKarier?.rekomendasi || []).find(
   (r) => r.id === 'data_analyst' || r.profesi === 'Data Analyst',
 );
 const seReko = (diniKarier?.rekomendasi || []).find(
@@ -229,7 +229,7 @@ const seReko = (diniKarier?.rekomendasi || []).find(
 const uiReko =
   (diniKarier?.rekomendasi || []).find((r) => r.profesi?.includes('UI/UX')) ||
   (diniKarier?.profesi_lain || []).find((r) => r.profesi?.includes('UI/UX'));
-cekAngka('Dini karier Data Analyst skor', 75, daReko?.skor_kecocokan);
+cekAngka('Dini karier Data Analyst skor', 75, daRekoDini?.skor_kecocokan);
 cekAngka('Dini karier Software Engineer skor', 73, seReko?.skor_kecocokan);
 cekAngka('Dini karier UI/UX Designer skor', 73, uiReko?.skor_kecocokan);
 
