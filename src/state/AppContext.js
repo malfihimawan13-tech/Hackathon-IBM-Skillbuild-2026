@@ -25,7 +25,8 @@ function demoChatReply(uid, question) {
 
 export { EXPENSE_TEMPLATE, sampleDrafts } from './payloads';
 
-const STORE_KEY = 'cita:v1';
+const STORE_KEY = 'cita:v2';
+const STORE_KEY_V1 = 'cita:v1';
 
 // user_id persona contoh — tidak perlu onboarding, data sudah ada di Langflow
 export const DEMO_USER_IDS = ['budi', 'agus', 'dini'];
@@ -64,42 +65,27 @@ export function AppProvider({ children }) {
   useEffect(() => {
     (async () => {
       try {
-        const raw = await AsyncStorage.getItem(STORE_KEY);
-        if (raw) {
-          const s = JSON.parse(raw);
+        const rawV2 = await AsyncStorage.getItem(STORE_KEY);
+        if (rawV2) {
+          // v2: simpan hanya activeUserId, settings, chatByUser
+          const s = JSON.parse(rawV2);
           if (s.activeUserId) setActiveUserId(s.activeUserId);
           if (s.settings) setSettings({ ...DEFAULT_SETTINGS, ...s.settings });
-          if (s.profilDraft) setProfilDraft(s.profilDraft);
-          if (s.keuanganDraft) setKeuanganDraft(s.keuanganDraft);
-          if (s.psikologi) setPsikologi(s.psikologi);
-          if (s.analysis) setAnalysis(s.analysis);
-          if (s.updatedAt) setUpdatedAt(s.updatedAt);
-          // Muat chatByUser; chat aktif akan diisi saat activeUserId diketahui
           if (s.chatByUser) {
             setChatByUser(s.chatByUser);
             const uid = (s.activeUserId || '').trim().toLowerCase().replace(/\s+/g, '_');
             if (uid && s.chatByUser[uid]) setChat((s.chatByUser[uid] || []).slice(-40));
-          } else if (s.chat) {
-            // migrasi dari format lama (chat global) ke format per pengguna
-            const uid = (s.activeUserId || '').trim().toLowerCase().replace(/\s+/g, '_');
-            if (uid) {
-              const migrated = { [uid]: s.chat.slice(-40) };
-              setChatByUser(migrated);
-              setChat(s.chat.slice(-40));
+          }
+        } else {
+          // Migrasi dari v1: ambil settings saja agar pengguna tidak perlu isi ulang koneksi
+          try {
+            const rawV1 = await AsyncStorage.getItem(STORE_KEY_V1);
+            if (rawV1) {
+              const s1 = JSON.parse(rawV1);
+              if (s1.settings) setSettings({ ...DEFAULT_SETTINGS, ...s1.settings });
+              if (s1.activeUserId) setActiveUserId(s1.activeUserId);
             }
-          }
-          if (s.karierByUser) setKarierByUser(s.karierByUser);
-          else if (s.karier) {
-            // Migrasi format lama (single object) ke per-user
-            const uid = (s.activeUserId || '').trim().toLowerCase().replace(/\s+/g, '_');
-            if (uid && s.karier) setKarierByUser({ [uid]: s.karier });
-          }
-          if (s.usahaByUser) setUsahaByUser(s.usahaByUser);
-          else if (s.usaha) {
-            const uid = (s.activeUserId || '').trim().toLowerCase().replace(/\s+/g, '_');
-            if (uid && s.usaha) setUsahaByUser({ [uid]: s.usaha });
-          }
-          if (s.skenario) setSkenario(s.skenario);
+          } catch (_) { /* v1 kosong atau rusak */ }
         }
       } catch (_) { /* penyimpanan kosong atau rusak: mulai baru */ }
       loaded.current = true;
@@ -107,12 +93,14 @@ export function AppProvider({ children }) {
     })();
   }, []);
 
+  // Simpan hanya data yang ringan dan tidak basi: pengguna aktif, pengaturan koneksi, riwayat chat.
+  // Hasil karier, usaha, analisis, dan skenario selalu dimuat ulang dari Langflow/demoData setelah login.
   useEffect(() => {
     if (!loaded.current) return;
     AsyncStorage.setItem(STORE_KEY, JSON.stringify({
-      activeUserId, settings, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chatByUser, karierByUser, usahaByUser, skenario,
+      activeUserId, settings, chatByUser,
     })).catch(() => {});
-  }, [activeUserId, settings, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chatByUser, karierByUser, usahaByUser, skenario]);
+  }, [activeUserId, settings, chatByUser]);
 
   // Saat Mode demo dinyalakan atau dimatikan, kosongkan riwayat chat pengguna aktif
   // agar pesan "Mode demo hanya menjawab..." tidak bercampur dengan jawaban live.
