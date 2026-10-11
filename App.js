@@ -21,29 +21,27 @@ import Profil from './src/screens/Profil';
 import Onboarding from './src/screens/Onboarding';
 import Karier from './src/screens/Karier';
 import Usaha from './src/screens/Usaha';
+import KarirBisnis from './src/screens/KarirBisnis';
 import Masuk from './src/screens/Masuk';
 import Roadmap from './src/screens/Roadmap';
 import Pendidikan from './src/screens/Pendidikan';
 import Pengeluaran from './src/screens/Pengeluaran';
 
-// Tab ke-2 bergantung persona: Karier untuk Budi/Dini, Usaha untuk Agus
-function getTabs(userId) {
-  const tab2 = userId === 'agus'
-    ? { key: 'usaha', label: 'Usaha', icon: 'store' }
-    : { key: 'karier', label: 'Karier', icon: 'briefcase' };
-  return [
-    { key: 'home', label: 'Beranda', icon: 'home' },
-    tab2,
-    { key: 'roadmap', label: 'Roadmap', icon: 'route' },
-    { key: 'keuangan', label: 'Keuangan', icon: 'chart' },
-    { key: 'chat', label: 'Tanya', icon: 'chat' },
-  ];
-}
+const TABS = [
+  { key: 'home', label: 'Beranda', icon: 'home' },
+  { key: 'karirbisnis', label: 'Karir/Bisnis', icon: 'briefcase' },
+  { key: 'roadmap', label: 'Roadmap', icon: 'route' },
+  { key: 'keuangan', label: 'Keuangan', icon: 'chart' },
+  { key: 'chat', label: 'Tanya', icon: 'chat' },
+];
 
-function BottomNav({ active, go, userId }) {
+function BottomNav({ active, go }) {
   const insets = useSafeAreaInsets();
-  const activeTab = ['cari', 'tujuan', 'pengeluaran'].includes(active) ? 'keuangan' : active;
-  const TABS = getTabs(userId);
+  const activeTab = ['cari', 'tujuan', 'pengeluaran'].includes(active)
+    ? 'keuangan'
+    : ['karier', 'usaha'].includes(active)
+    ? 'karirbisnis'
+    : active;
   return (
     <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: C.white, borderTopWidth: 1, borderTopColor: C.line, flexDirection: 'row', paddingHorizontal: 6, paddingTop: 6, paddingBottom: Math.max(insets.bottom, 8) }}
       accessibilityRole="tablist">
@@ -103,12 +101,12 @@ function Root() {
     openOnboarding: isDemoPersona ? undefined : () => setOnboarding(true),
     onLogout: () => { setRoute({ name: 'home', params: null }); app.logout(); },
   };
-  const screens = { home: Home, karier: Karier, usaha: Usaha, roadmap: Roadmap, pendidikan: Pendidikan, keuangan: Keuangan, tujuan: Tujuan, cari: Cari, chat: Chat, profil: Profil, pengeluaran: Pengeluaran };
+  const screens = { home: Home, karirbisnis: KarirBisnis, karier: Karier, usaha: Usaha, roadmap: Roadmap, pendidikan: Pendidikan, keuangan: Keuangan, tujuan: Tujuan, cari: Cari, chat: Chat, profil: Profil, pengeluaran: Pengeluaran };
   const Screen = screens[route.name] || Home;
   return (
     <View style={{ flex: 1, backgroundColor: C.ground }}>
       <Screen key={`${route.name}-${route.params?.tab || ''}`} {...props} />
-      {route.name !== 'chat' ? <BottomNav active={route.name} go={go} userId={app.activeUserId} /> : null}
+      {route.name !== 'chat' ? <BottomNav active={route.name} go={go} /> : null}
     </View>
   );
 }

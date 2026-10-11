@@ -97,7 +97,7 @@ function Kondisi({ a, pengeluaran, showTotalMismatch, totalPersona, totalFlow4, 
       <Card style={{ gap: 14 }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
           <View>
-            <T size={13} color={C.muted}>Skor kesehatan</T>
+            <T size={13} color={C.muted}>Skor Kesehatan Finansial</T>
             <T w={800} size={34} style={{ lineHeight: 40 }}>{k.skor}<T w={600} size={16} color={C.muted}> /100</T></T>
           </View>
           <Chip label={cleanStatus(k.status)} tone={k.skor >= 65 ? 'teal' : 'warn'} />
@@ -222,13 +222,10 @@ function Atur({ a }) {
   );
 }
 
-const KEUANGAN_TITLE = { agus: 'Keuangan keluarga', dini: 'Keuangan pelajar' };
-
 export default function Keuangan({ go, params }) {
   const { analysis, keuanganDraft, userId } = useApp();
   const [tab, setTab] = useState(params?.tab || 'kondisi');
   const [showAsumsi, setShowAsumsi] = useState(false);
-  const title = KEUANGAN_TITLE[userId] || 'Keuangan';
 
   // Pakai keuanganDraft jika sudah diisi, fallback ke data persona (input ke flow 2)
   const persona = findPersona(userId);
@@ -243,7 +240,7 @@ export default function Keuangan({ go, params }) {
   const showTotalMismatch = totalFlow4 && totalPersona > 0 && Math.abs(totalPersona - totalFlow4) > 1000;
   return (
     <Screen>
-      <ScreenHeader title={title} onBack={() => go('home')} />
+      <ScreenHeader title="Keuangan" onBack={() => go('home')} />
       {!analysis ? (
         <EmptyState icon="chart" title="Belum ada data" body="Isi data keuanganmu untuk melihat analisis." action="Ke beranda" onAction={() => go('home')} />
       ) : (

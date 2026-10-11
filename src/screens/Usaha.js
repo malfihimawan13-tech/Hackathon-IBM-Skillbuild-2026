@@ -159,9 +159,7 @@ function AgusUsaha({ go }) {
   ];
 
   return (
-    <Screen>
-      <ScreenHeader title="Usaha keluarga" onBack={() => go('home')} />
-
+    <>
       <T size={13} color={C.muted}>Dua sumber pendapatan: bengkel motor milik Agus dan usaha kelontong milik istri.</T>
 
       {/* Omzet chart */}
@@ -219,9 +217,11 @@ function AgusUsaha({ go }) {
       </Card>
 
       <Button label="Lihat dampak ke rumah" icon="route" onPress={() => go('roadmap')} />
-    </Screen>
+    </>
   );
 }
+
+export { AgusUsaha as AgusUsahaContent };
 
 // ── Budi usaha: skenario bar ──────────────────────────────────────
 function ScenarioBar({ label, bulan, maxBulan, deadlinePct, isPast }) {
@@ -431,9 +431,7 @@ function BudiUsaha({ go }) {
   }, []); // eslint-disable-line
 
   return (
-    <Screen>
-      <ScreenHeader title="Usaha sampingan" onBack={() => go('home')} />
-
+    <>
       <T size={13} color={C.muted}>Minat kopi dan minuman, modal Rp3 jt, dijalankan sambil tetap bekerja.</T>
 
       {busy && !hasil ? (
@@ -474,14 +472,20 @@ function BudiUsaha({ go }) {
       ) : null}
 
       <ErrorBox message={err} />
-    </Screen>
+    </>
   );
 }
+
+export { BudiUsaha as BudiUsahaContent };
 
 // ── DEFAULT EXPORT: persona router ───────────────────────────────
 export default function Usaha({ go }) {
   const app = useApp();
   const uid = app.activeUserId;
-  if (uid === 'agus') return <AgusUsaha go={go} />;
-  return <BudiUsaha go={go} />;
+  if (uid === 'agus') return (
+    <Screen><ScreenHeader title="Karir dan Bisnis" onBack={() => go('home')} /><AgusUsaha go={go} /></Screen>
+  );
+  return (
+    <Screen><ScreenHeader title="Karir dan Bisnis" onBack={() => go('home')} /><BudiUsaha go={go} /></Screen>
+  );
 }

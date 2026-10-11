@@ -36,12 +36,12 @@ function ScoreCard({ d, dd, onPress }) {
   const sub3 = ddText ? `Dana darurat${ddText}` : null;
   return (
     <Pressable accessibilityRole="button"
-      accessibilityLabel={`Skor kesehatan ${d.skor_kesehatan} dari 100, ${cleanStatus(d.status)}`}
+      accessibilityLabel={`Skor Kesehatan Finansial ${d.skor_kesehatan} dari 100, ${cleanStatus(d.status)}`}
       onPress={onPress}>
       <Card tone="teal" style={{ flexDirection: 'row', alignItems: 'center', gap: 16, borderRadius: 24, padding: 16 }}>
         <ScoreRing score={d.skor_kesehatan} />
         <View style={{ flex: 1, gap: 5 }}>
-          <T size={12} color="rgba(255,255,255,0.85)">Skor kesehatan keuangan</T>
+          <T size={12} color="rgba(255,255,255,0.85)">Skor Kesehatan Finansial</T>
           <T w={800} size={19} color={C.white}>{cleanStatus(d.status)}</T>
           {sub2 ? <T size={12} color="rgba(255,255,255,0.9)" style={{ lineHeight: 17 }}>{sub2}</T> : null}
           {sub3 ? <T size={12} color="rgba(255,255,255,0.9)">{sub3}</T> : null}
@@ -314,7 +314,7 @@ function RoadmapCard({ uid, karier, usaha, go }) {
           <Icon name="route" size={20} color={C.teal} />
           <T w={800} size={15} style={{ flex: 1 }}>Roadmap-mu</T>
         </View>
-        <Pressable onPress={() => go('karier')} accessibilityRole="button" accessibilityLabel="Buka layar Karier"
+        <Pressable onPress={() => go('karirbisnis', { tab: 'karir' })} accessibilityRole="button" accessibilityLabel="Buka layar Karir dan Bisnis — tab Karir"
           style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
           <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: C.soft, alignItems: 'center', justifyContent: 'center' }}>
             <Icon name="briefcase" size={19} color={C.teal} />
@@ -324,7 +324,7 @@ function RoadmapCard({ uid, karier, usaha, go }) {
             <T size={12} color={C.muted}>Jalur karier baru yang kamu targetkan</T>
           </View>
         </Pressable>
-        <Pressable onPress={() => go('usaha')} accessibilityRole="button" accessibilityLabel="Buka layar Usaha"
+        <Pressable onPress={() => go('karirbisnis', { tab: 'bisnis' })} accessibilityRole="button" accessibilityLabel="Buka layar Karir dan Bisnis — tab Bisnis"
           style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
           <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: C.goldSoft, alignItems: 'center', justifyContent: 'center' }}>
             <Icon name="store" size={19} color={C.warn} />
@@ -346,7 +346,7 @@ function RoadmapCard({ uid, karier, usaha, go }) {
           <Icon name="route" size={20} color={C.teal} />
           <T w={800} size={15} style={{ flex: 1 }}>Roadmap-mu</T>
         </View>
-        <Pressable onPress={() => go('usaha')} accessibilityRole="button" accessibilityLabel="Buka layar Usaha"
+        <Pressable onPress={() => go('karirbisnis')} accessibilityRole="button" accessibilityLabel="Buka layar Karir dan Bisnis"
           style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
           <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: C.goldSoft, alignItems: 'center', justifyContent: 'center' }}>
             <Icon name="store" size={19} color={C.warn} />
@@ -388,7 +388,7 @@ function RoadmapCard({ uid, karier, usaha, go }) {
             <T size={12} color={C.muted}>Pilih jurusan yang paling cocok untukmu</T>
           </View>
         </Pressable>
-        <Pressable onPress={() => go('karier')} accessibilityRole="button" accessibilityLabel="Buka layar Karier"
+        <Pressable onPress={() => go('karirbisnis')} accessibilityRole="button" accessibilityLabel="Buka layar Karir dan Bisnis"
           style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
           <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: C.goldSoft, alignItems: 'center', justifyContent: 'center' }}>
             <Icon name="briefcase" size={19} color={C.warn} />
@@ -409,7 +409,7 @@ function RoadmapCard({ uid, karier, usaha, go }) {
         <Icon name="route" size={20} color={C.teal} />
         <T w={800} size={15} style={{ flex: 1 }}>Roadmap-mu</T>
       </View>
-      <Pressable onPress={() => go('karier')} accessibilityRole="button" accessibilityLabel="Buka layar Karier"
+      <Pressable onPress={() => go('karirbisnis', { tab: 'karir' })} accessibilityRole="button" accessibilityLabel="Buka layar Karir dan Bisnis — tab Karir"
         style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
         <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: C.soft, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="briefcase" size={19} color={C.teal} />
@@ -419,7 +419,7 @@ function RoadmapCard({ uid, karier, usaha, go }) {
           <T size={12} color={C.muted}>Cocokkan minat &amp; skill dengan data profesi</T>
         </View>
       </Pressable>
-      <Pressable onPress={() => go('usaha')} accessibilityRole="button" accessibilityLabel="Buka layar Usaha"
+      <Pressable onPress={() => go('karirbisnis', { tab: 'bisnis' })} accessibilityRole="button" accessibilityLabel="Buka layar Karir dan Bisnis — tab Bisnis"
         style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
         <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: C.goldSoft, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="store" size={19} color={C.warn} />
@@ -444,7 +444,7 @@ function UsahaCards({ usahaList, go }) {
         const margin = u.omzet > 0 ? Math.round((bersih / u.omzet) * 100) : 0;
         return (
           <Pressable key={i} accessibilityRole="button" accessibilityLabel={`Detail ${u.nama}`}
-            onPress={() => go('usaha')}
+            onPress={() => go('karirbisnis')}
             style={({ pressed }) => ({ flex: 1, opacity: pressed ? 0.85 : 1 })}>
             <Card style={{ gap: 6, padding: 14 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -591,7 +591,7 @@ function KarierCards({ rekomendasi, go }) {
     <Card style={{ gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <T w={800} size={15} style={{ flex: 1 }}>Karier setelah lulus</T>
-        <Pressable onPress={() => go('karier')} accessibilityRole="button">
+        <Pressable onPress={() => go('karirbisnis')} accessibilityRole="button">
           <T w={700} size={12} color={C.teal}>Detail</T>
         </Pressable>
       </View>

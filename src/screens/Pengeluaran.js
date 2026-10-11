@@ -135,7 +135,7 @@ function ChangeCard({ before, after }) {
   const rows = [
     { label: 'Total pengeluaran', b: rp(before.dashboard?.pengeluaran), a: rp(after.dashboard?.pengeluaran) },
     { label: 'Sisa per bulan', b: rp(before.dashboard?.sisa), a: rp(after.dashboard?.sisa) },
-    { label: 'Skor kesehatan', b: `${before.dashboard?.skor_kesehatan}/100`, a: `${after.dashboard?.skor_kesehatan}/100` },
+    { label: 'Skor Kesehatan Finansial', b: `${before.dashboard?.skor_kesehatan}/100`, a: `${after.dashboard?.skor_kesehatan}/100` },
   ];
   return (
     <Card tone="teal" style={{ gap: 10 }}>

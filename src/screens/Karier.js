@@ -344,9 +344,7 @@ function BudiKarier({ go }) {
   }, []); // eslint-disable-line
 
   return (
-    <Screen>
-      <ScreenHeader title="Karier" onBack={() => go('home')} />
-
+    <>
       {/* Skill level card */}
       <Card style={{ gap: 10 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -398,9 +396,11 @@ function BudiKarier({ go }) {
       )}
 
       <ErrorBox message={err} />
-    </Screen>
+    </>
   );
 }
+
+export { BudiKarier as BudiKarierContent };
 
 // ── DINI KARIER SCREEN ────────────────────────────────────────────
 function DiniKarier({ go }) {
@@ -419,9 +419,7 @@ function DiniKarier({ go }) {
   ];
 
   return (
-    <Screen>
-      <ScreenHeader title="Career discovery" onBack={() => go('home')} />
-
+    <>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Pill text="Mode pelajar" />
         <T size={12} color={C.muted}>Peta pilihan karier setelah kuliah</T>
@@ -522,9 +520,11 @@ function DiniKarier({ go }) {
       </Card>
 
       <Button label="Lihat jurusan & kampus" icon="briefcase" onPress={() => go('pendidikan')} />
-    </Screen>
+    </>
   );
 }
+
+export { DiniKarier as DiniKarierContent };
 
 // ── DEFAULT EXPORT: persona router ───────────────────────────────
 export default function Karier({ go }) {
@@ -533,17 +533,20 @@ export default function Karier({ go }) {
 
   // Hooks harus dipanggil tanpa kondisi — redirect Agus ditangani di sini
   useEffect(() => {
-    if (uid === 'agus') go('usaha');
+    if (uid === 'agus') go('karirbisnis');
   }, [uid]);
 
-  if (uid === 'budi') return <BudiKarier go={go} />;
-  if (uid === 'dini') return <DiniKarier go={go} />;
-  // Agus: App.js sudah arahkan tab ke-2 ke Usaha; jika layar ini terbuka lewat jalan lain,
-  // useEffect di atas yang redirect. Tampilkan null sementara.
+  if (uid === 'budi') return (
+    <Screen><ScreenHeader title="Karir dan Bisnis" onBack={() => go('home')} /><BudiKarier go={go} /></Screen>
+  );
+  if (uid === 'dini') return (
+    <Screen><ScreenHeader title="Karir dan Bisnis" onBack={() => go('home')} /><DiniKarier go={go} /></Screen>
+  );
   if (uid === 'agus') return null;
   // Pengguna lain yang belum mengisi data karier
   return (
     <Screen>
+      <ScreenHeader title="Karir dan Bisnis" onBack={() => go('home')} />
       <EmptyState
         icon="briefcase"
         title="Belum ada data karier"

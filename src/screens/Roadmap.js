@@ -3,7 +3,6 @@ import { Platform, Pressable, ScrollView, View } from 'react-native';
 import Svg, { Circle, Line, Path, Polygon, Polyline, Rect, Text as SvgText } from 'react-native-svg';
 import { useApp } from '../state/AppContext';
 import { DEMO } from '../api/demoData';
-import { findPersona } from '../state/persona';
 import { T } from '../components/ui';
 import Icon from '../components/Icon';
 import { C, R } from '../theme';
@@ -631,7 +630,6 @@ function DiniRoadmap({ karier, analysis }) {
 export default function Roadmap({ go }) {
   const app = useApp();
   const uid = app.activeUserId;
-  const persona = findPersona(uid);
 
   return (
     <View style={{ flex: 1, backgroundColor: C.ground }}>
@@ -644,7 +642,14 @@ export default function Roadmap({ go }) {
           style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="back" size={20} color={C.ink} />
         </Pressable>
-        <T size={20} w={800} style={{ flex: 1, letterSpacing: -0.2 }}>Roadmap {persona?.nama || uid}</T>
+        <T size={20} w={800} style={{ flex: 1, letterSpacing: -0.2 }}>Roadmap</T>
+        <Pressable
+          onPress={() => go('tujuan')}
+          accessibilityRole="button"
+          accessibilityLabel="Atur tujuanmu"
+          style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name="flag" size={20} color={C.teal} />
+        </Pressable>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 8, paddingBottom: 100, gap: 14 }} showsVerticalScrollIndicator={false}>

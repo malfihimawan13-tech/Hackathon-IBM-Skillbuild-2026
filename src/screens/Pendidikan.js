@@ -83,7 +83,7 @@ export default function Pendidikan({ go }) {
 
   return (
     <Screen>
-      <ScreenHeader title="Jurusan & kampus" onBack={() => go('karier')} />
+      <ScreenHeader title="Jurusan & kampus" onBack={() => go('karirbisnis')} />
 
       {/* Jurusan yang cocok */}
       <Card style={{ gap: 12 }}>
