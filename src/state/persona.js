@@ -57,8 +57,7 @@ export const PERSONAS = [
     usahaInput: {
       user_id: 'budi',
       minat: ['kopi', 'minuman', 'kuliner'],
-      skill: ['pelayanan pelanggan', 'komunikasi'],
-      pengalaman: [],
+      skill: ['meracik kopi', 'pelayanan pelanggan'],
       modal_tersedia: 3000000,
       waktu: 'sampingan',
     },
@@ -169,16 +168,6 @@ export const PERSONAS = [
       { nama: 'Public speaking', level: 'Cukup', skor: 1 },
     ],
     minat: ['Teknologi', 'Matematika', 'Desain', 'Memecahkan masalah'],
-    // Input untuk flow 5_eksplorasi_karier_mycita
-    karierInput: {
-      user_id: 'dini',
-      minat: ['Teknologi', 'Matematika', 'Desain', 'Memecahkan masalah'],
-      skill: ['Microsoft Office', 'Canva', 'Bahasa Inggris', 'Python dasar'],
-      pengalaman: ['Ekstrakurikuler coding', 'Membuat website sederhana', 'Lomba teknologi'],
-      pendidikan_terakhir: 'SMA',
-      kota: 'Bandung',
-      status: 'pelajar',
-    },
   },
 ];
 

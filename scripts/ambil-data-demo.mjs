@@ -158,28 +158,24 @@ section('AGUS');
 
 const agus_analisis = await flow4({ user_id: 'agus' }, 'dasar agus');
 
-// Simulasi pengembangan usaha agus: bengkel +20%, kelontong +25%, gabungan
-// Ambil data pendapatan agus dari analisis
-// flow 4 dengan simulasi pengembangan bengkel +20%: tambahan pendapatan dari bengkel
-// omzet bengkel 11.000.000 × 20% × margin bengkel
-const BENGKEL_OMZET = 11000000;
-const BENGKEL_MARGIN_PCT = 20; // margin bersih bengkel
-const KELONTONG_OMZET = 3000000; // +25% omzet tambahan sebagaimana diminta
-const KELONTONG_MARGIN_PCT = 25;
-
-const bengkelPlusLaba = Math.round(BENGKEL_OMZET * 0.20 * (BENGKEL_MARGIN_PCT / 100));
-const kelontongPlusLaba = Math.round(KELONTONG_OMZET * 0.25 * (KELONTONG_MARGIN_PCT / 100));
+// Simulasi pengembangan usaha agus: input laba_bersih + kenaikan_persen ke Langflow
+// laba_bersih = omzet − biaya; tambahan_laba_bulanan adalah HASIL dari Langflow
+const AGUS_BENGKEL_LABA = 18000000 - 7000000;  // 11000000
+const AGUS_KELONTONG_LABA = 8000000 - 5000000;  // 3000000
 
 const agus_sim_bengkel = {
-  pendapatan_tambahan_jadwal: [{ mulai_bulan: 0, nilai: bengkelPlusLaba }],
+  pengembangan_usaha: [{ nama: 'Bengkel Agus', laba_bersih: AGUS_BENGKEL_LABA, kenaikan_persen: 20 }],
 };
 
 const agus_sim_kelontong = {
-  pendapatan_tambahan_jadwal: [{ mulai_bulan: 0, nilai: kelontongPlusLaba }],
+  pengembangan_usaha: [{ nama: 'Kelontong istri', laba_bersih: AGUS_KELONTONG_LABA, kenaikan_persen: 25 }],
 };
 
 const agus_sim_gabungan = {
-  pendapatan_tambahan_jadwal: [{ mulai_bulan: 0, nilai: bengkelPlusLaba + kelontongPlusLaba }],
+  pengembangan_usaha: [
+    { nama: 'Bengkel Agus', laba_bersih: AGUS_BENGKEL_LABA, kenaikan_persen: 20 },
+    { nama: 'Kelontong istri', laba_bersih: AGUS_KELONTONG_LABA, kenaikan_persen: 25 },
+  ],
 };
 
 const agus_sim_bengkel_r = await flow4({ user_id: 'agus', simulasi: agus_sim_bengkel }, 'simulasi bengkel +20%');
@@ -192,13 +188,21 @@ const agusTargetRumah = agus_sim_gabungan_r.target?.find((t) => t.kategori === '
 const agusHargaMaxSesuaiTenggat = agusTargetRumah?.alternatif?.harga_maksimal_terjangkau_sesuai_tenggat;
 ok(`agus rumah harga_maksimal_terjangkau_sesuai_tenggat: ${agusHargaMaxSesuaiTenggat}`);
 
-// flow 4 dengan target sesuai harga_maksimal_terjangkau_sesuai_tenggat hasil gabungan
-// Ini adalah simulasi with asumsi berbeda, bukan menambah target baru — pakai asumsi harga baru
-const agusRumahHarga = agusHargaMaxSesuaiTenggat || agusTargetRumah?.harga_saat_ini || 185000000;
-const agus_sim_rumah_sesuai = await flow4(
-  { user_id: 'agus', simulasi: agus_sim_gabungan, asumsi: { harga_rumah_override: agusRumahHarga } },
-  `simulasi gabungan + rumah Rp${agusRumahHarga}`,
-);
+// flow 4 dengan simulasi gabungan + target rumah sesuai harga realistis (tenggat 7 tahun)
+const agusRumahHarga = agusHargaMaxSesuaiTenggat ?? null;
+const agusTenggat = agusTargetRumah?.tenggat_bulan ?? 84;
+const agus_sim_rumah_sesuai = agusRumahHarga
+  ? await flow4(
+      {
+        user_id: 'agus',
+        simulasi: {
+          ...agus_sim_gabungan,
+          target: { nama: 'Rumah', kategori: 'rumah', harga: agusRumahHarga, target_tahun: Math.round(agusTenggat / 12) },
+        },
+      },
+      `simulasi gabungan + rumah Rp${agusRumahHarga}`,
+    )
+  : null;
 
 // ── DINI ────────────────────────────────────────────────────────────────────
 section('DINI');
@@ -264,7 +268,7 @@ const data = {
       bengkel_plus20: agus_sim_bengkel_r.perbandingan,
       kelontong_plus25: agus_sim_kelontong_r.perbandingan,
       gabungan: agus_sim_gabungan_r.perbandingan,
-      gabungan_rumah_terjangkau: agus_sim_rumah_sesuai.perbandingan,
+      ...(agus_sim_rumah_sesuai ? { gabungan_rumah_terjangkau: agus_sim_rumah_sesuai.perbandingan } : {}),
     },
     // Jawaban rekaman flow 7 untuk pertanyaan contoh
     chat: agus_chat,

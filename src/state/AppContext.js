@@ -439,12 +439,14 @@ export function AppProvider({ children }) {
       return r;
     };
 
-    const simBengkel = { pengembangan_usaha: [{ nama: bengkelData?.nama || 'Bengkel Agus', tambahan_laba_bulanan: bengkelTambahan }] };
-    const simKelontong = { pengembangan_usaha: [{ nama: kelontongData?.nama || 'Kelontong istri', tambahan_laba_bulanan: kelontongTambahan }] };
+    const bengkelLaba = bengkelData ? (bengkelData.omzet - bengkelData.biaya) : 11000000;
+    const kelontongLaba = kelontongData ? (kelontongData.omzet - kelontongData.biaya) : 3000000;
+    const simBengkel = { pengembangan_usaha: [{ nama: bengkelData?.nama || 'Bengkel Agus', laba_bersih: bengkelLaba, kenaikan_persen: 20 }] };
+    const simKelontong = { pengembangan_usaha: [{ nama: kelontongData?.nama || 'Kelontong istri', laba_bersih: kelontongLaba, kenaikan_persen: 25 }] };
     const simGabungan = {
       pengembangan_usaha: [
-        { nama: bengkelData?.nama || 'Bengkel Agus', tambahan_laba_bulanan: bengkelTambahan },
-        { nama: kelontongData?.nama || 'Kelontong istri', tambahan_laba_bulanan: kelontongTambahan },
+        { nama: bengkelData?.nama || 'Bengkel Agus', laba_bersih: bengkelLaba, kenaikan_persen: 20 },
+        { nama: kelontongData?.nama || 'Kelontong istri', laba_bersih: kelontongLaba, kenaikan_persen: 25 },
       ],
     };
 
@@ -573,20 +575,20 @@ export function AppProvider({ children }) {
     // Untuk Dini: otomatis panggil flow 5_eksplorasi_karier_mycita
     // sehingga rekomendasi jurusan/karier langsung tersedia di Beranda
     if (id === 'dini') {
+      const diniInput = { user_id: 'dini', status: 'pelajar' };
       try {
-        const persona = findPersona('dini');
         const st = settings;
         const lv = !st.demo && !!st.baseUrl;
         let r;
-        if (lv && persona?.karierInput) {
-          r = await callTool(st, 'karier', persona.karierInput);
+        if (lv) {
+          r = await callTool(st, 'karier', diniInput);
         } else {
           await new Promise((res) => setTimeout(res, 100));
           r = demoD.karier;
         }
-        setKarierForUser(id, { input: persona?.karierInput || {}, hasil: r, at: new Date().toISOString() });
+        setKarierForUser(id, { input: diniInput, hasil: r, at: new Date().toISOString() });
       } catch (_) {
-        setKarierForUser(id, { input: {}, hasil: demoD.karier, at: new Date().toISOString() });
+        setKarierForUser(id, { input: diniInput, hasil: demoD.karier, at: new Date().toISOString() });
       }
     }
   }, [settings, setAnalysisNow, setKarierForUser, setUsahaForUser]);

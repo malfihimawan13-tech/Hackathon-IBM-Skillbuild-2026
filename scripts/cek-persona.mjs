@@ -78,14 +78,14 @@ const budiKarier = await callTool(settings, 'karier', {
   target_profesi: 'Data Scientist',
 });
 const dsReko = (budiKarier?.rekomendasi || []).find((r) => r.id === 'data_scientist');
+const daReko = (budiKarier?.rekomendasi || []).find((r) => r.id === 'data_analyst');
 cekAngka('Budi karier Data Scientist skor', 71, dsReko?.skor_kecocokan);
 
 // [C] Budi usaha kopi
 const budiUsaha = await callTool(settings, 'usaha', {
   user_id: 'budi',
   minat: ['kopi', 'minuman', 'kuliner'],
-  skill: ['pelayanan pelanggan', 'komunikasi'],
-  pengalaman: [],
+  skill: ['meracik kopi', 'pelayanan pelanggan'],
   modal_tersedia: 3000000,
   waktu: 'sampingan',
 });
@@ -98,13 +98,15 @@ cek('Budi kopi balik modal pesimis', '3 bulan', kopiReko?.skenario?.pesimis?.bal
 cek('Budi kopi balik modal moderat', '2 bulan', kopiReko?.skenario?.moderat?.balik_modal);
 cek('Budi kopi balik modal optimis', '2 bulan', kopiReko?.skenario?.optimis?.balik_modal);
 
-// [D] Budi skenario Mobil — DS, kopi pesimis, DS+kopi pesimis, DS+kopi moderat, DS saja
+// [D] Budi skenario Mobil — DS, DA, kopi pesimis, DS+kopi pesimis, DS+kopi moderat
 const kopiPesimis = kopiReko?.simulasi_siap_pakai_per_skenario?.pesimis;
 const kopiModerat = kopiReko?.simulasi_siap_pakai_per_skenario?.moderat;
 const dsSim = dsReko?.simulasi_siap_pakai;
+const daSim = daReko?.simulasi_siap_pakai;
 
-const [rDS, rKopiP, rDSKopiP, rDSKopiM] = await Promise.all([
+const [rDS, rDA, rKopiP, rDSKopiP, rDSKopiM] = await Promise.all([
   dsSim ? callTool(settings, 'analisis', { user_id: 'budi', simulasi: dsSim }) : Promise.resolve(null),
+  daSim ? callTool(settings, 'analisis', { user_id: 'budi', simulasi: daSim }) : Promise.resolve(null),
   kopiPesimis ? callTool(settings, 'analisis', { user_id: 'budi', simulasi: kopiPesimis }) : Promise.resolve(null),
   (dsSim && kopiPesimis)
     ? callTool(settings, 'analisis', {
@@ -129,31 +131,31 @@ const [rDS, rKopiP, rDSKopiP, rDSKopiM] = await Promise.all([
 ]);
 
 cek('Budi Mobil DS saja', '5 tahun 6 bulan', waktuTargetMobil(rDS));
-cek('Budi Mobil kopi pesimis saja', '6 tahun', waktuTargetMobil(rKopiP));
+cek('Budi Mobil Data Analyst saja', '6 tahun', waktuTargetMobil(rDA));
+cek('Budi Mobil kopi pesimis saja', '6 tahun 11 bulan', waktuTargetMobil(rKopiP));
 cek('Budi Mobil DS+kopi pesimis', '4 tahun 1 bulan', waktuTargetMobil(rDSKopiP));
 cek('Budi Mobil DS+kopi moderat', '3 tahun 4 bulan', waktuTargetMobil(rDSKopiM));
 
 // ── AGUS ───────────────────────────────────────────────────────────────────────
 console.log('\n══ AGUS ══════════════════════════════════════════════════════════════');
 
-// Tambahan laba sesuai persona.js: bengkel 20% laba, kelontong 25% laba
-const bengkelTambahan = Math.round((18000000 - 7000000) * 0.2);  // 2200000
-const kelontongTambahan = Math.round((8000000 - 5000000) * 0.25); // 750000
+// laba_bersih = omzet − biaya (dari persona.js); kenaikan_persen dikirim ke Langflow
+// tambahan_laba_bulanan adalah HASIL dari Langflow, bukan input
+const BENGKEL_LABA = 18000000 - 7000000;  // 11000000
+const KELONTONG_LABA = 8000000 - 5000000;  // 3000000
 
 const agusFin = await callTool(settings, 'analisis', { user_id: 'agus' });
 cekAngka('Agus skor', 84, agusFin.dashboard?.skor_kesehatan);
-cekAngka('Agus sisa (Rp)', 5500000, bulatkanJuta(agusFin.dashboard?.sisa));
-cekAngka('Agus tambahan laba bengkel', 2200000, bengkelTambahan);
-cekAngka('Agus tambahan laba kelontong', 750000, kelontongTambahan);
+cekAngka('Agus sisa (Rp)', 5500000, agusFin.dashboard?.sisa);
 cek('Agus Rumah opsi-A dasar', '22 tahun 2 bulan', waktuTargetRumah(agusFin));
 
-// Skenario bengkel, kelontong, gabungan
-const simBengkel = { pengembangan_usaha: [{ nama: 'Bengkel Agus', tambahan_laba_bulanan: bengkelTambahan }] };
-const simKelontong = { pengembangan_usaha: [{ nama: 'Kelontong istri', tambahan_laba_bulanan: kelontongTambahan }] };
+// Skenario bengkel, kelontong, gabungan — input: laba_bersih + kenaikan_persen
+const simBengkel = { pengembangan_usaha: [{ nama: 'Bengkel Agus', laba_bersih: BENGKEL_LABA, kenaikan_persen: 20 }] };
+const simKelontong = { pengembangan_usaha: [{ nama: 'Kelontong istri', laba_bersih: KELONTONG_LABA, kenaikan_persen: 25 }] };
 const simGabungan = {
   pengembangan_usaha: [
-    { nama: 'Bengkel Agus', tambahan_laba_bulanan: bengkelTambahan },
-    { nama: 'Kelontong istri', tambahan_laba_bulanan: kelontongTambahan },
+    { nama: 'Bengkel Agus', laba_bersih: BENGKEL_LABA, kenaikan_persen: 20 },
+    { nama: 'Kelontong istri', laba_bersih: KELONTONG_LABA, kenaikan_persen: 25 },
   ],
 };
 
@@ -166,6 +168,12 @@ const [rBengkel, rKelontong, rGabungan] = await Promise.all([
 cek('Agus Rumah + bengkel', '10 tahun', waktuTargetRumah(rBengkel));
 cek('Agus Rumah + kelontong', '14 tahun 8 bulan', waktuTargetRumah(rKelontong));
 cek('Agus Rumah + gabungan', '8 tahun 8 bulan', waktuTargetRumah(rGabungan));
+
+// Tambahan laba dari respons Langflow (pengembangan_usaha[].tambahan_laba_bulanan)
+const bengkelResp = (rBengkel?.pengembangan_usaha || []).find((u) => u.nama === 'Bengkel Agus');
+const kelontongResp = (rKelontong?.pengembangan_usaha || []).find((u) => u.nama === 'Kelontong istri');
+cekAngka('Agus tambahan laba bengkel (dari Langflow)', 2200000, bengkelResp?.tambahan_laba_bulanan);
+cekAngka('Agus tambahan laba kelontong (dari Langflow)', 750000, kelontongResp?.tambahan_laba_bulanan);
 
 // Rumah realistis: harga_maksimal_terjangkau_sesuai_tenggat dari skenario gabungan
 const rumahGab = (rGabungan?.target || []).find((t) => t.nama === 'Rumah');
@@ -195,14 +203,10 @@ const diniFin = await callTool(settings, 'analisis', { user_id: 'dini' });
 cekAngka('Dini skor', 59, diniFin.dashboard?.skor_kesehatan);
 cekAngka('Dini sisa (Rp)', 150000, diniFin.dashboard?.sisa);
 
-// Karier Dini: status pelajar
+// Karier Dini: hanya kirim user_id + status (jangan kirim minat/skill/pengalaman
+// karena flow 5 menyimpannya dan akan mengubah skor Dini secara permanen)
 const diniKarier = await callTool(settings, 'karier', {
   user_id: 'dini',
-  minat: ['Teknologi', 'Matematika', 'Desain', 'Memecahkan masalah'],
-  skill: ['Microsoft Office', 'Canva', 'Bahasa Inggris', 'Python dasar'],
-  pengalaman: ['Ekstrakurikuler coding', 'Membuat website sederhana', 'Lomba teknologi'],
-  pendidikan_terakhir: 'SMA',
-  kota: 'Bandung',
   status: 'pelajar',
 });
 
