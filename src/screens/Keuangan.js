@@ -6,6 +6,61 @@ import Icon from '../components/Icon';
 import { C } from '../theme';
 import { cleanStatus, pct, rp, rpShort } from '../utils/format';
 
+// Grafik batang 6 bulan (contoh data) — dipakai di tab Kondisi
+const HISTORY_BULAN = ['Mei', 'Jun', 'Jul', 'Agt', 'Sep', 'Okt'];
+
+function HistoryChart({ sisa }) {
+  // Contoh data proporsional terhadap sisa nyata — tidak mengubah angka asli
+  const base = Math.max(sisa || 1000000, 100000);
+  const ratios = [0.72, 0.85, 0.78, 0.91, 0.88, 1.0];
+  const maxVal = base;
+  const H = 80;
+  return (
+    <Card style={{ gap: 10 }}>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+        <T w={800} size={14}>Riwayat sisa bulanan</T>
+        <Chip label="Contoh data" tone="warn" />
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 4, height: H + 20 }}>
+        {ratios.map((r, i) => {
+          const barH = Math.round(r * H);
+          const isLast = i === ratios.length - 1;
+          return (
+            <View key={i} style={{ flex: 1, alignItems: 'center', gap: 4 }}>
+              <View style={{ height: barH, width: '80%', borderRadius: 4, backgroundColor: isLast ? C.teal : C.soft }} />
+              <T size={10} color={C.muted}>{HISTORY_BULAN[i]}</T>
+            </View>
+          );
+        })}
+      </View>
+      <T size={11} color={C.muted}>Grafik riwayat menggunakan contoh data. Angka aktual dihitung dari datamu di Langflow.</T>
+    </Card>
+  );
+}
+
+function ExpenseBreakdown({ pengeluaran, total }) {
+  if (!pengeluaran || pengeluaran.length === 0) return null;
+  const items = pengeluaran
+    .map((e) => ({ label: e.label, val: Number(String(e.nominal || '').replace(/[^0-9]/g, '')) || 0 }))
+    .filter((e) => e.val > 0);
+  if (items.length === 0) return null;
+  const maxVal = Math.max(...items.map((e) => e.val));
+  return (
+    <Card style={{ gap: 10 }}>
+      <T w={800} size={16}>Rincian pengeluaran</T>
+      {items.map((e) => (
+        <View key={e.label} style={{ gap: 4 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+            <T size={13} color={C.muted}>{e.label}</T>
+            <T w={700} size={13}>{rpShort(e.val)}</T>
+          </View>
+          <Bar ratio={maxVal > 0 ? e.val / maxVal : 0} color={C.teal} />
+        </View>
+      ))}
+    </Card>
+  );
+}
+
 function Ratio({ label, value, note, ok }) {
   return (
     <Card style={{ flex: 1, padding: 12, gap: 2 }}>
@@ -16,7 +71,7 @@ function Ratio({ label, value, note, ok }) {
   );
 }
 
-function Kondisi({ a }) {
+function Kondisi({ a, pengeluaran }) {
   const k = a.kesehatan_keuangan;
   const dd = a.dana_darurat;
   const bars = Object.entries(k.rincian_skor || {}).map(([label, v]) => {
@@ -58,6 +113,7 @@ function Kondisi({ a }) {
         <View style={{ height: 1, backgroundColor: C.line }} />
         <KV k="Sisa (disposable income)" v={rp(k.disposable_income)} strong />
       </Card>
+      <ExpenseBreakdown pengeluaran={pengeluaran} total={k.pengeluaran_rutin} />
       <Card style={{ gap: 12 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <Icon name="umbrella" size={22} color={C.teal} />
@@ -73,6 +129,7 @@ function Kondisi({ a }) {
           {dd.kekurangan > 0 ? `Perkiraan terpenuhi dalam ${dd.perkiraan_waktu_terpenuhi}. Target ideal ${rpShort(dd.target_ideal)}.` : 'Dana darurat minimum sudah terpenuhi.'}
         </T>
       </Card>
+      <HistoryChart sisa={k.disposable_income} />
     </>
   );
 }
@@ -142,19 +199,23 @@ function Atur({ a }) {
   );
 }
 
+const KEUANGAN_TITLE = { agus: 'Keuangan keluarga', dini: 'Keuangan pelajar' };
+
 export default function Keuangan({ go, params }) {
-  const { analysis } = useApp();
+  const { analysis, keuanganDraft, userId } = useApp();
   const [tab, setTab] = useState(params?.tab || 'kondisi');
   const [showAsumsi, setShowAsumsi] = useState(false);
+  const pengeluaran = keuanganDraft?.pengeluaran || [];
+  const title = KEUANGAN_TITLE[userId] || 'Keuangan';
   return (
     <Screen>
-      <ScreenHeader title="Keuangan" onBack={() => go('home')} />
+      <ScreenHeader title={title} onBack={() => go('home')} />
       {!analysis ? (
         <EmptyState icon="chart" title="Belum ada data" body="Isi data keuanganmu untuk melihat analisis." action="Ke beranda" onAction={() => go('home')} />
       ) : (
         <>
           <Segmented options={[{ value: 'kondisi', label: 'Kondisi' }, { value: 'atur', label: 'Atur' }]} value={tab} onChange={setTab} />
-          {tab === 'kondisi' ? <Kondisi a={analysis} /> : <Atur a={analysis} />}
+          {tab === 'kondisi' ? <Kondisi a={analysis} pengeluaran={pengeluaran} /> : <Atur a={analysis} />}
           <Pressable accessibilityRole="button" onPress={() => setShowAsumsi(!showAsumsi)}>
             <T w={700} size={13} color={C.teal}>{showAsumsi ? 'Sembunyikan asumsi & sumber' : 'Lihat asumsi & sumber data'}</T>
           </Pressable>

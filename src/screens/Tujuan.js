@@ -29,15 +29,20 @@ function OptionCard({ title, children, ok, okText, badText }) {
 function Kredit({ b, label }) {
   if (!b) return null;
   const tenor = b.pilihan_tenor || [];
-  const best = tenor.find((o) => o.tenor_tahun === b.tenor_aman_terpendek) || tenor[tenor.length - 1];
+  // Jika tenor_aman_terpendek null, berarti semua opsi melebihi batas aman cicilan
+  const safe = !!b.tenor_aman_terpendek;
+  const best = safe
+    ? tenor.find((o) => o.tenor_tahun === b.tenor_aman_terpendek) || tenor[tenor.length - 1]
+    : tenor[tenor.length - 1]; // tampilkan tenor terpanjang sebagai contoh terbaik yang ada
   return (
-    <OptionCard title={`${label} DP ${Math.round(b.dp_persen)}%`} ok={!!b.tenor_aman_terpendek} okText="Aman" badText="Belum aman">
+    <OptionCard title={`${label} DP ${Math.round(b.dp_persen)}%`} ok={safe} okText="Aman" badText="Belum aman">
       <KV k={`DP ${rpShort(b.dp)} terkumpul dalam`} v={b.waktu_kumpulkan_dp} />
       {tenor.map((o) => (
         <KV key={o.tenor_tahun} k={`Cicilan ${o.tenor_tahun} tahun (${String(o.rasio_cicilan_setelah_kredit_persen).replace('.', ',')}% penghasilan)`}
           v={`${rpShort(o.cicilan_bulanan)}/bln`} strong={o === best} />
       ))}
       {best ? <T size={12} color={C.muted}>Total bunga tenor {best.tenor_tahun} tahun: {rpShort(best.total_bunga)} · bunga {String(b.bunga_tahunan_persen).replace('.', ',')}%/thn</T> : null}
+      {!safe ? <T size={12} color={C.warn}>Semua pilihan tenor melebihi batas aman cicilan 30% penghasilan.</T> : null}
     </OptionCard>
   );
 }
@@ -52,6 +57,15 @@ export default function Tujuan({ go }) {
   const [hemat, setHemat] = useState('');
   const [sim, setSim] = useState(null);
   const [simBusy, setSimBusy] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Muat data dari flow 4 saat membuka layar (mode live)
+  useEffect(() => {
+    if (app.live && !app.analysis) {
+      setRefreshing(true);
+      app.refreshAnalysis().catch((e) => setErr(e.message)).finally(() => setRefreshing(false));
+    }
+  }, []);
 
   useEffect(() => { if (sel >= targets.length) setSel(0); }, [targets.length, sel]);
   const t = targets[sel];
@@ -82,7 +96,9 @@ export default function Tujuan({ go }) {
   return (
     <Screen>
       <ScreenHeader title="Tujuan Saya" onBack={() => go('home')} right={<IconButton icon="plus" label="Tambah tujuan" filled onPress={() => go('cari')} />} />
-      {!app.analysis ? (
+      {refreshing ? (
+        <EmptyState icon="target" title="Memuat data…" body="Mengambil data tujuan dari Langflow." />
+      ) : !app.analysis ? (
         <EmptyState icon="target" title="Belum ada data" body="Isi data keuanganmu dulu dari beranda." action="Ke beranda" onAction={() => go('home')} />
       ) : targets.length === 0 ? (
         <EmptyState icon="target" title="Belum ada impian" body="Tambahkan rumah, kendaraan, menikah, atau tujuan lain untuk melihat berapa lama tercapai." action="Cari impian" onAction={() => go('cari')} />

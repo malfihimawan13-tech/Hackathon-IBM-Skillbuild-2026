@@ -40,7 +40,7 @@ export default function Chat({ go }) {
         </View>
         <View style={{ flex: 1 }}>
           <T w={800} size={16}>Tanya myCITA</T>
-          <T size={12} color={C.muted}>{app.live ? 'Angka dihitung dari datamu di Langflow' : 'Mode demo, jawaban contoh'}</T>
+          <T size={12} color={C.muted}>{app.live ? 'Terhubung ke Langflow · bisa butuh 20–60 detik' : 'Mode demo, jawaban contoh'}</T>
         </View>
         {app.chat.length ? <IconButton icon="trash" label="Hapus riwayat chat" onPress={() => app.setChat([])} /> : null}
       </View>
@@ -74,9 +74,14 @@ export default function Chat({ go }) {
           );
         })}
         {sending ? (
-          <View style={{ alignSelf: 'flex-start', flexDirection: 'row', gap: 8, alignItems: 'center', backgroundColor: C.card, borderWidth: 1, borderColor: C.line, paddingHorizontal: 14, paddingVertical: 11, borderRadius: 18 }}>
-            <ActivityIndicator color={C.teal} size="small" />
-            <T size={13} color={C.muted}>CITA sedang menghitung…</T>
+          <View style={{ alignSelf: 'flex-start', maxWidth: '90%', backgroundColor: C.card, borderWidth: 1, borderColor: C.line, paddingHorizontal: 14, paddingVertical: 12, borderRadius: 18, borderBottomLeftRadius: 4, gap: 6 }}>
+            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+              <ActivityIndicator color={C.teal} size="small" />
+              <T size={13} color={C.muted}>CITA sedang menjawab…</T>
+            </View>
+            {app.live ? (
+              <T size={11} color={C.muted}>Menggunakan Gemini AI · bisa butuh 20–60 detik. Jangan tutup layar ini.</T>
+            ) : null}
           </View>
         ) : null}
       </ScrollView>
