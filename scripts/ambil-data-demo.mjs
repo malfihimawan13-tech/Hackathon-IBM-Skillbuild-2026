@@ -9,7 +9,7 @@
  */
 
 import { writeFileSync } from 'node:fs';
-import { callTool } from '../src/api/langflow.js';
+import { callTool, runFlow } from '../src/api/langflow.js';
 
 const [, , baseUrl = 'http://localhost:7860', apiKey = ''] = process.argv;
 if (!baseUrl) { console.error('Pakai: node scripts/ambil-data-demo.mjs <baseUrl> <apiKey>'); process.exit(1); }
@@ -41,6 +41,26 @@ async function flow6(payload, label) {
   const r = await callTool(settings, 'usaha', payload);
   ok(`flow6 ${label}`);
   return r;
+}
+
+// Panggil flow 7 (coach) dan kembalikan jawaban teks
+async function flow7(userId, pertanyaan, label) {
+  const r = await runFlow(settings, 'coach', `user_id: ${userId}\npertanyaan: ${pertanyaan}`, {
+    timeout: 120000,
+    sessionId: `cita-${userId}`,
+  });
+  ok(`flow7 ${label}`);
+  return r;
+}
+
+// Rekam jawaban flow 7 untuk semua pertanyaan contoh persona.
+// Mengembalikan objek { [pertanyaan]: jawaban }
+async function rekamChatPersona(userId, pertanyaanList) {
+  const hasil = {};
+  for (const q of pertanyaanList) {
+    hasil[q] = await flow7(userId, q, `${userId}: "${q.slice(0, 40)}…"`);
+  }
+  return hasil;
 }
 
 // ── BUDI ────────────────────────────────────────────────────────────────────
@@ -191,6 +211,26 @@ const dini_karier = await flow5({
   status: 'pelajar',
 }, 'karier dini (pelajar)');
 
+// ── FLOW 7 — Rekam jawaban coach per persona ─────────────────────────────────
+section('FLOW 7 — rekam jawaban coach');
+
+// Pertanyaan contoh harus sesuai dengan persona.pertanyaanChat di src/state/persona.js
+const budi_chat = await rekamChatPersona('budi', [
+  'Aku mau pindah ke data science, tapi takut gaji awal turun. Aku juga mau menikah 3 tahun lagi dan beli mobil. Gimana aturnya?',
+  'Kalau aku juga buka usaha kopi sampingan di akhir pekan dengan modal 3 juta, apa dampaknya?',
+  'Portofolio apa dulu?',
+]);
+
+const agus_chat = await rekamChatPersona('agus', [
+  'Kami mau punya rumah Rp600 juta dalam 7 tahun. Bengkel dan kelontong istri sebaiknya diapakan?',
+  'Kalau omzet bengkel naik 30%?',
+]);
+
+const dini_chat = await rekamChatPersona('dini', [
+  'Aku sebentar lagi lulus SMA. Suka teknologi tapi bingung pilih jurusan dan kampus. Harus mulai dari mana?',
+  'Berapa biaya kuliah di ITB atau Telkom University, dan ada beasiswa apa yang bisa aku coba?',
+]);
+
 // ── Tulis demoData.js ────────────────────────────────────────────────────────
 section('Menulis src/api/demoData.js');
 
@@ -215,6 +255,8 @@ const data = {
       ...(budi_sim_gabungan_pesimis ? { data_scientist_kopi_pesimis: budi_sim_gabungan_pesimis.perbandingan } : {}),
       ...(budi_sim_gabungan_moderat ? { data_scientist_kopi_moderat: budi_sim_gabungan_moderat.perbandingan } : {}),
     },
+    // Jawaban rekaman flow 7 untuk pertanyaan contoh — { [pertanyaan]: jawaban }
+    chat: budi_chat,
   },
   agus: {
     analisis: agus_analisis,
@@ -224,10 +266,14 @@ const data = {
       gabungan: agus_sim_gabungan_r.perbandingan,
       gabungan_rumah_terjangkau: agus_sim_rumah_sesuai.perbandingan,
     },
+    // Jawaban rekaman flow 7 untuk pertanyaan contoh
+    chat: agus_chat,
   },
   dini: {
     analisis: dini_analisis,
     karier: dini_karier,
+    // Jawaban rekaman flow 7 untuk pertanyaan contoh
+    chat: dini_chat,
   },
 };
 
@@ -320,6 +366,7 @@ export const DEMO = ${JSON.stringify({ ...data, harga: oldHarga }, null, 1)};
 // Akses per persona: DEMO.budi.analisis, DEMO.agus.analisis, DEMO.dini.analisis
 // Karier simulasi Budi: DEMO.budi.karier_simulasi.<id>  (perbandingan sebelum/sesudah)
 // Usaha simulasi Agus : DEMO.agus.simulasi.<key>        (perbandingan sebelum/sesudah)
+// Jawaban coach demo : DEMO.<id>.chat[pertanyaan]        (string jawaban flow 7)
 `;
 
 writeFileSync(new URL('../src/api/demoData.js', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'), fileContent, 'utf8');

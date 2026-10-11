@@ -9,6 +9,12 @@ export const PERSONAS = [
     kota: 'Tangerang',
     deskripsi: 'Career switch + usaha sampingan',
     subJudul: 'Operator produksi → Data Scientist',
+    // Pertanyaan contoh di layar Chat — sesuai konteks persona
+    pertanyaanChat: [
+      'Aku mau pindah ke data science, tapi takut gaji awal turun. Aku juga mau menikah 3 tahun lagi dan beli mobil. Gimana aturnya?',
+      'Kalau aku juga buka usaha kopi sampingan di akhir pekan dengan modal 3 juta, apa dampaknya?',
+      'Portofolio apa dulu?',
+    ],
     avatarBg: '#E3EFEC',
     avatarColor: '#0F4C47',
     // Data profil — dikirim ke flow 1, tidak dikembalikan Langflow
@@ -65,6 +71,11 @@ export const PERSONAS = [
     kota: 'Bekasi',
     deskripsi: 'Usaha keluarga + rumah',
     subJudul: 'Bengkel motor + kelontong istri · Bekasi',
+    // Pertanyaan contoh di layar Chat — sesuai konteks persona
+    pertanyaanChat: [
+      'Kami mau punya rumah Rp600 juta dalam 7 tahun. Bengkel dan kelontong istri sebaiknya diapakan?',
+      'Kalau omzet bengkel naik 30%?',
+    ],
     avatarBg: '#FDF1DC',
     avatarColor: '#9A4610',
     // Data profil — dikirim ke flow 1, tidak dikembalikan Langflow
@@ -121,6 +132,11 @@ export const PERSONAS = [
     kota: 'Bandung',
     deskripsi: 'Career discovery (pelajar)',
     subJudul: 'Siswa SMA kelas 3 · Bandung · mode pelajar',
+    // Pertanyaan contoh di layar Chat — sesuai konteks persona
+    pertanyaanChat: [
+      'Aku sebentar lagi lulus SMA. Suka teknologi tapi bingung pilih jurusan dan kampus. Harus mulai dari mana?',
+      'Berapa biaya kuliah di ITB atau Telkom University, dan ada beasiswa apa yang bisa aku coba?',
+    ],
     avatarBg: '#E3EFEC',
     avatarColor: '#1F6F66',
     // Data profil — dikirim ke flow 1, tidak dikembalikan Langflow

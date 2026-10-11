@@ -2,7 +2,6 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { callTool, checkHealth, runFlow } from '../api/langflow';
 import { DEMO } from '../api/demoData';
-import { rp } from '../utils/format';
 import { EMPTY_KEUANGAN, EMPTY_PROFIL, buildKeuanganPayload, buildProfilPayload } from './payloads';
 import { findPersona } from './persona';
 
@@ -11,6 +10,17 @@ import { findPersona } from './persona';
 function demoForUser(uid) {
   const id = (uid || '').trim().toLowerCase().replace(/\s+/g, '_');
   return DEMO[id] || {};
+}
+
+// Cari jawaban rekaman untuk pertanyaan q dari DEMO.<uid>.chat.
+// Mengembalikan string jawaban atau null jika tidak ditemukan.
+function demoChatReply(uid, question) {
+  const d = demoForUser(uid);
+  if (!d.chat) return null;
+  // Cari kecocokan persis terlebih dulu
+  if (d.chat[question] != null) return d.chat[question];
+  // Tidak ada kecocokan — kembalikan null agar caller tahu ini pertanyaan bebas
+  return null;
 }
 
 export { EXPENSE_TEMPLATE, sampleDrafts } from './payloads';
@@ -28,28 +38,6 @@ export const DEFAULT_SETTINGS = {
   flowIds: {},
 };
 
-function demoCoachReply(q, uid) {
-  const d = demoForUser(uid);
-  const a = d.analisis;
-  const s = d.simulasi_gaji;
-  if (!a) return 'Data demo belum tersedia.';
-  const t = (a.target || [])[0];
-  const text = q.toLowerCase();
-  if (s && /(gaji|naik|hemat|jajan|kalau|gimana kalau|bagaimana jika)/.test(text)) {
-    const before = s.perbandingan.sebelum; const after = s.perbandingan.sesudah;
-    return `Aku coba simulasikan gaji naik ${rp(2000000)} dan jajan berkurang ${rp(300000)} per bulan.\n\n`
-      + `- Sisa per bulan: ${rp(before.sisa)} → **${rp(after.sisa)}**\n`
-      + Object.keys(after.target).map((k) => `- ${k}: ${before.target[k]} → **${after.target[k]}**`).join('\n')
-      + `\n\nLangkah kecil minggu ini: mulai sisihkan lebih ke rekening tabungan terpisah.\n\n_Estimasi edukatif, bukan nasihat investasi._`;
-  }
-  if (/rumah/.test(text)) {
-    return 'Untuk rumah, aku perlu harga yang kamu incar. Sebagai gambaran, batas harga rumah subsidi di Jabodetabek maksimal Rp185 juta dengan bunga KPR subsidi 5% tetap, tetapi ada syarat penghasilan dan belum punya rumah. Tambahkan rumah di menu Cari Impian supaya aku bisa hitung simulasinya.\n\n_Estimasi edukatif, bukan nasihat investasi._';
-  }
-  return `Kondisi keuanganmu ${a.dashboard.status.replace(/[^\p{L}\p{N} ]/gu, '').trim().toLowerCase()} dengan skor ${a.dashboard.skor_kesehatan}/100 dan sisa ${rp(a.dashboard.sisa)} per bulan.\n\n`
-    + (t ? `Untuk ${t.nama}, dengan kondisi sekarang baru tercapai dalam **${t.opsi_a_menabung?.waktu_tercapai}**. ` : '')
-    + `Prioritas utamaku untukmu:\n- ${(a.rekomendasi_utama || []).slice(0, 3).join('\n- ')}\n\nMau coba simulasi "bagaimana kalau gaji naik"?\n\n_Estimasi edukatif, bukan nasihat investasi._`;
-}
-
 const Ctx = createContext(null);
 
 export function AppProvider({ children }) {
@@ -62,7 +50,9 @@ export function AppProvider({ children }) {
   const [psikologi, setPsikologi] = useState({});
   const [analysis, setAnalysis] = useState(null);
   const [updatedAt, setUpdatedAt] = useState(null);
+  // chat per pengguna: dict { userId: messages[] }. chat (array) adalah slice untuk pengguna aktif.
   const [chat, setChat] = useState([]);
+  const [chatByUser, setChatByUser] = useState({});
   const [karier, setKarier] = useState(null);
   const [usaha, setUsaha] = useState(null);
   const [skenario, setSkenario] = useState({});
@@ -81,7 +71,20 @@ export function AppProvider({ children }) {
           if (s.psikologi) setPsikologi(s.psikologi);
           if (s.analysis) setAnalysis(s.analysis);
           if (s.updatedAt) setUpdatedAt(s.updatedAt);
-          if (s.chat) setChat(s.chat.slice(-40));
+          // Muat chatByUser; chat aktif akan diisi saat activeUserId diketahui
+          if (s.chatByUser) {
+            setChatByUser(s.chatByUser);
+            const uid = (s.activeUserId || '').trim().toLowerCase().replace(/\s+/g, '_');
+            if (uid && s.chatByUser[uid]) setChat((s.chatByUser[uid] || []).slice(-40));
+          } else if (s.chat) {
+            // migrasi dari format lama (chat global) ke format per pengguna
+            const uid = (s.activeUserId || '').trim().toLowerCase().replace(/\s+/g, '_');
+            if (uid) {
+              const migrated = { [uid]: s.chat.slice(-40) };
+              setChatByUser(migrated);
+              setChat(s.chat.slice(-40));
+            }
+          }
           if (s.karier) setKarier(s.karier);
           if (s.usaha) setUsaha(s.usaha);
           if (s.skenario) setSkenario(s.skenario);
@@ -95,13 +98,26 @@ export function AppProvider({ children }) {
   useEffect(() => {
     if (!loaded.current) return;
     AsyncStorage.setItem(STORE_KEY, JSON.stringify({
-      activeUserId, settings, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chat: chat.slice(-40), karier, usaha, skenario,
+      activeUserId, settings, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chatByUser, karier, usaha, skenario,
     })).catch(() => {});
-  }, [activeUserId, settings, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chat, karier, usaha, skenario]);
+  }, [activeUserId, settings, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chatByUser, karier, usaha, skenario]);
 
   const live = !settings.demo;
   // Pengguna aktif: hanya dari activeUserId (layar Masuk). settings.userId lama diabaikan.
   const userId = (activeUserId || '').trim().toLowerCase().replace(/\s+/g, '_');
+
+  // Perbarui chat pengguna aktif di kedua state (in-memory + dict per pengguna)
+  const setChatForUser = useCallback((updater, uid) => {
+    const id = (uid || userId || '').trim();
+    setChat((prev) => {
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      const sliced = next.slice(-40);
+      if (id) {
+        setChatByUser((byUser) => ({ ...byUser, [id]: sliced }));
+      }
+      return sliced;
+    });
+  }, [userId]);
 
   const requireUser = useCallback(() => {
     if (!userId) throw new Error('User ID belum diisi. Isi di langkah profil atau tab Profil.');
@@ -225,23 +241,30 @@ export function AppProvider({ children }) {
 
   const askCoach = useCallback(async (question) => {
     const msg = { id: `${Date.now()}u`, role: 'user', text: question };
-    setChat((c) => [...c, msg]);
+    setChatForUser((c) => [...c, msg]);
     try {
       let reply;
       if (!live) {
-        await new Promise((r) => setTimeout(r, 900));
-        reply = demoCoachReply(question, activeUserId);
+        // Mode demo: cari jawaban rekaman untuk pertanyaan contoh persona
+        const recorded = demoChatReply(activeUserId, question);
+        if (recorded != null) {
+          await new Promise((r) => setTimeout(r, 900));
+          reply = recorded + '\n\n_Jawaban rekaman dari Langflow._';
+        } else {
+          // Pertanyaan bebas — tidak dijawab di Mode demo
+          reply = 'Mode demo hanya menjawab pertanyaan contoh. Matikan Mode demo untuk bertanya bebas ke myCITA.';
+        }
       } else {
         requireUser();
         reply = await runFlow(settings, 'coach', `user_id: ${userId}\npertanyaan: ${question}`, {
           timeout: 120000, sessionId: `cita-${userId}`,
         });
       }
-      setChat((c) => [...c, { id: `${Date.now()}a`, role: 'assistant', text: reply }]);
+      setChatForUser((c) => [...c, { id: `${Date.now()}a`, role: 'assistant', text: reply }]);
     } catch (e) {
-      setChat((c) => [...c, { id: `${Date.now()}e`, role: 'error', text: e.message }]);
+      setChatForUser((c) => [...c, { id: `${Date.now()}e`, role: 'error', text: e.message }]);
     }
-  }, [live, settings, userId, requireUser]);
+  }, [live, settings, userId, activeUserId, requireUser, setChatForUser]);
 
   const testConnection = useCallback(async (override) => {
     const st = { ...settings, ...(override || {}) };
@@ -374,18 +397,27 @@ export function AppProvider({ children }) {
 
   const deleteAllData = useCallback(async () => {
     if (live && userId) await callTool(settings, 'hapus', { user_id: userId, konfirmasi: true });
-    setAnalysis(null); setUpdatedAt(null); setChat([]); setKarier(null); setUsaha(null); setSkenario({});
+    setAnalysis(null); setUpdatedAt(null); setKarier(null); setUsaha(null); setSkenario({});
     setProfilDraft(EMPTY_PROFIL); setKeuanganDraft(EMPTY_KEUANGAN); setPsikologi({});
+    // Hapus riwayat chat untuk user aktif dari dict
+    if (userId) setChatByUser((prev) => { const next = { ...prev }; delete next[userId]; return next; });
+    setChat([]);
   }, [live, settings, userId]);
 
   // Masuk sebagai salah satu persona contoh: atur userId, muat analisis dari Langflow.
   // Untuk persona contoh, mode demo tetap aktif (data demo tersedia tanpa server).
   const loginAs = useCallback(async (uid) => {
     const id = uid.trim().toLowerCase().replace(/\s+/g, '_');
-    // reset state sesi sebelumnya
-    setAnalysis(null); setUpdatedAt(null); setChat([]); setKarier(null); setUsaha(null); setSkenario({});
+    // reset state analisis/karier/usaha — tapi PERTAHANKAN chatByUser agar riwayat tiap persona tersimpan
+    setAnalysis(null); setUpdatedAt(null); setKarier(null); setUsaha(null); setSkenario({});
     setProfilDraft(EMPTY_PROFIL); setKeuanganDraft(EMPTY_KEUANGAN); setPsikologi({});
     setActiveUserId(id);
+    // Muat chat persona ini dari dict (bisa kosong jika belum pernah chat)
+    setChatByUser((prev) => {
+      const existing = prev[id] || [];
+      setChat(existing.slice(-40));
+      return prev;
+    });
     // Muat analisis: pakai mode live jika server dikonfigurasi, fallback ke demo
     const demoD = demoForUser(id);
     try {
@@ -444,15 +476,21 @@ export function AppProvider({ children }) {
     setActiveUserId(null);
     setAnalysis(null); setUpdatedAt(null); setChat([]); setKarier(null); setUsaha(null); setSkenario({});
     setProfilDraft(EMPTY_PROFIL); setKeuanganDraft(EMPTY_KEUANGAN); setPsikologi({});
+    // chatByUser dipertahankan agar riwayat tiap persona tidak hilang saat logout
   }, []);
+
+  // setChat yang diekspos ke layar: juga perbarui chatByUser (dipakai tombol hapus riwayat di Chat.js)
+  const setChatCtx = useCallback((updater) => {
+    setChatForUser(updater);
+  }, [setChatForUser]);
 
   const value = useMemo(() => ({
     ready, settings, setSettings, live, userId, activeUserId,
-    profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chat, setChat, karier, usaha, skenario,
+    profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chat, setChat: setChatCtx, karier, usaha, skenario,
     exploreKarier, exploreUsaha, exploreUsahaKopi, simulateRoadmap, loadSkenarioBudi, refreshAnalysis, submitOnboarding, searchPrice, addTarget, removeTarget, whatIf, askCoach,
     testConnection, deleteAllData, loginAs, logout, savePengeluaran,
   }), [ready, settings, live, userId, activeUserId, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chat, karier, usaha, skenario,
-    exploreKarier, exploreUsaha, exploreUsahaKopi, simulateRoadmap, loadSkenarioBudi, refreshAnalysis, submitOnboarding, searchPrice, addTarget, removeTarget, whatIf, askCoach, testConnection, deleteAllData, loginAs, logout, savePengeluaran]);
+    exploreKarier, exploreUsaha, exploreUsahaKopi, simulateRoadmap, loadSkenarioBudi, refreshAnalysis, submitOnboarding, searchPrice, addTarget, removeTarget, whatIf, askCoach, testConnection, deleteAllData, loginAs, logout, savePengeluaran, setChatCtx]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

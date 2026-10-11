@@ -5,13 +5,15 @@ import { useApp } from '../state/AppContext';
 import { IconButton, RichText, T } from '../components/ui';
 import Icon from '../components/Icon';
 import { C, F } from '../theme';
+import { findPersona } from '../state/persona';
 
-const SUGGEST = [
-  'Aku kerja di gudang, mau pindah karier. Mulai dari mana?',
-  'Bisa nggak aku capai tujuanku tepat waktu?',
-  'Kalau gajiku naik 2 juta gimana?',
-  'Hutang mana yang harus dilunasi dulu?',
-  'Kalau aku mau beli rumah subsidi?',
+// Pertanyaan umum untuk pengguna baru (bukan persona contoh), tanpa menyebut gudang/hutang/angka tertentu
+const SUGGEST_UMUM = [
+  'Bagaimana kondisi keuanganku sekarang?',
+  'Tujuanku bisa tercapai tepat waktu?',
+  'Bagaimana kalau penghasilanku naik bulan depan?',
+  'Apa langkah pertama yang harus aku ambil?',
+  'Bagaimana cara menabung lebih efektif?',
 ];
 
 export default function Chat({ go }) {
@@ -20,6 +22,10 @@ export default function Chat({ go }) {
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
   const scroll = useRef(null);
+
+  // Pertanyaan contoh: pakai milik persona aktif jika ada, fallback ke pertanyaan umum
+  const persona = findPersona(app.activeUserId);
+  const suggestList = persona?.pertanyaanChat || SUGGEST_UMUM;
 
   useEffect(() => { setTimeout(() => scroll.current?.scrollToEnd({ animated: true }), 80); }, [app.chat.length, sending]);
 
@@ -50,7 +56,7 @@ export default function Chat({ go }) {
           <View style={{ gap: 12, paddingTop: 8 }}>
             <T w={800} size={20}>Mau tanya apa hari ini?</T>
             <T size={14} color={C.muted}>myCITA menjawab memakai datamu dan simulasi yang dihitung pasti, bukan tebakan.</T>
-            {SUGGEST.map((s) => (
+            {suggestList.map((s) => (
               <Pressable key={s} onPress={() => send(s)} accessibilityRole="button"
                 style={{ padding: 14, borderRadius: 16, borderWidth: 1, borderColor: C.line, backgroundColor: C.card, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <Icon name="chat" size={18} color={C.teal} /><T size={14} style={{ flex: 1 }}>{s}</T>
