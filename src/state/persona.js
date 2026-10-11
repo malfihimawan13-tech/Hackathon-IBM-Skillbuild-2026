@@ -11,6 +11,29 @@ export const PERSONAS = [
     subJudul: 'Operator produksi → Data Scientist',
     avatarBg: '#E3EFEC',
     avatarColor: '#0F4C47',
+    // Data profil — dikirim ke flow 1, tidak dikembalikan Langflow
+    profil: {
+      pendidikan_terakhir: 'S1 Teknik Informatika',
+      status_pernikahan: 'single',
+      pekerjaan: [
+        { nama: 'Operator Produksi', jenis: 'full_time', penghasilan: 7500000, lama_kerja_bulan: 120 },
+      ],
+    },
+    // Data keuangan — dikirim ke flow 2, tidak dikembalikan Langflow
+    keuangan: {
+      pengeluaran: [
+        { label: 'Makan', nominal: 1500000 },
+        { label: 'Kos', nominal: 1200000 },
+        { label: 'Transportasi', nominal: 600000 },
+        { label: 'Internet', nominal: 300000 },
+        { label: 'Listrik', nominal: 200000 },
+        { label: 'Kebutuhan pribadi', nominal: 500000 },
+        { label: 'Hiburan', nominal: 300000 },
+        { label: 'Orang tua', nominal: 500000 },
+        { label: 'Lainnya', nominal: 400000 },
+      ],
+      tabungan_saat_ini: 35000000,
+    },
     // Level skill (diisi pengguna, bukan hasil hitung Langflow)
     // Level: 'Mahir' = 3, 'Menengah' = 2, 'Dasar' = 1
     skills: [
@@ -43,6 +66,31 @@ export const PERSONAS = [
     subJudul: 'Bengkel motor + kelontong istri · Bekasi',
     avatarBg: '#FDF1DC',
     avatarColor: '#9A4610',
+    // Data profil — dikirim ke flow 1, tidak dikembalikan Langflow
+    profil: {
+      status_pernikahan: 'menikah',
+      jumlah_anak: 2,
+      pekerjaan: [
+        { nama: 'Pemilik bengkel motor', jenis: 'usaha', penghasilan: 11000000, penghasilan_min: 11000000, lama_kerja_bulan: 120 },
+      ],
+      pasangan: { nama: 'Istri (usaha kelontong)', penghasilan: 3000000 },
+    },
+    // Data keuangan — dikirim ke flow 2, tidak dikembalikan Langflow
+    keuangan: {
+      pengeluaran: [
+        { label: 'Makan', nominal: 3000000 },
+        { label: 'Listrik', nominal: 500000 },
+        { label: 'Air', nominal: 200000 },
+        { label: 'Internet', nominal: 350000 },
+        { label: 'Transportasi', nominal: 1000000 },
+        { label: 'Pendidikan anak', nominal: 1500000 },
+        { label: 'Kesehatan', nominal: 500000 },
+        { label: 'Kebutuhan rumah', nominal: 700000 },
+        { label: 'Hiburan', nominal: 300000 },
+        { label: 'Lainnya', nominal: 450000 },
+      ],
+      tabungan_saat_ini: 45000000,
+    },
     // Data usaha (input, bukan hasil hitung Langflow)
     usaha: [
       {
@@ -73,6 +121,26 @@ export const PERSONAS = [
     subJudul: 'Siswa SMA kelas 3 · Bandung · mode pelajar',
     avatarBg: '#E3EFEC',
     avatarColor: '#1F6F66',
+    // Data profil — dikirim ke flow 1, tidak dikembalikan Langflow
+    profil: {
+      pendidikan_terakhir: 'SMA kelas 3',
+      status_pernikahan: 'single',
+      pekerjaan: [],
+      pendapatan_tambahan: [{ sumber: 'Uang saku', nominal: 1500000 }],
+    },
+    // Data keuangan — dikirim ke flow 2, tidak dikembalikan Langflow
+    keuangan: {
+      pengeluaran: [
+        { label: 'Makan & jajan', nominal: 500000 },
+        { label: 'Transportasi', nominal: 250000 },
+        { label: 'Internet & pulsa', nominal: 150000 },
+        { label: 'Hiburan', nominal: 200000 },
+        { label: 'Pendidikan & kursus', nominal: 200000 },
+        { label: 'Lainnya', nominal: 50000 },
+      ],
+      tabungan_saat_ini: 2500000,
+      tabungan_rutin_bulanan: 150000,
+    },
     // Data kemampuan (input, bukan hasil hitung Langflow)
     skills: [
       { nama: 'Microsoft Office', level: 'Menengah', skor: 2 },

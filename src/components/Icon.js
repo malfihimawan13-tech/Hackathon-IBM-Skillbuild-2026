@@ -38,6 +38,8 @@ const ICONS = {
   briefcase: [Re(3, 7, 18, 13, 2), P('M9 7V5h6v2'), P('M3 12h18')],
   store: [P('M4 10v10h16V10'), P('M3 10l2-6h14l2 6z'), P('M10 20v-5h4v5')],
   route: [Ci(6, 18, 2.2), Ci(18, 6, 2.2), P('M8 18h7a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h7')],
+  'chevron-down': [P('M6 9l6 6 6-6')],
+  'chevron-up': [P('M18 15l-6-6-6 6')],
 };
 
 export function iconForCategory(kat) {

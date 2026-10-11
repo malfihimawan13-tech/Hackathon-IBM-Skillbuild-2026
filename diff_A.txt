@@ -1,0 +1,711 @@
+diff --git a/src/components/Icon.js b/src/components/Icon.js
+index d95c4cb..f6b3e8a 100644
+--- a/src/components/Icon.js
++++ b/src/components/Icon.js
+@@ -38,6 +38,8 @@ const ICONS = {
+   briefcase: [Re(3, 7, 18, 13, 2), P('M9 7V5h6v2'), P('M3 12h18')],
+   store: [P('M4 10v10h16V10'), P('M3 10l2-6h14l2 6z'), P('M10 20v-5h4v5')],
+   route: [Ci(6, 18, 2.2), Ci(18, 6, 2.2), P('M8 18h7a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h7')],
++  'chevron-down': [P('M6 9l6 6 6-6')],
++  'chevron-up': [P('M18 15l-6-6-6 6')],
+ };
+ 
+ export function iconForCategory(kat) {
+diff --git a/src/screens/Karier.js b/src/screens/Karier.js
+index 129d154..53a0eda 100644
+--- a/src/screens/Karier.js
++++ b/src/screens/Karier.js
+@@ -415,7 +415,7 @@ function DiniKarier({ go }) {
+   const [sel, setSel] = useState(0);
+ 
+   // Fallback data from DEMO.dini.karier
+-  const demoKarier = (DEMO.dini || DEMO.budi || {}).karier;
++  const demoKarier = (DEMO.dini || {}).karier;
+   const reko = rekomendasi.length ? rekomendasi : (demoKarier?.rekomendasi || []);
+ 
+   // compare table data
+@@ -537,7 +537,7 @@ function DiniKarier({ go }) {
+ // ── DEFAULT EXPORT: persona router ───────────────────────────────
+ export default function Karier({ go }) {
+   const app = useApp();
+-  const uid = app.activeUserId || 'budi';
++  const uid = app.activeUserId;
+   if (uid === 'dini') return <DiniKarier go={go} />;
+   return <BudiKarier go={go} />;
+ }
+diff --git a/src/screens/Keuangan.js b/src/screens/Keuangan.js
+index 122e7b4..dbb4b02 100644
+--- a/src/screens/Keuangan.js
++++ b/src/screens/Keuangan.js
+@@ -1,6 +1,7 @@
+ import React, { useState } from 'react';
+ import { Pressable, View } from 'react-native';
+ import { useApp } from '../state/AppContext';
++import { findPersona } from '../state/persona';
+ import { Bar, Card, Chip, EmptyState, KV, Screen, ScreenHeader, Segmented, T } from '../components/ui';
+ import Icon from '../components/Icon';
+ import { C } from '../theme';
+@@ -71,7 +72,7 @@ function Ratio({ label, value, note, ok }) {
+   );
+ }
+ 
+-function Kondisi({ a, pengeluaran }) {
++function Kondisi({ a, pengeluaran, showTotalMismatch, totalPersona, totalFlow4 }) {
+   const k = a.kesehatan_keuangan;
+   const dd = a.dana_darurat;
+   const bars = Object.entries(k.rincian_skor || {}).map(([label, v]) => {
+@@ -114,6 +115,16 @@ function Kondisi({ a, pengeluaran }) {
+         <KV k="Sisa (disposable income)" v={rp(k.disposable_income)} strong />
+       </Card>
+       <ExpenseBreakdown pengeluaran={pengeluaran} total={k.pengeluaran_rutin} />
++      {showTotalMismatch ? (
++        <Card style={{ gap: 6, borderColor: C.warn, borderWidth: 1 }}>
++          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
++            <Icon name="spark" size={18} color={C.warn} />
++            <T size={12} color={C.warn} style={{ flex: 1, lineHeight: 18 }}>
++              Total rincian pengeluaran ({rpShort(totalPersona)}) berbeda dengan pengeluaran rutin Langflow ({rpShort(totalFlow4)}). Perbedaan ini mungkin karena Langflow memakai asumsi berbeda atau ada komponen yang digabung. Angka dari Langflow yang dipakai untuk perhitungan.
++            </T>
++          </View>
++        </Card>
++      ) : null}
+       <Card style={{ gap: 12 }}>
+         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+           <Icon name="umbrella" size={22} color={C.teal} />
+@@ -205,8 +216,19 @@ export default function Keuangan({ go, params }) {
+   const { analysis, keuanganDraft, userId } = useApp();
+   const [tab, setTab] = useState(params?.tab || 'kondisi');
+   const [showAsumsi, setShowAsumsi] = useState(false);
+-  const pengeluaran = keuanganDraft?.pengeluaran || [];
+   const title = KEUANGAN_TITLE[userId] || 'Keuangan';
++
++  // Pakai keuanganDraft jika sudah diisi, fallback ke data persona (input ke flow 2)
++  const persona = findPersona(userId);
++  const pengeluaran =
++    (keuanganDraft?.pengeluaran && keuanganDraft.pengeluaran.length > 0)
++      ? keuanganDraft.pengeluaran
++      : (persona?.keuangan?.pengeluaran || []);
++
++  // Cek apakah total pengeluaran persona berbeda dengan total_pengeluaran flow 4
++  const totalPersona = pengeluaran.reduce((s, e) => s + (Number(String(e.nominal || '').replace(/[^0-9]/g, '')) || 0), 0);
++  const totalFlow4 = analysis?.kesehatan_keuangan?.pengeluaran_rutin;
++  const showTotalMismatch = totalFlow4 && totalPersona > 0 && Math.abs(totalPersona - totalFlow4) > 1000;
+   return (
+     <Screen>
+       <ScreenHeader title={title} onBack={() => go('home')} />
+@@ -215,7 +237,7 @@ export default function Keuangan({ go, params }) {
+       ) : (
+         <>
+           <Segmented options={[{ value: 'kondisi', label: 'Kondisi' }, { value: 'atur', label: 'Atur' }]} value={tab} onChange={setTab} />
+-          {tab === 'kondisi' ? <Kondisi a={analysis} pengeluaran={pengeluaran} /> : <Atur a={analysis} />}
++          {tab === 'kondisi' ? <Kondisi a={analysis} pengeluaran={pengeluaran} showTotalMismatch={showTotalMismatch} totalPersona={totalPersona} totalFlow4={totalFlow4} /> : <Atur a={analysis} />}
+           <Pressable accessibilityRole="button" onPress={() => setShowAsumsi(!showAsumsi)}>
+             <T w={700} size={13} color={C.teal}>{showAsumsi ? 'Sembunyikan asumsi & sumber' : 'Lihat asumsi & sumber data'}</T>
+           </Pressable>
+diff --git a/src/screens/Profil.js b/src/screens/Profil.js
+index 998e7b0..e77b7cd 100644
+--- a/src/screens/Profil.js
++++ b/src/screens/Profil.js
+@@ -12,146 +12,140 @@ import { rpShort } from '../utils/format';
+ const AVATAR_BG = { budi: '#E3EFEC', agus: '#FDF1DC', dini: '#E3EFEC' };
+ const AVATAR_FG = { budi: '#0F4C47', agus: '#9A4610', dini: '#1F6F66' };
+ 
+-function PersonaData({ userId, analysis, profilDraft }) {
+-  const persona = findPersona(userId);
+-  const d = analysis?.dashboard;
+-
+-  // Data diri: gabungkan dari persona (statis) dan analysis/draft (dinamis)
+-  const nama = d?.nama || profilDraft?.nama || persona?.nama || userId;
+-  const usia = persona?.usia || '';
+-  const kota = profilDraft?.kota || persona?.kota || '';
+-  const status = profilDraft?.status === 'menikah' ? 'Menikah' : profilDraft?.status === 'single' ? 'Belum menikah' : '';
+-
+-  // Pendidikan dari profilDraft (jika sudah isi) atau persona tidak menyimpan ini
+-  const pendidikan = profilDraft?.pendidikan || '';
+-  const skills = persona?.skills || [];
+-
+-  // Pekerjaan dari profilDraft
+-  const pekerjaan = profilDraft?.pekerjaan?.[0] || null;
++function Row({ label, value }) {
++  return (
++    <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
++      <T size={13} color={C.muted}>{label}</T>
++      <T w={700} size={13} style={{ textAlign: 'right', flexShrink: 1, marginLeft: 12 }}>{value}</T>
++    </View>
++  );
++}
+ 
+-  // Target dari analisis
+-  const targets = analysis?.target || [];
++function PersonaData({ userId, analysis }) {
++  const persona = findPersona(userId);
++  if (!persona) return null;
+ 
+-  // Hanya tampilkan section jika ada data yang meaningful
+-  const showDiri = nama && (usia || kota || status);
+-  const showPendidikan = pendidikan || skills.length > 0;
+-  const showPekerjaan = pekerjaan?.nama;
+-  const showTujuan = targets.length > 0;
++  const d = analysis?.dashboard;
++  const p = persona.profil;
++  const pendapatan = d?.pendapatan;
+ 
+-  if (!showDiri && !showPendidikan && !showPekerjaan && !showTujuan) return null;
++  // ── BUDI ──────────────────────────────────────────────────────────
++  if (userId === 'budi') {
++    const pekerjaan = p?.pekerjaan?.[0];
++    const lamaKerja = pekerjaan?.lama_kerja_bulan;
++    const lamaStr = lamaKerja
++      ? `${Math.floor(lamaKerja / 12)} tahun${lamaKerja % 12 > 0 ? ` ${lamaKerja % 12} bulan` : ''}`
++      : null;
++    return (
++      <>
++        {p?.pendidikan_terakhir ? (
++          <Card style={{ gap: 10 }}>
++            <T w={800} size={15}>Pendidikan</T>
++            <Row label="Pendidikan terakhir" value={p.pendidikan_terakhir} />
++          </Card>
++        ) : null}
++        {pekerjaan?.nama ? (
++          <Card style={{ gap: 10 }}>
++            <T w={800} size={15}>Pekerjaan</T>
++            <Row label="Posisi" value={pekerjaan.nama} />
++            {lamaStr ? <Row label="Lama bekerja" value={lamaStr} /> : null}
++            {pendapatan ? (
++              <Row label="Pendapatan" value={`${rpShort(pendapatan)}/bulan`} />
++            ) : pekerjaan.penghasilan ? (
++              <Row label="Gaji" value={`${rpShort(pekerjaan.penghasilan)}/bulan`} />
++            ) : null}
++          </Card>
++        ) : null}
++      </>
++    );
++  }
+ 
+-  return (
+-    <>
+-      {showDiri ? (
++  // ── AGUS ──────────────────────────────────────────────────────────
++  if (userId === 'agus') {
++    const usahaList = persona.usaha || [];
++    return (
++      <>
+         <Card style={{ gap: 10 }}>
+-          <T w={800} size={15}>Data diri</T>
+-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+-            <T size={13} color={C.muted}>Nama</T>
+-            <T w={700} size={13}>{nama}</T>
+-          </View>
+-          {usia ? (
+-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+-              <T size={13} color={C.muted}>Usia</T>
+-              <T w={700} size={13}>{usia}</T>
+-            </View>
+-          ) : null}
+-          {status ? (
+-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+-              <T size={13} color={C.muted}>Status</T>
+-              <T w={700} size={13}>{status}</T>
+-            </View>
+-          ) : null}
+-          {kota ? (
+-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+-              <T size={13} color={C.muted}>Domisili</T>
+-              <T w={700} size={13}>{kota}</T>
+-            </View>
+-          ) : null}
++          <T w={800} size={15}>Status keluarga</T>
++          {p?.status_pernikahan === 'menikah' ? <Row label="Status" value="Menikah" /> : null}
++          {p?.jumlah_anak != null ? <Row label="Jumlah anak" value={String(p.jumlah_anak)} /> : null}
++          {p?.pasangan?.nama ? <Row label="Pasangan" value={p.pasangan.nama} /> : null}
+         </Card>
+-      ) : null}
+-
+-      {showPendidikan ? (
+-        <Card style={{ gap: 10 }}>
+-          <T w={800} size={15}>Pendidikan & kemampuan</T>
+-          {pendidikan ? (
+-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+-              <T size={13} color={C.muted}>Pendidikan</T>
+-              <T w={700} size={13}>{pendidikan}</T>
+-            </View>
+-          ) : null}
+-          {skills.length > 0 ? (
+-            <>
+-              <T size={12} w={700}>Skill</T>
+-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+-                {skills.map((s) => (
+-                  <Chip key={s.nama} label={s.nama} tone="teal" />
+-                ))}
++        {usahaList.length > 0 ? (
++          <Card style={{ gap: 10 }}>
++            <T w={800} size={15}>Usaha</T>
++            {pendapatan ? <Row label="Total pendapatan keluarga" value={`${rpShort(pendapatan)}/bulan`} /> : null}
++            {usahaList.map((u) => (
++              <View key={u.nama} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
++                <T size={13} color={C.muted}>{u.nama}</T>
++                <View style={{ alignItems: 'flex-end' }}>
++                  <T w={700} size={13}>Omzet {rpShort(u.omzet)}</T>
++                  <T size={12} color={C.muted}>Biaya {rpShort(u.biaya)}</T>
++                </View>
+               </View>
+-            </>
+-          ) : null}
+-        </Card>
+-      ) : null}
++            ))}
++          </Card>
++        ) : null}
++      </>
++    );
++  }
+ 
+-      {showPekerjaan ? (
+-        <Card style={{ gap: 10 }}>
+-          <T w={800} size={15}>Pekerjaan</T>
+-          {pekerjaan.nama ? (
+-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+-              <T size={13} color={C.muted}>Posisi</T>
+-              <T w={700} size={13} style={{ textAlign: 'right', flex: 1, marginLeft: 12 }}>{pekerjaan.nama}</T>
+-            </View>
+-          ) : null}
+-          {pekerjaan.lamaBulan ? (
+-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+-              <T size={13} color={C.muted}>Lama bekerja</T>
+-              <T w={700} size={13}>{Math.floor(Number(pekerjaan.lamaBulan) / 12)} tahun {Number(pekerjaan.lamaBulan) % 12 > 0 ? `${Number(pekerjaan.lamaBulan) % 12} bulan` : ''}</T>
+-            </View>
+-          ) : null}
+-          {pekerjaan.penghasilan ? (
+-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+-              <T size={13} color={C.muted}>Gaji</T>
+-              <T w={800} size={13}>{rpShort(Number(pekerjaan.penghasilan))}/bulan</T>
+-            </View>
+-          ) : null}
+-        </Card>
+-      ) : null}
++  // ── DINI ──────────────────────────────────────────────────────────
++  if (userId === 'dini') {
++    return (
++      <Card style={{ gap: 10 }}>
++        <T w={800} size={15}>Pendidikan & status</T>
++        {p?.pendidikan_terakhir ? <Row label="Pendidikan" value={p.pendidikan_terakhir} /> : null}
++        <Row label="Status" value="Pelajar" />
++        {pendapatan ? <Row label="Pendapatan" value={`${rpShort(pendapatan)}/bulan`} /> : null}
++      </Card>
++    );
++  }
+ 
+-      {showTujuan ? (
+-        <Card style={{ gap: 10 }}>
+-          <T w={800} size={15}>Tujuan finansial</T>
+-          {targets.map((t) => (
+-            <View key={t.nama} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
+-              <T size={13} color={C.muted}>{t.nama}</T>
+-              <T w={700} size={13} style={{ textAlign: 'right' }}>
+-                {t.harga_saat_ini ? `${rpShort(t.harga_saat_ini)}` : ''}
+-                {t.tenggat ? ` · ${t.tenggat}` : ''}
+-              </T>
+-            </View>
+-          ))}
+-        </Card>
+-      ) : null}
+-    </>
+-  );
++  return null;
+ }
+ 
+ export default function Profil({ go, openOnboarding, onLogout }) {
+   const app = useApp();
+-  const [form, setForm] = useState({ baseUrl: app.settings.baseUrl, apiKey: app.settings.apiKey, userId: app.settings.userId, flowIds: app.settings.flowIds || {} });
++  const [form, setForm] = useState({ baseUrl: app.settings.baseUrl, apiKey: app.settings.apiKey, flowIds: app.settings.flowIds || {} });
++  const [devOpen, setDevOpen] = useState(false);
+   const [advanced, setAdvanced] = useState(false);
+   const [testing, setTesting] = useState(false);
+   const [msg, setMsg] = useState('');
+   const [err, setErr] = useState('');
++  const [urlWarning, setUrlWarning] = useState('');
+   const d = app.analysis?.dashboard;
+ 
+   const userId = app.userId || '';
+   const isDemoUser = DEMO_USER_IDS.includes(userId);
+   const persona = findPersona(userId);
+-  const avatarInitial = (d?.nama || persona?.nama || userId)?.charAt(0)?.toUpperCase() || 'C';
++  const displayName = d?.nama || persona?.nama || userId || 'Pengguna';
++  const avatarInitial = displayName.charAt(0).toUpperCase() || 'C';
+   const avatarBg = AVATAR_BG[userId] || C.gold;
+   const avatarFg = AVATAR_FG[userId] || C.ink;
+ 
++  // Potong "/api/v1/mcp" dari alamat
++  function stripMcpPath(url) {
++    return url.replace(/\/api\/v1\/mcp.*$/i, '').replace(/\/$/, '');
++  }
++
++  const onChangeUrl = (v) => {
++    if (/\/api\/v1\/mcp/i.test(v)) {
++      setUrlWarning('Ini alamat MCP untuk IBM Bob. Untuk aplikasi, isi alamat dasar Langflow saja, misalnya http://localhost:7860');
++    } else {
++      setUrlWarning('');
++    }
++    setForm({ ...form, baseUrl: v });
++  };
++
+   const save = (extra = {}) => {
+-    app.setSettings((s) => ({ ...s, ...form, ...extra, userId: (form.userId || '').trim() }));
++    let baseUrl = form.baseUrl;
++    if (/\/api\/v1\/mcp/i.test(baseUrl)) {
++      baseUrl = stripMcpPath(baseUrl);
++      setForm((f) => ({ ...f, baseUrl }));
++      setUrlWarning('');
++    }
++    app.setSettings((s) => ({ ...s, ...form, ...extra, baseUrl }));
+   };
+ 
+   const test = async () => {
+@@ -170,11 +164,9 @@ export default function Profil({ go, openOnboarding, onLogout }) {
+   };
+ 
+   const confirmDelete = () => {
+-    // Tombol nonaktif saat Mode demo
+     if (!app.live) return;
+ 
+     if (isDemoUser) {
+-      // Konfirmasi pertama: peringatan data contoh
+       Alert.alert(
+         'Hapus data contoh?',
+         `Akun "${userId}" adalah pengguna contoh myCITA. Jika data di Langflow dihapus, seluruh skenario, analisis, dan tujuan akun ini akan hilang permanen dan perlu diisi ulang dari awal.`,
+@@ -182,7 +174,6 @@ export default function Profil({ go, openOnboarding, onLogout }) {
+           { text: 'Batal', style: 'cancel' },
+           {
+             text: 'Lanjutkan', style: 'destructive', onPress: () => {
+-              // Konfirmasi kedua: pastikan pengguna sadar
+               Alert.alert(
+                 'Yakin menghapus data contoh?',
+                 `Ketik "HAPUS" untuk mengonfirmasi. Data profil, keuangan, target, dan analisis akun ${userId} akan dihapus permanen dari Langflow.`,
+@@ -227,23 +218,23 @@ export default function Profil({ go, openOnboarding, onLogout }) {
+           <T w={800} size={20} color={avatarFg}>{avatarInitial}</T>
+         </View>
+         <View style={{ flex: 1 }}>
+-          <T w={800} size={17}>{d?.nama || persona?.nama || userId || 'Belum ada profil'}</T>
++          <T w={800} size={17}>{displayName}</T>
+           <T size={13} color={C.muted}>
+             {d ? `Pendapatan ${rpShort(d.pendapatan)}/bln` : (persona ? `${persona.usia} · ${persona.kota}` : 'Isi data untuk mulai')}
+           </T>
+         </View>
+       </Card>
+ 
+-      {/* Data persona — ditampilkan bila ada */}
+-      <PersonaData userId={userId} analysis={app.analysis} profilDraft={app.profilDraft} />
++      {/* Data persona — tampilan per persona */}
++      <PersonaData userId={userId} analysis={app.analysis} />
+ 
+       {openOnboarding ? (
+         <Button label={d ? 'Ubah data keuangan' : 'Isi data keuangan'} icon="edit" variant="secondary" onPress={openOnboarding} />
+       ) : null}
+       <Button label="Ganti pengguna" icon="back" variant="secondary" onPress={handleLogout} />
+ 
+-      <T w={800} size={16} style={{ marginTop: 6 }}>Koneksi Langflow</T>
+-      <Card style={{ gap: 12 }}>
++      {/* Saklar Mode demo — di luar kartu agar mudah diganti saat demo */}
++      <Card style={{ gap: 0 }}>
+         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+           <View style={{ flex: 1 }}>
+             <T w={700} size={14}>Mode demo</T>
+@@ -252,31 +243,69 @@ export default function Profil({ go, openOnboarding, onLogout }) {
+           <Switch value={app.settings.demo} onValueChange={toggleDemo} trackColor={{ true: C.teal, false: C.line }} thumbColor={C.white}
+             accessibilityLabel="Mode demo" />
+         </View>
+-        <Field label="Alamat Langflow" value={form.baseUrl} onChangeText={(v) => setForm({ ...form, baseUrl: v })} autoCapitalize="none"
+-          placeholder="http://192.168.1.10:7860 atau https://xxxx.ngrok-free.app" keyboardType="url"
+-          hint="Alamat IP laptop di Wi-Fi yang sama, atau alamat ngrok." />
+-        <Field label="API key Langflow" value={form.apiKey} onChangeText={(v) => setForm({ ...form, apiKey: v })} secure autoCapitalize="none"
+-          placeholder="sk-..." hint="Buat di Langflow: Settings → Langflow API Keys." />
+-        <Field label="User ID" value={form.userId} onChangeText={(v) => setForm({ ...form, userId: v })} autoCapitalize="none"
+-          placeholder="budi" hint="Samakan dengan user_id saat bertanya ke Bob." />
+-        <Pressable onPress={() => setAdvanced(!advanced)} accessibilityRole="button">
+-          <T w={700} size={13} color={C.teal}>{advanced ? 'Sembunyikan pengaturan lanjutan' : 'Pengaturan lanjutan: Flow ID'}</T>
+-        </Pressable>
+-        {advanced ? (
+-          <View style={{ gap: 10 }}>
+-            <T size={12} color={C.muted}>Kosongkan untuk memakai Endpoint Name bawaan. Isi Flow ID jika endpoint name tidak diatur.</T>
+-            {Object.entries(FLOWS).map(([key, name]) => (
+-              <Field key={key} label={name} value={form.flowIds[key] || ''} autoCapitalize="none" placeholder={name}
+-                onChangeText={(v) => setForm({ ...form, flowIds: { ...form.flowIds, [key]: v.trim() } })} />
+-            ))}
+-          </View>
+-        ) : null}
+-        <View style={{ flexDirection: 'row', gap: 10 }}>
+-          <Button label="Simpan" variant="secondary" onPress={() => { save(); setMsg('Pengaturan tersimpan.'); setErr(''); }} style={{ flex: 1 }} />
+-          <Button label="Tes koneksi" icon="link" onPress={test} loading={testing} style={{ flex: 1 }} />
+-        </View>
+-        {msg ? <T size={13} color={C.teal}>{msg}</T> : null}
+       </Card>
++
++      {/* Pengaturan pengembang — tertutup secara default */}
++      <Pressable
++        onPress={() => setDevOpen(!devOpen)}
++        accessibilityRole="button"
++        accessibilityLabel={devOpen ? 'Tutup pengaturan pengembang' : 'Buka pengaturan pengembang'}
++        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 4 }}
++      >
++        <T w={800} size={15}>Pengaturan pengembang</T>
++        <Icon name={devOpen ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
++      </Pressable>
++
++      {devOpen ? (
++        <Card style={{ gap: 12 }}>
++          {/* Info pengguna aktif — hanya baca */}
++          <View style={{ backgroundColor: C.ground, borderRadius: 10, padding: 10 }}>
++            <T size={13} color={C.muted}>
++              Masuk sebagai: <T w={700} size={13}>{displayName}</T>
++              {userId ? <T size={13} color={C.muted}> (user_id: {userId})</T> : null}
++            </T>
++          </View>
++
++          <Field
++            label="Alamat Langflow"
++            value={form.baseUrl}
++            onChangeText={onChangeUrl}
++            autoCapitalize="none"
++            placeholder="http://192.168.1.10:7860 atau https://xxxx.ngrok-free.app"
++            keyboardType="url"
++          />
++          {urlWarning ? (
++            <View style={{ backgroundColor: C.warnSoft, borderRadius: 8, padding: 8 }}>
++              <T size={12} color={C.warn} style={{ lineHeight: 18 }}>{urlWarning}</T>
++            </View>
++          ) : null}
++          <T size={12} color={C.muted} style={{ marginTop: -6 }}>
++            Di laptop: http://localhost:7860 · Di HP: IP laptop (mis. http://192.168.1.10:7860) atau URL ngrok
++          </T>
++
++          <Field label="API key Langflow" value={form.apiKey} onChangeText={(v) => setForm({ ...form, apiKey: v })} secure autoCapitalize="none"
++            placeholder="sk-..." hint="Buat di Langflow: Settings → Langflow API Keys." />
++
++          <Pressable onPress={() => setAdvanced(!advanced)} accessibilityRole="button">
++            <T w={700} size={13} color={C.teal}>{advanced ? 'Sembunyikan pengaturan lanjutan' : 'Pengaturan lanjutan: Flow ID'}</T>
++          </Pressable>
++          {advanced ? (
++            <View style={{ gap: 10 }}>
++              <T size={12} color={C.muted}>Kosongkan untuk memakai Endpoint Name bawaan. Isi Flow ID jika endpoint name tidak diatur.</T>
++              {Object.entries(FLOWS).map(([key, name]) => (
++                <Field key={key} label={name} value={form.flowIds[key] || ''} autoCapitalize="none" placeholder={name}
++                  onChangeText={(v) => setForm({ ...form, flowIds: { ...form.flowIds, [key]: v.trim() } })} />
++              ))}
++            </View>
++          ) : null}
++
++          <View style={{ flexDirection: 'row', gap: 10 }}>
++            <Button label="Simpan" variant="secondary" onPress={() => { save(); setMsg('Pengaturan tersimpan.'); setErr(''); }} style={{ flex: 1 }} />
++            <Button label="Tes koneksi" icon="link" onPress={test} loading={testing} style={{ flex: 1 }} />
++          </View>
++          {msg ? <T size={13} color={C.teal}>{msg}</T> : null}
++        </Card>
++      ) : null}
+       <ErrorBox message={err} />
+ 
+       <T w={800} size={16} style={{ marginTop: 6 }}>Privasi</T>
+diff --git a/src/screens/Roadmap.js b/src/screens/Roadmap.js
+index 42ee3ef..0e18d28 100644
+--- a/src/screens/Roadmap.js
++++ b/src/screens/Roadmap.js
+@@ -457,7 +457,7 @@ function DiniRoadmap({ karier }) {
+ // ── main screen ───────────────────────────────────────────────────
+ export default function Roadmap({ go }) {
+   const app = useApp();
+-  const uid = app.activeUserId || 'budi';
++  const uid = app.activeUserId;
+   const persona = findPersona(uid);
+ 
+   return (
+diff --git a/src/screens/Usaha.js b/src/screens/Usaha.js
+index 2fc9523..817e014 100644
+--- a/src/screens/Usaha.js
++++ b/src/screens/Usaha.js
+@@ -419,7 +419,7 @@ function BudiUsaha({ go }) {
+ // ── DEFAULT EXPORT: persona router ───────────────────────────────
+ export default function Usaha({ go }) {
+   const app = useApp();
+-  const uid = app.activeUserId || 'budi';
++  const uid = app.activeUserId;
+   if (uid === 'agus') return <AgusUsaha go={go} />;
+   return <BudiUsaha go={go} />;
+ }
+diff --git a/src/state/AppContext.js b/src/state/AppContext.js
+index 05378b1..3845cf5 100644
+--- a/src/state/AppContext.js
++++ b/src/state/AppContext.js
+@@ -8,10 +8,9 @@ import { findPersona } from './persona';
+ 
+ // Kembalikan data demo untuk persona yang sedang aktif.
+ // DEMO sekarang berstruktur { budi: {...}, agus: {...}, dini: {...} }.
+-// Fallback ke budi agar layar tidak crash jika user_id tidak dikenal.
+ function demoForUser(uid) {
+-  const id = (uid || 'budi').trim().toLowerCase().replace(/\s+/g, '_');
+-  return DEMO[id] || DEMO.budi || {};
++  const id = (uid || '').trim().toLowerCase().replace(/\s+/g, '_');
++  return DEMO[id] || {};
+ }
+ 
+ export { EXPENSE_TEMPLATE, sampleDrafts } from './payloads';
+@@ -99,8 +98,8 @@ export function AppProvider({ children }) {
+   }, [activeUserId, settings, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chat, karier, usaha]);
+ 
+   const live = !settings.demo;
+-  // Pengguna aktif: activeUserId (layar Masuk) atau settings.userId (pengaturan manual lama)
+-  const userId = (activeUserId || settings.userId || '').trim().toLowerCase().replace(/\s+/g, '_');
++  // Pengguna aktif: hanya dari activeUserId (layar Masuk). settings.userId lama diabaikan.
++  const userId = (activeUserId || '').trim().toLowerCase().replace(/\s+/g, '_');
+ 
+   const requireUser = useCallback(() => {
+     if (!userId) throw new Error('User ID belum diisi. Isi di langkah profil atau tab Profil.');
+@@ -189,20 +188,18 @@ export function AppProvider({ children }) {
+     return v;
+   }, [live, settings, userId, activeUserId]);
+ 
+-  // Untuk Agus: state usaha menyimpan kopi (Budi). Agus memakai persona.js langsung,
+-  // tidak perlu state tambahan karena datanya statis dari persona.js.
+   // Untuk Budi: panggil flow 6 dengan input kopi, simpan di usaha state (dipakai Usaha screen).
+   const exploreUsahaKopi = useCallback(async () => {
+     // Jika sudah ada data kopi yang tersimpan, pakai ulang
+     if (usaha?.input?.minat?.[0] === 'kopi') return usaha;
+-    const persona = findPersona('budi');
+-    const input = persona?.usahaInput || { user_id: 'budi', minat: ['kopi', 'minuman', 'kuliner'], skill: [], modal_tersedia: 3000000, waktu: 'sampingan' };
++    const persona = findPersona(activeUserId);
++    const input = persona?.usahaInput || { user_id: activeUserId, minat: ['kopi', 'minuman', 'kuliner'], skill: [], modal_tersedia: 3000000, waktu: 'sampingan' };
+     let r;
+     if (!live) {
+       await new Promise((res) => setTimeout(res, 300));
+       r = demoForUser(activeUserId).usaha_kopi;
+     } else {
+-      r = await callTool(settings, 'usaha', { ...input, user_id: userId || 'budi' });
++      r = await callTool(settings, 'usaha', { ...input, user_id: userId });
+     }
+     const v = { input, hasil: r, at: new Date().toISOString() };
+     setUsaha(v);
+@@ -246,15 +243,16 @@ export function AppProvider({ children }) {
+ 
+   const testConnection = useCallback(async (override) => {
+     const st = { ...settings, ...(override || {}) };
+-    const uid = (st.userId || '').trim().toLowerCase().replace(/\s+/g, '_');
++    // Pakai activeUserId (pengguna yang sedang masuk), bukan settings.userId
++    const uid = (activeUserId || '').trim().toLowerCase().replace(/\s+/g, '_');
+     const healthy = await checkHealth(st);
+     if (!healthy) throw new Error('Server ditemukan, tetapi Langflow belum siap.');
+-    if (!uid) return 'Langflow terhubung. Isi User ID untuk menguji flow CITA.';
++    if (!uid) return 'Langflow terhubung. Pilih pengguna untuk menguji flow CITA.';
+     const a = await callTool(st, 'analisis', { user_id: uid });
+     return a.status === 'data_belum_lengkap'
+       ? 'Langflow dan flow CITA terhubung. Data pengguna ini belum ada, silakan isi data keuangan.'
+       : 'Langflow dan flow CITA terhubung, data pengguna ditemukan.';
+-  }, [settings]);
++  }, [settings, activeUserId]);
+ 
+   const deleteAllData = useCallback(async () => {
+     if (live && userId) await callTool(settings, 'hapus', { user_id: userId, konfirmasi: true });
+@@ -288,12 +286,12 @@ export function AppProvider({ children }) {
+     // Untuk Budi: otomatis muat data usaha kopi jika belum ada
+     if (id === 'budi') {
+       try {
+-        const persona = findPersona('budi');
++        const persona = findPersona(id);
+         const input = persona?.usahaInput || { minat: ['kopi'], modal_tersedia: 3000000, waktu: 'sampingan' };
+         const lv = !settings.demo && !!settings.baseUrl;
+         let r;
+         if (lv) {
+-          r = await callTool(settings, 'usaha', { ...input, user_id: 'budi' });
++          r = await callTool(settings, 'usaha', { ...input, user_id: id });
+         } else {
+           r = demoD.usaha_kopi;
+         }
+diff --git a/src/state/persona.js b/src/state/persona.js
+index 578ebd6..d31dbe9 100644
+--- a/src/state/persona.js
++++ b/src/state/persona.js
+@@ -11,6 +11,29 @@ export const PERSONAS = [
+     subJudul: 'Operator produksi → Data Scientist',
+     avatarBg: '#E3EFEC',
+     avatarColor: '#0F4C47',
++    // Data profil — dikirim ke flow 1, tidak dikembalikan Langflow
++    profil: {
++      pendidikan_terakhir: 'S1 Teknik Informatika',
++      status_pernikahan: 'single',
++      pekerjaan: [
++        { nama: 'Operator Produksi', jenis: 'full_time', penghasilan: 7500000, lama_kerja_bulan: 120 },
++      ],
++    },
++    // Data keuangan — dikirim ke flow 2, tidak dikembalikan Langflow
++    keuangan: {
++      pengeluaran: [
++        { label: 'Makan', nominal: 1500000 },
++        { label: 'Kos', nominal: 1200000 },
++        { label: 'Transportasi', nominal: 600000 },
++        { label: 'Internet', nominal: 300000 },
++        { label: 'Listrik', nominal: 200000 },
++        { label: 'Kebutuhan pribadi', nominal: 500000 },
++        { label: 'Hiburan', nominal: 300000 },
++        { label: 'Orang tua', nominal: 500000 },
++        { label: 'Lainnya', nominal: 400000 },
++      ],
++      tabungan_saat_ini: 35000000,
++    },
+     // Level skill (diisi pengguna, bukan hasil hitung Langflow)
+     // Level: 'Mahir' = 3, 'Menengah' = 2, 'Dasar' = 1
+     skills: [
+@@ -43,6 +66,31 @@ export const PERSONAS = [
+     subJudul: 'Bengkel motor + kelontong istri · Bekasi',
+     avatarBg: '#FDF1DC',
+     avatarColor: '#9A4610',
++    // Data profil — dikirim ke flow 1, tidak dikembalikan Langflow
++    profil: {
++      status_pernikahan: 'menikah',
++      jumlah_anak: 2,
++      pekerjaan: [
++        { nama: 'Pemilik bengkel motor', jenis: 'usaha', penghasilan: 11000000, penghasilan_min: 11000000, lama_kerja_bulan: 120 },
++      ],
++      pasangan: { nama: 'Istri (usaha kelontong)', penghasilan: 3000000 },
++    },
++    // Data keuangan — dikirim ke flow 2, tidak dikembalikan Langflow
++    keuangan: {
++      pengeluaran: [
++        { label: 'Makan', nominal: 3000000 },
++        { label: 'Listrik', nominal: 500000 },
++        { label: 'Air', nominal: 200000 },
++        { label: 'Internet', nominal: 350000 },
++        { label: 'Transportasi', nominal: 1000000 },
++        { label: 'Pendidikan anak', nominal: 1500000 },
++        { label: 'Kesehatan', nominal: 500000 },
++        { label: 'Kebutuhan rumah', nominal: 700000 },
++        { label: 'Hiburan', nominal: 300000 },
++        { label: 'Lainnya', nominal: 450000 },
++      ],
++      tabungan_saat_ini: 45000000,
++    },
+     // Data usaha (input, bukan hasil hitung Langflow)
+     usaha: [
+       {
+@@ -73,6 +121,26 @@ export const PERSONAS = [
+     subJudul: 'Siswa SMA kelas 3 · Bandung · mode pelajar',
+     avatarBg: '#E3EFEC',
+     avatarColor: '#1F6F66',
++    // Data profil — dikirim ke flow 1, tidak dikembalikan Langflow
++    profil: {
++      pendidikan_terakhir: 'SMA kelas 3',
++      status_pernikahan: 'single',
++      pekerjaan: [],
++      pendapatan_tambahan: [{ sumber: 'Uang saku', nominal: 1500000 }],
++    },
++    // Data keuangan — dikirim ke flow 2, tidak dikembalikan Langflow
++    keuangan: {
++      pengeluaran: [
++        { label: 'Makan & jajan', nominal: 500000 },
++        { label: 'Transportasi', nominal: 250000 },
++        { label: 'Internet & pulsa', nominal: 150000 },
++        { label: 'Hiburan', nominal: 200000 },
++        { label: 'Pendidikan & kursus', nominal: 200000 },
++        { label: 'Lainnya', nominal: 50000 },
++      ],
++      tabungan_saat_ini: 2500000,
++      tabungan_rutin_bulanan: 150000,
++    },
+     // Data kemampuan (input, bukan hasil hitung Langflow)
+     skills: [
+       { nama: 'Microsoft Office', level: 'Menengah', skor: 2 },

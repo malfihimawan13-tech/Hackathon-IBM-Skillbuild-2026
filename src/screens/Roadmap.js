@@ -457,7 +457,7 @@ function DiniRoadmap({ karier }) {
 // ── main screen ───────────────────────────────────────────────────
 export default function Roadmap({ go }) {
   const app = useApp();
-  const uid = app.activeUserId || 'budi';
+  const uid = app.activeUserId;
   const persona = findPersona(uid);
 
   return (

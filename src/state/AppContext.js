@@ -8,10 +8,9 @@ import { findPersona } from './persona';
 
 // Kembalikan data demo untuk persona yang sedang aktif.
 // DEMO sekarang berstruktur { budi: {...}, agus: {...}, dini: {...} }.
-// Fallback ke budi agar layar tidak crash jika user_id tidak dikenal.
 function demoForUser(uid) {
-  const id = (uid || 'budi').trim().toLowerCase().replace(/\s+/g, '_');
-  return DEMO[id] || DEMO.budi || {};
+  const id = (uid || '').trim().toLowerCase().replace(/\s+/g, '_');
+  return DEMO[id] || {};
 }
 
 export { EXPENSE_TEMPLATE, sampleDrafts } from './payloads';
@@ -99,8 +98,8 @@ export function AppProvider({ children }) {
   }, [activeUserId, settings, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chat, karier, usaha]);
 
   const live = !settings.demo;
-  // Pengguna aktif: activeUserId (layar Masuk) atau settings.userId (pengaturan manual lama)
-  const userId = (activeUserId || settings.userId || '').trim().toLowerCase().replace(/\s+/g, '_');
+  // Pengguna aktif: hanya dari activeUserId (layar Masuk). settings.userId lama diabaikan.
+  const userId = (activeUserId || '').trim().toLowerCase().replace(/\s+/g, '_');
 
   const requireUser = useCallback(() => {
     if (!userId) throw new Error('User ID belum diisi. Isi di langkah profil atau tab Profil.');
@@ -189,20 +188,18 @@ export function AppProvider({ children }) {
     return v;
   }, [live, settings, userId, activeUserId]);
 
-  // Untuk Agus: state usaha menyimpan kopi (Budi). Agus memakai persona.js langsung,
-  // tidak perlu state tambahan karena datanya statis dari persona.js.
   // Untuk Budi: panggil flow 6 dengan input kopi, simpan di usaha state (dipakai Usaha screen).
   const exploreUsahaKopi = useCallback(async () => {
     // Jika sudah ada data kopi yang tersimpan, pakai ulang
     if (usaha?.input?.minat?.[0] === 'kopi') return usaha;
-    const persona = findPersona('budi');
-    const input = persona?.usahaInput || { user_id: 'budi', minat: ['kopi', 'minuman', 'kuliner'], skill: [], modal_tersedia: 3000000, waktu: 'sampingan' };
+    const persona = findPersona(activeUserId);
+    const input = persona?.usahaInput || { user_id: activeUserId, minat: ['kopi', 'minuman', 'kuliner'], skill: [], modal_tersedia: 3000000, waktu: 'sampingan' };
     let r;
     if (!live) {
       await new Promise((res) => setTimeout(res, 300));
       r = demoForUser(activeUserId).usaha_kopi;
     } else {
-      r = await callTool(settings, 'usaha', { ...input, user_id: userId || 'budi' });
+      r = await callTool(settings, 'usaha', { ...input, user_id: userId });
     }
     const v = { input, hasil: r, at: new Date().toISOString() };
     setUsaha(v);
@@ -246,15 +243,16 @@ export function AppProvider({ children }) {
 
   const testConnection = useCallback(async (override) => {
     const st = { ...settings, ...(override || {}) };
-    const uid = (st.userId || '').trim().toLowerCase().replace(/\s+/g, '_');
+    // Pakai activeUserId (pengguna yang sedang masuk), bukan settings.userId
+    const uid = (activeUserId || '').trim().toLowerCase().replace(/\s+/g, '_');
     const healthy = await checkHealth(st);
     if (!healthy) throw new Error('Server ditemukan, tetapi Langflow belum siap.');
-    if (!uid) return 'Langflow terhubung. Isi User ID untuk menguji flow CITA.';
+    if (!uid) return 'Langflow terhubung. Pilih pengguna untuk menguji flow CITA.';
     const a = await callTool(st, 'analisis', { user_id: uid });
     return a.status === 'data_belum_lengkap'
       ? 'Langflow dan flow CITA terhubung. Data pengguna ini belum ada, silakan isi data keuangan.'
       : 'Langflow dan flow CITA terhubung, data pengguna ditemukan.';
-  }, [settings]);
+  }, [settings, activeUserId]);
 
   const deleteAllData = useCallback(async () => {
     if (live && userId) await callTool(settings, 'hapus', { user_id: userId, konfirmasi: true });
@@ -288,12 +286,12 @@ export function AppProvider({ children }) {
     // Untuk Budi: otomatis muat data usaha kopi jika belum ada
     if (id === 'budi') {
       try {
-        const persona = findPersona('budi');
+        const persona = findPersona(id);
         const input = persona?.usahaInput || { minat: ['kopi'], modal_tersedia: 3000000, waktu: 'sampingan' };
         const lv = !settings.demo && !!settings.baseUrl;
         let r;
         if (lv) {
-          r = await callTool(settings, 'usaha', { ...input, user_id: 'budi' });
+          r = await callTool(settings, 'usaha', { ...input, user_id: id });
         } else {
           r = demoD.usaha_kopi;
         }

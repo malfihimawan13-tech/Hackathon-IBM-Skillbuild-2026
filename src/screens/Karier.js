@@ -415,7 +415,7 @@ function DiniKarier({ go }) {
   const [sel, setSel] = useState(0);
 
   // Fallback data from DEMO.dini.karier
-  const demoKarier = (DEMO.dini || DEMO.budi || {}).karier;
+  const demoKarier = (DEMO.dini || {}).karier;
   const reko = rekomendasi.length ? rekomendasi : (demoKarier?.rekomendasi || []);
 
   // compare table data
@@ -537,7 +537,7 @@ function DiniKarier({ go }) {
 // ── DEFAULT EXPORT: persona router ───────────────────────────────
 export default function Karier({ go }) {
   const app = useApp();
-  const uid = app.activeUserId || 'budi';
+  const uid = app.activeUserId;
   if (uid === 'dini') return <DiniKarier go={go} />;
   return <BudiKarier go={go} />;
 }

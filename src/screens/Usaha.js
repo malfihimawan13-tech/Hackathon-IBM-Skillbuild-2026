@@ -419,7 +419,7 @@ function BudiUsaha({ go }) {
 // ── DEFAULT EXPORT: persona router ───────────────────────────────
 export default function Usaha({ go }) {
   const app = useApp();
-  const uid = app.activeUserId || 'budi';
+  const uid = app.activeUserId;
   if (uid === 'agus') return <AgusUsaha go={go} />;
   return <BudiUsaha go={go} />;
 }

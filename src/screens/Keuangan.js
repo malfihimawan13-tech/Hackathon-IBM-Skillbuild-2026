@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { useApp } from '../state/AppContext';
+import { findPersona } from '../state/persona';
 import { Bar, Card, Chip, EmptyState, KV, Screen, ScreenHeader, Segmented, T } from '../components/ui';
 import Icon from '../components/Icon';
 import { C } from '../theme';
@@ -71,7 +72,7 @@ function Ratio({ label, value, note, ok }) {
   );
 }
 
-function Kondisi({ a, pengeluaran }) {
+function Kondisi({ a, pengeluaran, showTotalMismatch, totalPersona, totalFlow4 }) {
   const k = a.kesehatan_keuangan;
   const dd = a.dana_darurat;
   const bars = Object.entries(k.rincian_skor || {}).map(([label, v]) => {
@@ -114,6 +115,16 @@ function Kondisi({ a, pengeluaran }) {
         <KV k="Sisa (disposable income)" v={rp(k.disposable_income)} strong />
       </Card>
       <ExpenseBreakdown pengeluaran={pengeluaran} total={k.pengeluaran_rutin} />
+      {showTotalMismatch ? (
+        <Card style={{ gap: 6, borderColor: C.warn, borderWidth: 1 }}>
+          <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
+            <Icon name="spark" size={18} color={C.warn} />
+            <T size={12} color={C.warn} style={{ flex: 1, lineHeight: 18 }}>
+              Total rincian pengeluaran ({rpShort(totalPersona)}) berbeda dengan pengeluaran rutin Langflow ({rpShort(totalFlow4)}). Perbedaan ini mungkin karena Langflow memakai asumsi berbeda atau ada komponen yang digabung. Angka dari Langflow yang dipakai untuk perhitungan.
+            </T>
+          </View>
+        </Card>
+      ) : null}
       <Card style={{ gap: 12 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <Icon name="umbrella" size={22} color={C.teal} />
@@ -205,8 +216,19 @@ export default function Keuangan({ go, params }) {
   const { analysis, keuanganDraft, userId } = useApp();
   const [tab, setTab] = useState(params?.tab || 'kondisi');
   const [showAsumsi, setShowAsumsi] = useState(false);
-  const pengeluaran = keuanganDraft?.pengeluaran || [];
   const title = KEUANGAN_TITLE[userId] || 'Keuangan';
+
+  // Pakai keuanganDraft jika sudah diisi, fallback ke data persona (input ke flow 2)
+  const persona = findPersona(userId);
+  const pengeluaran =
+    (keuanganDraft?.pengeluaran && keuanganDraft.pengeluaran.length > 0)
+      ? keuanganDraft.pengeluaran
+      : (persona?.keuangan?.pengeluaran || []);
+
+  // Cek apakah total pengeluaran persona berbeda dengan total_pengeluaran flow 4
+  const totalPersona = pengeluaran.reduce((s, e) => s + (Number(String(e.nominal || '').replace(/[^0-9]/g, '')) || 0), 0);
+  const totalFlow4 = analysis?.kesehatan_keuangan?.pengeluaran_rutin;
+  const showTotalMismatch = totalFlow4 && totalPersona > 0 && Math.abs(totalPersona - totalFlow4) > 1000;
   return (
     <Screen>
       <ScreenHeader title={title} onBack={() => go('home')} />
@@ -215,7 +237,7 @@ export default function Keuangan({ go, params }) {
       ) : (
         <>
           <Segmented options={[{ value: 'kondisi', label: 'Kondisi' }, { value: 'atur', label: 'Atur' }]} value={tab} onChange={setTab} />
-          {tab === 'kondisi' ? <Kondisi a={analysis} pengeluaran={pengeluaran} /> : <Atur a={analysis} />}
+          {tab === 'kondisi' ? <Kondisi a={analysis} pengeluaran={pengeluaran} showTotalMismatch={showTotalMismatch} totalPersona={totalPersona} totalFlow4={totalFlow4} /> : <Atur a={analysis} />}
           <Pressable accessibilityRole="button" onPress={() => setShowAsumsi(!showAsumsi)}>
             <T w={700} size={13} color={C.teal}>{showAsumsi ? 'Sembunyikan asumsi & sumber' : 'Lihat asumsi & sumber data'}</T>
           </Pressable>

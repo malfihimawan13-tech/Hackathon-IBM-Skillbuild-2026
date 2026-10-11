@@ -3,155 +3,144 @@ import { Alert, Pressable, Switch, View } from 'react-native';
 import { useApp, DEMO_USER_IDS } from '../state/AppContext';
 import { findPersona } from '../state/persona';
 import { FLOWS } from '../api/langflow';
-import { Button, Card, Chip, ErrorBox, Field, Screen, ScreenHeader, T } from '../components/ui';
+import { Button, Card, ErrorBox, Field, Screen, ScreenHeader, T } from '../components/ui';
 import Icon from '../components/Icon';
 import { C } from '../theme';
-import { rpShort } from '../utils/format';
 
 // Warna inisial avatar per persona
 const AVATAR_BG = { budi: '#E3EFEC', agus: '#FDF1DC', dini: '#E3EFEC' };
 const AVATAR_FG = { budi: '#0F4C47', agus: '#9A4610', dini: '#1F6F66' };
 
-function PersonaData({ userId, analysis, profilDraft }) {
-  const persona = findPersona(userId);
-  const d = analysis?.dashboard;
-
-  // Data diri: gabungkan dari persona (statis) dan analysis/draft (dinamis)
-  const nama = d?.nama || profilDraft?.nama || persona?.nama || userId;
-  const usia = persona?.usia || '';
-  const kota = profilDraft?.kota || persona?.kota || '';
-  const status = profilDraft?.status === 'menikah' ? 'Menikah' : profilDraft?.status === 'single' ? 'Belum menikah' : '';
-
-  // Pendidikan dari profilDraft (jika sudah isi) atau persona tidak menyimpan ini
-  const pendidikan = profilDraft?.pendidikan || '';
-  const skills = persona?.skills || [];
-
-  // Pekerjaan dari profilDraft
-  const pekerjaan = profilDraft?.pekerjaan?.[0] || null;
-
-  // Target dari analisis
-  const targets = analysis?.target || [];
-
-  // Hanya tampilkan section jika ada data yang meaningful
-  const showDiri = nama && (usia || kota || status);
-  const showPendidikan = pendidikan || skills.length > 0;
-  const showPekerjaan = pekerjaan?.nama;
-  const showTujuan = targets.length > 0;
-
-  if (!showDiri && !showPendidikan && !showPekerjaan && !showTujuan) return null;
-
+function Row({ label, value }) {
   return (
-    <>
-      {showDiri ? (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
+      <T size={13} color={C.muted}>{label}</T>
+      <T w={700} size={13} style={{ textAlign: 'right', flexShrink: 1, marginLeft: 12 }}>{value}</T>
+    </View>
+  );
+}
+
+function PersonaData({ userId }) {
+  const persona = findPersona(userId);
+  if (!persona) return null;
+  const p = persona.profil;
+
+  // ── BUDI ──────────────────────────────────────────────────────────
+  if (userId === 'budi') {
+    const pekerjaan = p?.pekerjaan?.[0];
+    const lamaKerja = pekerjaan?.lama_kerja_bulan;
+    const lamaStr = lamaKerja ? `${Math.floor(lamaKerja / 12)} tahun` : null;
+    return (
+      <>
         <Card style={{ gap: 10 }}>
           <T w={800} size={15}>Data diri</T>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <T size={13} color={C.muted}>Nama</T>
-            <T w={700} size={13}>{nama}</T>
-          </View>
-          {usia ? (
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <T size={13} color={C.muted}>Usia</T>
-              <T w={700} size={13}>{usia}</T>
-            </View>
-          ) : null}
-          {status ? (
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <T size={13} color={C.muted}>Status</T>
-              <T w={700} size={13}>{status}</T>
-            </View>
-          ) : null}
-          {kota ? (
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <T size={13} color={C.muted}>Domisili</T>
-              <T w={700} size={13}>{kota}</T>
-            </View>
-          ) : null}
+          <Row label="Nama" value={persona.nama} />
+          <Row label="Usia" value={persona.usia.replace(' th', ' tahun')} />
+          <Row label="Status" value="Belum menikah" />
+          <Row label="Domisili" value={persona.kota} />
         </Card>
-      ) : null}
+        {p?.pendidikan_terakhir ? (
+          <Card style={{ gap: 10 }}>
+            <T w={800} size={15}>Pendidikan</T>
+            <Row label="Pendidikan terakhir" value={p.pendidikan_terakhir} />
+          </Card>
+        ) : null}
+        {pekerjaan?.nama ? (
+          <Card style={{ gap: 10 }}>
+            <T w={800} size={15}>Pekerjaan</T>
+            <Row label="Posisi" value={pekerjaan.nama} />
+            {lamaStr ? <Row label="Lama bekerja" value={lamaStr} /> : null}
+          </Card>
+        ) : null}
+      </>
+    );
+  }
 
-      {showPendidikan ? (
+  // ── AGUS ──────────────────────────────────────────────────────────
+  if (userId === 'agus') {
+    const pekerjaan = p?.pekerjaan?.[0];
+    const lamaKerja = pekerjaan?.lama_kerja_bulan;
+    const lamaStr = lamaKerja ? `${Math.floor(lamaKerja / 12)} tahun` : null;
+    const statusStr = p?.status_pernikahan === 'menikah' && p?.jumlah_anak != null
+      ? `Menikah · ${p.jumlah_anak} anak`
+      : 'Menikah';
+    return (
+      <>
         <Card style={{ gap: 10 }}>
-          <T w={800} size={15}>Pendidikan & kemampuan</T>
-          {pendidikan ? (
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <T size={13} color={C.muted}>Pendidikan</T>
-              <T w={700} size={13}>{pendidikan}</T>
-            </View>
-          ) : null}
-          {skills.length > 0 ? (
-            <>
-              <T size={12} w={700}>Skill</T>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                {skills.map((s) => (
-                  <Chip key={s.nama} label={s.nama} tone="teal" />
-                ))}
-              </View>
-            </>
-          ) : null}
+          <T w={800} size={15}>Data diri</T>
+          <Row label="Nama" value={persona.nama} />
+          <Row label="Usia" value={persona.usia.replace(' th', ' tahun')} />
+          <Row label="Status" value={statusStr} />
+          <Row label="Domisili" value={persona.kota} />
         </Card>
-      ) : null}
+        {pekerjaan?.nama ? (
+          <Card style={{ gap: 10 }}>
+            <T w={800} size={15}>Pekerjaan</T>
+            <Row label="Posisi" value={pekerjaan.nama} />
+            {lamaStr ? <Row label="Lama bekerja" value={lamaStr} /> : null}
+            {p?.pasangan?.nama ? <Row label="Pasangan" value={p.pasangan.nama} /> : null}
+          </Card>
+        ) : null}
+      </>
+    );
+  }
 
-      {showPekerjaan ? (
-        <Card style={{ gap: 10 }}>
-          <T w={800} size={15}>Pekerjaan</T>
-          {pekerjaan.nama ? (
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <T size={13} color={C.muted}>Posisi</T>
-              <T w={700} size={13} style={{ textAlign: 'right', flex: 1, marginLeft: 12 }}>{pekerjaan.nama}</T>
-            </View>
-          ) : null}
-          {pekerjaan.lamaBulan ? (
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <T size={13} color={C.muted}>Lama bekerja</T>
-              <T w={700} size={13}>{Math.floor(Number(pekerjaan.lamaBulan) / 12)} tahun {Number(pekerjaan.lamaBulan) % 12 > 0 ? `${Number(pekerjaan.lamaBulan) % 12} bulan` : ''}</T>
-            </View>
-          ) : null}
-          {pekerjaan.penghasilan ? (
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-              <T size={13} color={C.muted}>Gaji</T>
-              <T w={800} size={13}>{rpShort(Number(pekerjaan.penghasilan))}/bulan</T>
-            </View>
-          ) : null}
-        </Card>
-      ) : null}
+  // ── DINI ──────────────────────────────────────────────────────────
+  if (userId === 'dini') {
+    return (
+      <Card style={{ gap: 10 }}>
+        <T w={800} size={15}>Data diri</T>
+        <Row label="Nama" value={persona.nama} />
+        <Row label="Usia" value={persona.usia.replace(' th', ' tahun')} />
+        <Row label="Domisili" value={persona.kota} />
+        {p?.pendidikan_terakhir ? <Row label="Pendidikan" value={p.pendidikan_terakhir} /> : null}
+        <Row label="Status" value="Pelajar" />
+      </Card>
+    );
+  }
 
-      {showTujuan ? (
-        <Card style={{ gap: 10 }}>
-          <T w={800} size={15}>Tujuan finansial</T>
-          {targets.map((t) => (
-            <View key={t.nama} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
-              <T size={13} color={C.muted}>{t.nama}</T>
-              <T w={700} size={13} style={{ textAlign: 'right' }}>
-                {t.harga_saat_ini ? `${rpShort(t.harga_saat_ini)}` : ''}
-                {t.tenggat ? ` · ${t.tenggat}` : ''}
-              </T>
-            </View>
-          ))}
-        </Card>
-      ) : null}
-    </>
-  );
+  return null;
 }
 
 export default function Profil({ go, openOnboarding, onLogout }) {
   const app = useApp();
-  const [form, setForm] = useState({ baseUrl: app.settings.baseUrl, apiKey: app.settings.apiKey, userId: app.settings.userId, flowIds: app.settings.flowIds || {} });
+  const [form, setForm] = useState({ baseUrl: app.settings.baseUrl, apiKey: app.settings.apiKey, flowIds: app.settings.flowIds || {} });
+  const [devOpen, setDevOpen] = useState(false);
   const [advanced, setAdvanced] = useState(false);
   const [testing, setTesting] = useState(false);
   const [msg, setMsg] = useState('');
   const [err, setErr] = useState('');
-  const d = app.analysis?.dashboard;
-
+  const [urlWarning, setUrlWarning] = useState('');
   const userId = app.userId || '';
   const isDemoUser = DEMO_USER_IDS.includes(userId);
   const persona = findPersona(userId);
-  const avatarInitial = (d?.nama || persona?.nama || userId)?.charAt(0)?.toUpperCase() || 'C';
+  const displayName = persona?.nama || userId || 'Pengguna';
+  const avatarInitial = displayName.charAt(0).toUpperCase() || 'C';
   const avatarBg = AVATAR_BG[userId] || C.gold;
   const avatarFg = AVATAR_FG[userId] || C.ink;
 
+  // Potong "/api/v1/mcp" dari alamat
+  function stripMcpPath(url) {
+    return url.replace(/\/api\/v1\/mcp.*$/i, '').replace(/\/$/, '');
+  }
+
+  const onChangeUrl = (v) => {
+    if (/\/api\/v1\/mcp/i.test(v)) {
+      setUrlWarning('Ini alamat MCP untuk IBM Bob. Untuk aplikasi, isi alamat dasar Langflow saja, misalnya http://localhost:7860');
+    } else {
+      setUrlWarning('');
+    }
+    setForm({ ...form, baseUrl: v });
+  };
+
   const save = (extra = {}) => {
-    app.setSettings((s) => ({ ...s, ...form, ...extra, userId: (form.userId || '').trim() }));
+    let baseUrl = form.baseUrl;
+    if (/\/api\/v1\/mcp/i.test(baseUrl)) {
+      baseUrl = stripMcpPath(baseUrl);
+      setForm((f) => ({ ...f, baseUrl }));
+      setUrlWarning('');
+    }
+    app.setSettings((s) => ({ ...s, ...form, ...extra, baseUrl }));
   };
 
   const test = async () => {
@@ -170,11 +159,9 @@ export default function Profil({ go, openOnboarding, onLogout }) {
   };
 
   const confirmDelete = () => {
-    // Tombol nonaktif saat Mode demo
     if (!app.live) return;
 
     if (isDemoUser) {
-      // Konfirmasi pertama: peringatan data contoh
       Alert.alert(
         'Hapus data contoh?',
         `Akun "${userId}" adalah pengguna contoh myCITA. Jika data di Langflow dihapus, seluruh skenario, analisis, dan tujuan akun ini akan hilang permanen dan perlu diisi ulang dari awal.`,
@@ -182,7 +169,6 @@ export default function Profil({ go, openOnboarding, onLogout }) {
           { text: 'Batal', style: 'cancel' },
           {
             text: 'Lanjutkan', style: 'destructive', onPress: () => {
-              // Konfirmasi kedua: pastikan pengguna sadar
               Alert.alert(
                 'Yakin menghapus data contoh?',
                 `Ketik "HAPUS" untuk mengonfirmasi. Data profil, keuangan, target, dan analisis akun ${userId} akan dihapus permanen dari Langflow.`,
@@ -221,29 +207,29 @@ export default function Profil({ go, openOnboarding, onLogout }) {
 
   return (
     <Screen>
-      <ScreenHeader title="Profil & data" onBack={() => go('home')} />
+      <ScreenHeader title="Profil" onBack={() => go('home')} />
       <Card style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
         <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: avatarBg, alignItems: 'center', justifyContent: 'center' }}>
           <T w={800} size={20} color={avatarFg}>{avatarInitial}</T>
         </View>
         <View style={{ flex: 1 }}>
-          <T w={800} size={17}>{d?.nama || persona?.nama || userId || 'Belum ada profil'}</T>
-          <T size={13} color={C.muted}>
-            {d ? `Pendapatan ${rpShort(d.pendapatan)}/bln` : (persona ? `${persona.usia} · ${persona.kota}` : 'Isi data untuk mulai')}
-          </T>
+          <T w={800} size={17}>{displayName}</T>
+          {persona ? (
+            <T size={13} color={C.muted}>{persona.usia} · {persona.kota}</T>
+          ) : null}
         </View>
       </Card>
 
-      {/* Data persona — ditampilkan bila ada */}
-      <PersonaData userId={userId} analysis={app.analysis} profilDraft={app.profilDraft} />
+      {/* Data persona — tampilan per persona */}
+      <PersonaData userId={userId} />
 
       {openOnboarding ? (
-        <Button label={d ? 'Ubah data keuangan' : 'Isi data keuangan'} icon="edit" variant="secondary" onPress={openOnboarding} />
+        <Button label={app.analysis ? 'Ubah data keuangan' : 'Isi data keuangan'} icon="edit" variant="secondary" onPress={openOnboarding} />
       ) : null}
       <Button label="Ganti pengguna" icon="back" variant="secondary" onPress={handleLogout} />
 
-      <T w={800} size={16} style={{ marginTop: 6 }}>Koneksi Langflow</T>
-      <Card style={{ gap: 12 }}>
+      {/* Saklar Mode demo — di luar kartu agar mudah diganti saat demo */}
+      <Card style={{ gap: 0 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <View style={{ flex: 1 }}>
             <T w={700} size={14}>Mode demo</T>
@@ -252,31 +238,69 @@ export default function Profil({ go, openOnboarding, onLogout }) {
           <Switch value={app.settings.demo} onValueChange={toggleDemo} trackColor={{ true: C.teal, false: C.line }} thumbColor={C.white}
             accessibilityLabel="Mode demo" />
         </View>
-        <Field label="Alamat Langflow" value={form.baseUrl} onChangeText={(v) => setForm({ ...form, baseUrl: v })} autoCapitalize="none"
-          placeholder="http://192.168.1.10:7860 atau https://xxxx.ngrok-free.app" keyboardType="url"
-          hint="Alamat IP laptop di Wi-Fi yang sama, atau alamat ngrok." />
-        <Field label="API key Langflow" value={form.apiKey} onChangeText={(v) => setForm({ ...form, apiKey: v })} secure autoCapitalize="none"
-          placeholder="sk-..." hint="Buat di Langflow: Settings → Langflow API Keys." />
-        <Field label="User ID" value={form.userId} onChangeText={(v) => setForm({ ...form, userId: v })} autoCapitalize="none"
-          placeholder="budi" hint="Samakan dengan user_id saat bertanya ke Bob." />
-        <Pressable onPress={() => setAdvanced(!advanced)} accessibilityRole="button">
-          <T w={700} size={13} color={C.teal}>{advanced ? 'Sembunyikan pengaturan lanjutan' : 'Pengaturan lanjutan: Flow ID'}</T>
-        </Pressable>
-        {advanced ? (
-          <View style={{ gap: 10 }}>
-            <T size={12} color={C.muted}>Kosongkan untuk memakai Endpoint Name bawaan. Isi Flow ID jika endpoint name tidak diatur.</T>
-            {Object.entries(FLOWS).map(([key, name]) => (
-              <Field key={key} label={name} value={form.flowIds[key] || ''} autoCapitalize="none" placeholder={name}
-                onChangeText={(v) => setForm({ ...form, flowIds: { ...form.flowIds, [key]: v.trim() } })} />
-            ))}
-          </View>
-        ) : null}
-        <View style={{ flexDirection: 'row', gap: 10 }}>
-          <Button label="Simpan" variant="secondary" onPress={() => { save(); setMsg('Pengaturan tersimpan.'); setErr(''); }} style={{ flex: 1 }} />
-          <Button label="Tes koneksi" icon="link" onPress={test} loading={testing} style={{ flex: 1 }} />
-        </View>
-        {msg ? <T size={13} color={C.teal}>{msg}</T> : null}
       </Card>
+
+      {/* Pengaturan pengembang — tertutup secara default */}
+      <Pressable
+        onPress={() => setDevOpen(!devOpen)}
+        accessibilityRole="button"
+        accessibilityLabel={devOpen ? 'Tutup pengaturan pengembang' : 'Buka pengaturan pengembang'}
+        style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 4 }}
+      >
+        <T w={800} size={15}>Pengaturan pengembang</T>
+        <Icon name={devOpen ? 'chevron-up' : 'chevron-down'} size={18} color={C.muted} />
+      </Pressable>
+
+      {devOpen ? (
+        <Card style={{ gap: 12 }}>
+          {/* Info pengguna aktif — hanya baca */}
+          <View style={{ backgroundColor: C.ground, borderRadius: 10, padding: 10 }}>
+            <T size={13} color={C.muted}>
+              Masuk sebagai: <T w={700} size={13}>{displayName}</T>
+              {userId ? <T size={13} color={C.muted}> (user_id: {userId})</T> : null}
+            </T>
+          </View>
+
+          <Field
+            label="Alamat Langflow"
+            value={form.baseUrl}
+            onChangeText={onChangeUrl}
+            autoCapitalize="none"
+            placeholder="http://192.168.1.10:7860 atau https://xxxx.ngrok-free.app"
+            keyboardType="url"
+          />
+          {urlWarning ? (
+            <View style={{ backgroundColor: C.warnSoft, borderRadius: 8, padding: 8 }}>
+              <T size={12} color={C.warn} style={{ lineHeight: 18 }}>{urlWarning}</T>
+            </View>
+          ) : null}
+          <T size={12} color={C.muted} style={{ marginTop: -6 }}>
+            Di laptop: http://localhost:7860 · Di HP: IP laptop (mis. http://192.168.1.10:7860) atau URL ngrok
+          </T>
+
+          <Field label="API key Langflow" value={form.apiKey} onChangeText={(v) => setForm({ ...form, apiKey: v })} secure autoCapitalize="none"
+            placeholder="sk-..." hint="Buat di Langflow: Settings → Langflow API Keys." />
+
+          <Pressable onPress={() => setAdvanced(!advanced)} accessibilityRole="button">
+            <T w={700} size={13} color={C.teal}>{advanced ? 'Sembunyikan pengaturan lanjutan' : 'Pengaturan lanjutan: Flow ID'}</T>
+          </Pressable>
+          {advanced ? (
+            <View style={{ gap: 10 }}>
+              <T size={12} color={C.muted}>Kosongkan untuk memakai Endpoint Name bawaan. Isi Flow ID jika endpoint name tidak diatur.</T>
+              {Object.entries(FLOWS).map(([key, name]) => (
+                <Field key={key} label={name} value={form.flowIds[key] || ''} autoCapitalize="none" placeholder={name}
+                  onChangeText={(v) => setForm({ ...form, flowIds: { ...form.flowIds, [key]: v.trim() } })} />
+              ))}
+            </View>
+          ) : null}
+
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <Button label="Simpan" variant="secondary" onPress={() => { save(); setMsg('Pengaturan tersimpan.'); setErr(''); }} style={{ flex: 1 }} />
+            <Button label="Tes koneksi" icon="link" onPress={test} loading={testing} style={{ flex: 1 }} />
+          </View>
+          {msg ? <T size={13} color={C.teal}>{msg}</T> : null}
+        </Card>
+      ) : null}
       <ErrorBox message={err} />
 
       <T w={800} size={16} style={{ marginTop: 6 }}>Privasi</T>
