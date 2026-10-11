@@ -130,17 +130,16 @@ function AgusUsaha({ go }) {
   // Ambil sisa sebelum/sesudah dan tambahan_laba_bulanan dari skenario.agus (flow 4)
   const sk = app.skenario?.agus;
 
-  // tambahan_laba_bulanan diambil dari perubahan_yang_disimulasikan flow 4
-  // Fallback ke perhitungan lokal dari persona.js hanya jika skenario belum dimuat
-  const bengkelTambahan = sk?.bengkel?.perubahan_yang_disimulasikan?.pengembangan_usaha?.[0]?.tambahan_laba_bulanan
-    ?? Math.round(bengkelBersih * 0.2);
-  const kelontongTambahan = sk?.kelontong?.perubahan_yang_disimulasikan?.pengembangan_usaha?.[0]?.tambahan_laba_bulanan
-    ?? Math.round(kelontongBersih * 0.25);
-  const gabunganTambahan = bengkelTambahan + kelontongTambahan;
+  // tambahan_laba_bulanan dari pengembangan_usaha[] hasil flow 4 — tidak ada fallback lokal
+  const bengkelTambahan = sk?.bengkel?.pengembangan_usaha?.[0]?.tambahan_laba_bulanan ?? null;
+  const kelontongTambahan = sk?.kelontong?.pengembangan_usaha?.[0]?.tambahan_laba_bulanan ?? null;
+  const gabunganTambahan = bengkelTambahan != null && kelontongTambahan != null
+    ? bengkelTambahan + kelontongTambahan
+    : null;
 
-  // sisa sebelum/sesudah dari dashboard.sisa hasil flow 4
-  const sisaDasar = sk?.dasar?.dashboard?.sisa ?? app.analysis?.dashboard?.sisa;
-  const sisaGabungan = sk?.gabungan?.dashboard?.sisa;
+  // sisa sebelum/sesudah dari dashboard.sisa hasil flow 4 — tidak ada fallback lokal
+  const sisaDasar = sk?.dasar?.dashboard?.sisa ?? null;
+  const sisaGabungan = sk?.gabungan?.dashboard?.sisa ?? null;
 
   const sisaSebelumTeks = sisaDasar != null ? rpShort(sisaDasar) : '–';
   const sisaSetelahTeks = sisaGabungan != null ? rpShort(sisaGabungan) : '–';
@@ -190,15 +189,15 @@ function AgusUsaha({ go }) {
       <Card style={{ gap: 10 }}>
         <T w={800} size={15}>Simulasi pengembangan usaha</T>
         {busy && !sk && <T size={12} color={C.muted}>Memuat simulasi dari Langflow…</T>}
-        <Row label="B · Omzet bengkel +20%" value={`+${rpShort(bengkelTambahan)}/bulan`} teal />
+        <Row label="B · Omzet bengkel +20%" value={bengkelTambahan != null ? `+${rpShort(bengkelTambahan)}/bulan` : '–'} teal />
         <T size={11} color={C.muted} style={{ lineHeight: 16 }}>
           {`Tambahan laba bersih dari kenaikan omzet 20% dengan margin tetap ${Math.round((bengkelBersih / bengkel.omzet) * 100)}%.`}
         </T>
-        <Row label="C · Omzet kelontong +25%" value={`+${rpShort(kelontongTambahan)}/bulan`} teal />
+        <Row label="C · Omzet kelontong +25%" value={kelontongTambahan != null ? `+${rpShort(kelontongTambahan)}/bulan` : '–'} teal />
         <T size={11} color={C.muted} style={{ lineHeight: 16 }}>
           {`Tambahan laba bersih dari kenaikan omzet 25% dengan margin tetap ${Math.round((kelontongBersih / kelontong.omzet) * 100)}%.`}
         </T>
-        <Row label="B + C · Gabungan" value={`+${rpShort(gabunganTambahan)}/bulan`} teal />
+        <Row label="B + C · Gabungan" value={gabunganTambahan != null ? `+${rpShort(gabunganTambahan)}/bulan` : '–'} teal />
         <T size={11} color={C.muted} style={{ lineHeight: 16 }}>
           {`Sisa per bulan naik dari ${sisaSebelumTeks} menjadi ${sisaSetelahTeks}.`}
         </T>

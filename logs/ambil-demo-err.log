@@ -1,0 +1,18 @@
+(node:30156) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///D:/Alfi/Hackaton/myCITA/update/myCITA_Pengumpulan_Hackathon/myCITA_Hackathon/mobile-app/src/api/langflow.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\D:\Alfi\Hackaton\myCITA\update\myCITA_Pengumpulan_Hackathon\myCITA_Hackathon\mobile-app\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+  ⚠ flow7 budi: "Aku mau pindah ke data science, tapi takut gaji aw…" GAGAL: Langflow mengembalikan error 500. {"detail":"{\"message\":\"Error running graph: Error building Component Agent: \\n\\nError calling model 'gemini-3.8-flash' (Too Many Requests): 429 Too Many Requests. {'message': '{\\\\n  \\\"error\\
+  ⚠   Pertanyaan dilewati (tidak disimpan): "Aku mau pindah ke data science, tapi takut gaji awal turun. "
+  ⚠ flow7 budi: "Kalau aku juga buka usaha kopi sampingan di akhir …" GAGAL: Langflow mengembalikan error 500. {"detail":"{\"message\":\"Error running graph: Error building Component Agent: \\n\\nError calling model 'gemini-3.8-flash' (Too Many Requests): 429 Too Many Requests. {'message': '{\\\\n  \\\"error\\
+  ⚠   Pertanyaan dilewati (tidak disimpan): "Kalau aku juga buka usaha kopi sampingan di akhir pekan deng"
+  ⚠ flow7 budi: "Portofolio apa dulu?…" GAGAL: Langflow mengembalikan error 500. {"detail":"{\"message\":\"Error running graph: Error building Component Agent: \\n\\nError calling model 'gemini-3.8-flash' (Too Many Requests): 429 Too Many Requests. {'message': '{\\\\n  \\\"error\\
+  ⚠   Pertanyaan dilewati (tidak disimpan): "Portofolio apa dulu?"
+  ⚠ flow7 agus: "Kami mau punya rumah Rp600 juta dalam 7 tahun. Ben…" GAGAL: Langflow mengembalikan error 500. {"detail":"{\"message\":\"Error running graph: Error building Component Agent: \\n\\nError calling model 'gemini-3.8-flash' (Too Many Requests): 429 Too Many Requests. {'message': '{\\\\n  \\\"error\\
+  ⚠   Pertanyaan dilewati (tidak disimpan): "Kami mau punya rumah Rp600 juta dalam 7 tahun. Bengkel dan k"
+  ⚠ flow7 agus: "Kalau omzet bengkel naik 30%?…" GAGAL: Langflow mengembalikan error 500. {"detail":"{\"message\":\"Error running graph: Error building Component Agent: \\n\\nError calling model 'gemini-3.8-flash' (Too Many Requests): 429 Too Many Requests. {'message': '{\\\\n  \\\"error\\
+  ⚠   Pertanyaan dilewati (tidak disimpan): "Kalau omzet bengkel naik 30%?"
+  ⚠ flow7 dini: "Aku sebentar lagi lulus SMA. Suka teknologi tapi b…" GAGAL: Langflow mengembalikan error 500. {"detail":"{\"message\":\"Error running graph: Error building Component Agent: \\n\\nError calling model 'gemini-3.8-flash' (Too Many Requests): 429 Too Many Requests. {'message': '{\\\\n  \\\"error\\
+  ⚠   Pertanyaan dilewati (tidak disimpan): "Aku sebentar lagi lulus SMA. Suka teknologi tapi bingung pil"
+  ⚠ flow7 dini: "Berapa biaya kuliah di ITB atau Telkom University,…" GAGAL: Langflow mengembalikan error 500. {"detail":"{\"message\":\"Error running graph: Error building Component Agent: \\n\\nError calling model 'gemini-3.8-flash' (Too Many Requests): 429 Too Many Requests. {'message': '{\\\\n  \\\"error\\
+  ⚠   Pertanyaan dilewati (tidak disimpan): "Berapa biaya kuliah di ITB atau Telkom University, dan ada b"

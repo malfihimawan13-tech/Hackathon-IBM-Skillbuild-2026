@@ -264,8 +264,14 @@ export function AppProvider({ children }) {
   const simulateRoadmap = useCallback(async (simulasi, demoKey) => {
     if (!live) {
       const d = demoForUser(activeUserId);
-      const tabel = demoKey?.[0] === 'usaha' ? d.usaha_simulasi : d.karier_simulasi;
-      const p = tabel?.[demoKey?.[1]];
+      // Semua skenario Budi tersimpan di karier_simulasi (usaha_simulasi sudah dihapus).
+      // Untuk usaha kopi_keliling, id = 'kopi_keliling' → kunci di karier_simulasi = 'kopi_pesimis'.
+      const tabel = d.karier_simulasi;
+      let p = tabel?.[demoKey?.[1]];
+      // Fallback: usaha kopi_keliling → kopi_pesimis
+      if (!p && demoKey?.[0] === 'usaha' && demoKey?.[1] === 'kopi_keliling') {
+        p = tabel?.kopi_pesimis;
+      }
       if (!p) throw new Error('Simulasi demo untuk pilihan ini belum tersedia.');
       return { perbandingan: p };
     }
@@ -406,31 +412,31 @@ export function AppProvider({ children }) {
   // Muat semua skenario Agus: dasar; bengkel saja; kelontong saja; gabungan;
   // lalu gabungan + budget rumah tepat 7 tahun dari harga_maksimal_terjangkau_sesuai_tenggat.
   const loadSkenarioAgus = useCallback(async () => {
-    const personaAgus = findPersona('agus');
-    const usahaList = personaAgus?.usaha || [];
-    const bengkelData = usahaList[0];
-    const kelontongData = usahaList[1];
-    const bengkelTambahan = bengkelData ? Math.round((bengkelData.omzet - bengkelData.biaya) * 0.2) : 2200000;
-    const kelontongTambahan = kelontongData ? Math.round((kelontongData.omzet - kelontongData.biaya) * 0.25) : 750000;
-
     if (!live) {
       const d = demoForUser('agus');
+      // DEMO.agus.skenario berisi objek analisis penuh sesuai live path.
+      // Jika belum ada (file demo lama), fallback ke analisis saja.
+      const sk = d.skenario || {};
       setSkenario((prev) => ({
         ...prev,
         agus: {
-          dasar: d.analisis || null,
-          bengkel: null,
-          kelontong: null,
-          gabungan: null,
-          rumah_realistis: null,
-          tambahan: { bengkel: bengkelTambahan, kelontong: kelontongTambahan },
-          harga_realistis: null,
+          dasar: sk.dasar || d.analisis || null,
+          bengkel: sk.bengkel || null,
+          kelontong: sk.kelontong || null,
+          gabungan: sk.gabungan || null,
+          rumah_realistis: sk.rumah_realistis || null,
+          harga_realistis: sk.harga_realistis || null,
+          tenggat_tahun: sk.tenggat_tahun || 7,
         },
       }));
       return;
     }
 
     requireUser();
+    const personaAgus = findPersona('agus');
+    const usahaList = personaAgus?.usaha || [];
+    const bengkelData = usahaList[0];
+    const kelontongData = usahaList[1];
     const run = async (simulasi) => {
       const payload = { user_id: userId };
       if (simulasi) payload.simulasi = simulasi;
@@ -478,7 +484,6 @@ export function AppProvider({ children }) {
         kelontong: rKelontong,
         gabungan: rGabungan,
         rumah_realistis: rRumahRealistis,
-        tambahan: { bengkel: bengkelTambahan, kelontong: kelontongTambahan },
         harga_realistis: hargaRealistis,
         tenggat_tahun: Math.round(tenggat / 12),
       },

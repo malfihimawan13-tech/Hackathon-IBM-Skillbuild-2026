@@ -1,0 +1,57 @@
+
+── BUDI ──
+  ✓ flow4 dasar budi
+  ✓ flow5 karier budi
+  ✓ flow4 simulasi Data Scientist
+  ✓ flow4 simulasi Data Analyst
+  ✓ flow6 usaha kopi budi
+  ✓ flow4 simulasi kopi pesimis
+  ✓ flow4 simulasi DS+kopi pesimis
+  ✓ flow4 simulasi DS+kopi moderat
+
+── AGUS ──
+  ✓ flow4 dasar agus
+  ✓ flow4 simulasi bengkel +20%
+  ✓ flow4 simulasi kelontong +25%
+  ✓ flow4 simulasi bengkel+kelontong gabungan
+  ✓ agus harga_maksimal_terjangkau_sesuai_tenggat: 515000000
+  ✓ flow4 simulasi gabungan + rumah Rp515000000
+
+── DINI ──
+  ✓ flow4 dasar dini
+  ✓ flow5 karier dini (pelajar)
+
+── FLOW 7 — rekam jawaban coach (budi) ──
+
+── FLOW 7 — rekam jawaban coach (agus) ──
+
+── FLOW 7 — rekam jawaban coach (dini) ──
+
+── Menulis src/api/demoData.js ──
+
+══════════════════════════════════════════
+LAPORAN ANGKA KUNCI
+══════════════════════════════════════════
+Skor kesehatan:
+  Budi : 100
+  Agus : 84
+  Dini : 59
+
+Waktu tercapai Mobil Budi:
+  Baseline (tanpa perubahan) : 22 tahun 1 bulan
+  Kopi pesimis saja          : 6 tahun 11 bulan
+  Data Scientist saja        : 5 tahun 6 bulan
+  Data Analyst saja          : 6 tahun
+  DS + kopi (pesimis)        : 4 tahun 1 bulan
+  DS + kopi (moderat)        : 3 tahun 4 bulan
+
+Waktu tercapai Rumah Agus:
+  Baseline (tanpa perubahan)   : 22 tahun 2 bulan
+  Bengkel +20%                 : 10 tahun
+  Kelontong +25%               : 14 tahun 8 bulan
+  Bengkel + Kelontong          : 8 tahun 8 bulan
+  Gabungan + rumah realistis   : 7 tahun
+══════════════════════════════════════════
+
+  ✓ src/api/demoData.js berhasil ditulis ulang
+Selesai.

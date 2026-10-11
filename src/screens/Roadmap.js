@@ -366,12 +366,9 @@ function AgusRoadmap({ analysis }) {
   const sisa = dashboard.sisa;
   const tabungan = analysis?.dana_darurat?.dana_likuid_saat_ini;
 
-  // tambahan_laba_bulanan dari perubahan_yang_disimulasikan flow 4 (echo dari payload yang dikirim)
-  // Gunakan sk.tambahan sebagai fallback sementara skenario belum dimuat
-  const bengkelTambahan = sk?.bengkel?.perubahan_yang_disimulasikan?.pengembangan_usaha?.[0]?.tambahan_laba_bulanan
-    ?? sk?.tambahan?.bengkel ?? null;
-  const kelontongTambahan = sk?.kelontong?.perubahan_yang_disimulasikan?.pengembangan_usaha?.[0]?.tambahan_laba_bulanan
-    ?? sk?.tambahan?.kelontong ?? null;
+  // tambahan_laba_bulanan dari pengembangan_usaha[] hasil flow 4 — tidak ada fallback lokal
+  const bengkelTambahan = sk?.bengkel?.pengembangan_usaha?.[0]?.tambahan_laba_bulanan ?? null;
+  const kelontongTambahan = sk?.kelontong?.pengembangan_usaha?.[0]?.tambahan_laba_bulanan ?? null;
 
   // Bulan tercapai dari tiap skenario (opsi_a_menabung.waktu_tercapai_bulan)
   const getRumahBulan = (r) => (r?.target || []).find((t) => t.nama === 'Rumah')?.opsi_a_menabung?.waktu_tercapai_bulan ?? null;
