@@ -112,21 +112,44 @@ function UsahaCard({ usaha, pctPendapatan, accentColor }) {
 
 // ── AGUS USAHA SCREEN ─────────────────────────────────────────────
 function AgusUsaha({ go }) {
-  const persona = findPersona('agus');
+  const app = useApp();
+  const persona = findPersona(app.activeUserId);
   const bengkel = persona?.usaha?.[0];
   const kelontong = persona?.usaha?.[1];
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
+
   if (!bengkel || !kelontong) return null;
 
-  const totalPendapatan = (bengkel.omzet - bengkel.biaya) + (kelontong.omzet - kelontong.biaya);
   const bengkelBersih = bengkel.omzet - bengkel.biaya;
   const kelontongBersih = kelontong.omzet - kelontong.biaya;
-  const pctBengkel = Math.round((bengkelBersih / totalPendapatan) * 100);
+  const totalBersih = bengkelBersih + kelontongBersih;
+  const pctBengkel = Math.round((bengkelBersih / totalBersih) * 100);
   const pctKelontong = 100 - pctBengkel;
 
-  // Simulasi pengembangan (calculated from persona data, same as design)
-  const bengkelPlus20Laba = Math.round(bengkel.omzet * 0.2 * (bengkelBersih / bengkel.omzet));
-  const kelontongPlus25Laba = Math.round(kelontong.omzet * 0.25 * (kelontongBersih / kelontong.omzet));
-  const gabunganLaba = bengkelPlus20Laba + kelontongPlus25Laba;
+  // tambahan_laba_bulanan: laba_bersih × kenaikan_persen (dari persona, dikonfirmasi flow 4)
+  const bengkelTambahan = Math.round(bengkelBersih * 0.2);   // 11jt × 20% = 2.2jt
+  const kelontongTambahan = Math.round(kelontongBersih * 0.25); // 3jt × 25% = 750rb
+  const gabunganTambahan = bengkelTambahan + kelontongTambahan;
+
+  // Ambil sisa sebelum/sesudah dari skenario.agus (dimuat loadSkenarioAgus)
+  // Setiap skenario menyimpan hasil analisis lengkap (bukan wrapper sebelum/sesudah)
+  const sk = app.skenario?.agus;
+  const sisaDasar = sk?.dasar?.dashboard?.sisa ?? app.analysis?.dashboard?.sisa;
+  const sisaGabungan = sk?.gabungan?.dashboard?.sisa;
+
+  const sisaSebelumTeks = sisaDasar != null ? rpShort(sisaDasar) : '–';
+  const sisaSetelahTeks = sisaGabungan != null ? rpShort(sisaGabungan) : '–';
+
+  const muatSkenario = async () => {
+    setBusy(true); setErr('');
+    try { await app.loadSkenarioAgus(); } catch (e) { setErr(e.message); }
+    setBusy(false);
+  };
+
+  useEffect(() => {
+    if (!sk && app.loadSkenarioAgus) { muatSkenario(); }
+  }, []); // eslint-disable-line
 
   const LANGKAH = [
     'Bengkel: paket servis berkala dan pengingat pelanggan tetap',
@@ -164,18 +187,23 @@ function AgusUsaha({ go }) {
       {/* Simulasi pengembangan */}
       <Card style={{ gap: 10 }}>
         <T w={800} size={15}>Simulasi pengembangan usaha</T>
-        <Row label="B · Omzet bengkel +20%" value={`+${rpShort(bengkelPlus20Laba)}/bulan`} teal />
+        {busy && !sk && <T size={12} color={C.muted}>Memuat simulasi dari Langflow…</T>}
+        <Row label="B · Omzet bengkel +20%" value={`+${rpShort(bengkelTambahan)}/bulan`} teal />
         <T size={11} color={C.muted} style={{ lineHeight: 16 }}>
-          {`Tambahan omzet ${rpShort(bengkel.omzet * 0.2)} dengan margin bersih tetap ${Math.round((bengkelBersih / bengkel.omzet) * 100)}% (asumsi).`}
+          {`Tambahan laba bersih dari kenaikan omzet 20% dengan margin tetap ${Math.round((bengkelBersih / bengkel.omzet) * 100)}%.`}
         </T>
-        <Row label="C · Omzet kelontong +25%" value={`+${rpShort(kelontongPlus25Laba)}/bulan`} teal />
+        <Row label="C · Omzet kelontong +25%" value={`+${rpShort(kelontongTambahan)}/bulan`} teal />
         <T size={11} color={C.muted} style={{ lineHeight: 16 }}>
-          {`Tambahan omzet ${rpShort(kelontong.omzet * 0.25)} dengan margin bersih tetap ${Math.round((kelontongBersih / kelontong.omzet) * 100)}% (asumsi).`}
+          {`Tambahan laba bersih dari kenaikan omzet 25% dengan margin tetap ${Math.round((kelontongBersih / kelontong.omzet) * 100)}%.`}
         </T>
-        <Row label="B + C · Gabungan" value={`+${rpShort(gabunganLaba)}/bulan`} teal />
+        <Row label="B + C · Gabungan" value={`+${rpShort(gabunganTambahan)}/bulan`} teal />
         <T size={11} color={C.muted} style={{ lineHeight: 16 }}>
-          {`Sisa per bulan naik dari ${rpShort(totalPendapatan - 8500000)} menjadi ${rpShort(totalPendapatan - 8500000 + gabunganLaba)}.`}
+          {`Sisa per bulan naik dari ${sisaSebelumTeks} menjadi ${sisaSetelahTeks}.`}
         </T>
+        {err ? <T size={12} color={C.warn}>{err}</T> : null}
+        {!sk && !busy && (
+          <Button label="Muat ulang simulasi" icon="refresh" onPress={muatSkenario} />
+        )}
       </Card>
 
       {/* Langkah awal */}

@@ -367,6 +367,86 @@ export function AppProvider({ children }) {
     }));
   }, [live, settings, userId, karier, usaha, requireUser]);
 
+  // Muat semua skenario Agus: dasar; bengkel saja; kelontong saja; gabungan;
+  // lalu gabungan + budget rumah tepat 7 tahun dari harga_maksimal_terjangkau_sesuai_tenggat.
+  const loadSkenarioAgus = useCallback(async () => {
+    const personaAgus = findPersona('agus');
+    const usahaList = personaAgus?.usaha || [];
+    const bengkelData = usahaList[0];
+    const kelontongData = usahaList[1];
+    const bengkelTambahan = bengkelData ? Math.round((bengkelData.omzet - bengkelData.biaya) * 0.2) : 2200000;
+    const kelontongTambahan = kelontongData ? Math.round((kelontongData.omzet - kelontongData.biaya) * 0.25) : 750000;
+
+    if (!live) {
+      const d = demoForUser('agus');
+      setSkenario((prev) => ({
+        ...prev,
+        agus: {
+          dasar: d.analisis || null,
+          bengkel: null,
+          kelontong: null,
+          gabungan: null,
+          rumah_realistis: null,
+          tambahan: { bengkel: bengkelTambahan, kelontong: kelontongTambahan },
+          harga_realistis: null,
+        },
+      }));
+      return;
+    }
+
+    requireUser();
+    const run = async (simulasi) => {
+      const payload = { user_id: userId };
+      if (simulasi) payload.simulasi = simulasi;
+      const r = await callTool(settings, 'analisis', payload);
+      if (r.status === 'data_belum_lengkap') throw new Error(r.pesan);
+      return r;
+    };
+
+    const simBengkel = { pengembangan_usaha: [{ nama: bengkelData?.nama || 'Bengkel Agus', tambahan_laba_bulanan: bengkelTambahan }] };
+    const simKelontong = { pengembangan_usaha: [{ nama: kelontongData?.nama || 'Kelontong istri', tambahan_laba_bulanan: kelontongTambahan }] };
+    const simGabungan = {
+      pengembangan_usaha: [
+        { nama: bengkelData?.nama || 'Bengkel Agus', tambahan_laba_bulanan: bengkelTambahan },
+        { nama: kelontongData?.nama || 'Kelontong istri', tambahan_laba_bulanan: kelontongTambahan },
+      ],
+    };
+
+    const [rDasar, rBengkel, rKelontong, rGabungan] = await Promise.all([
+      run(null),
+      run(simBengkel),
+      run(simKelontong),
+      run(simGabungan),
+    ]);
+
+    // Dari hasil gabungan, ambil harga realistis agar target tepat 7 tahun
+    const rumahTargetGab = (rGabungan?.target || []).find((t) => t.nama === 'Rumah');
+    const hargaRealistis = rumahTargetGab?.alternatif?.harga_maksimal_terjangkau_sesuai_tenggat ?? null;
+    const tenggat = rumahTargetGab?.tenggat_bulan ?? 84;
+
+    let rRumahRealistis = null;
+    if (hargaRealistis) {
+      rRumahRealistis = await run({
+        ...simGabungan,
+        target: { nama: 'Rumah', kategori: 'rumah', harga: hargaRealistis, target_tahun: Math.round(tenggat / 12) },
+      });
+    }
+
+    setSkenario((prev) => ({
+      ...prev,
+      agus: {
+        dasar: rDasar,
+        bengkel: rBengkel,
+        kelontong: rKelontong,
+        gabungan: rGabungan,
+        rumah_realistis: rRumahRealistis,
+        tambahan: { bengkel: bengkelTambahan, kelontong: kelontongTambahan },
+        harga_realistis: hargaRealistis,
+        tenggat_tahun: Math.round(tenggat / 12),
+      },
+    }));
+  }, [live, settings, userId, requireUser]);
+
   // Simpan pengeluaran yang diubah: kirim data lengkap ke flow 2, lalu tandai skenario perlu dimuat ulang.
   // PENTING: flow 2 INSERT OR REPLACE, harus selalu sertakan hutang dan tabungan.
   const savePengeluaran = useCallback(async (uid, pengeluaranItems) => {
@@ -487,10 +567,10 @@ export function AppProvider({ children }) {
   const value = useMemo(() => ({
     ready, settings, setSettings, live, userId, activeUserId,
     profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chat, setChat: setChatCtx, karier, usaha, skenario,
-    exploreKarier, exploreUsaha, exploreUsahaKopi, simulateRoadmap, loadSkenarioBudi, refreshAnalysis, submitOnboarding, searchPrice, addTarget, removeTarget, whatIf, askCoach,
+    exploreKarier, exploreUsaha, exploreUsahaKopi, simulateRoadmap, loadSkenarioBudi, loadSkenarioAgus, refreshAnalysis, submitOnboarding, searchPrice, addTarget, removeTarget, whatIf, askCoach,
     testConnection, deleteAllData, loginAs, logout, savePengeluaran,
   }), [ready, settings, live, userId, activeUserId, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chat, karier, usaha, skenario,
-    exploreKarier, exploreUsaha, exploreUsahaKopi, simulateRoadmap, loadSkenarioBudi, refreshAnalysis, submitOnboarding, searchPrice, addTarget, removeTarget, whatIf, askCoach, testConnection, deleteAllData, loginAs, logout, savePengeluaran, setChatCtx]);
+    exploreKarier, exploreUsaha, exploreUsahaKopi, simulateRoadmap, loadSkenarioBudi, loadSkenarioAgus, refreshAnalysis, submitOnboarding, searchPrice, addTarget, removeTarget, whatIf, askCoach, testConnection, deleteAllData, loginAs, logout, savePengeluaran, setChatCtx]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

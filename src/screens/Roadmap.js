@@ -346,72 +346,115 @@ function BudiRoadmap({ analysis }) {
 
 // ── AGUS ROADMAP ──────────────────────────────────────────────────
 function AgusRoadmap({ analysis }) {
-  const dashboard = analysis?.dashboard || {};
-  const pendapatan = dashboard.pendapatan || 14000000;
-  const sisa = dashboard.sisa || 5500000;
-  const tabungan = analysis?.dana_darurat?.dana_likuid_saat_ini || 45000000;
+  const app = useApp();
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState('');
 
-  // Income projection: baseline 14M → bengkel+kelontong → 17M after month 12
+  const sk = app.skenario?.agus;
+
+  const muatSkenario = async () => {
+    setBusy(true); setErr('');
+    try { await app.loadSkenarioAgus(); } catch (e) { setErr(e.message); }
+    setBusy(false);
+  };
+
+  useEffect(() => {
+    if (!sk && app.loadSkenarioAgus) { muatSkenario(); }
+  }, []); // eslint-disable-line
+
+  const dashboard = analysis?.dashboard || {};
+  const pendapatan = dashboard.pendapatan;
+  const sisa = dashboard.sisa;
+  const tabungan = analysis?.dana_darurat?.dana_likuid_saat_ini;
+
+  // Tambahan dari skenario atau kalkulasi persona
+  const bengkelTambahan = sk?.tambahan?.bengkel ?? 2200000;
+  const kelontongTambahan = sk?.tambahan?.kelontong ?? 750000;
+
+  // Bulan tercapai dari tiap skenario (opsi_a_menabung.waktu_tercapai_bulan)
+  const getRumahBulan = (r) => (r?.target || []).find((t) => t.nama === 'Rumah')?.opsi_a_menabung?.waktu_tercapai_bulan ?? null;
+  const bulanDasar = getRumahBulan(sk?.dasar) ?? getRumahBulan(analysis);
+  const bulanBengkel = getRumahBulan(sk?.bengkel);
+  const bulanKelontong = getRumahBulan(sk?.kelontong);
+  const bulanGabungan = getRumahBulan(sk?.gabungan);
+  const bulanRumahRealistis = getRumahBulan(sk?.rumah_realistis);
+  const hargaRealistis = sk?.harga_realistis;
+  const tenggat = (sk?.dasar?.target || analysis?.target || []).find((t) => t.nama === 'Rumah')?.tenggat_bulan ?? 84;
+  const tenggat_tahun = sk?.tenggat_tahun ?? Math.round(tenggat / 12);
+
+  // maxDisplay untuk grafik batang: dasar atau 300
+  const maxDisplay = bulanDasar != null ? Math.max(bulanDasar, 300) : 300;
+  const deadlinePct = tenggat / maxDisplay;
+
+  // Proyeksi pendapatan keluarga: mulai dari dashboard.pendapatan, naik setelah bengkel & kelontong berkembang
+  const baseIncome = pendapatan;
+  const afterBengkel = baseIncome != null ? baseIncome + bengkelTambahan : null;
+  const afterGabungan = baseIncome != null ? baseIncome + bengkelTambahan + kelontongTambahan : null;
   const maxBln = 84;
-  const yMax = 20;
-  const incomePoints = [
-    { x: 0, y: 14 / yMax },
-    { x: 12 / maxBln, y: 14 / yMax },
-    { x: 13 / maxBln, y: 16.95 / yMax },
-    { x: 1, y: 16.95 / yMax },
-  ];
-  const yLabels = [
-    { yn: 0, text: '0' }, { yn: 5 / yMax, text: '5' }, { yn: 10 / yMax, text: '10' },
-    { yn: 15 / yMax, text: '15' }, { yn: 1, text: '20' },
-  ];
+  const yMax = afterGabungan != null ? Math.ceil(afterGabungan / 1000000 / 5) * 5 + 5 : 25;
+  const incomePoints = baseIncome != null ? [
+    { x: 0, y: baseIncome / 1000000 / yMax },
+    { x: 12 / maxBln, y: baseIncome / 1000000 / yMax },
+    { x: 13 / maxBln, y: afterBengkel / 1000000 / yMax },
+    { x: 1, y: afterGabungan / 1000000 / yMax },
+  ] : [];
+  const yStep = Math.ceil(yMax / 4);
+  const yLabels = Array.from({ length: 5 }, (_, i) => ({ yn: (i * yStep) / yMax, text: String(i * yStep) }));
   const xLabels = [
     { xn: 0, text: 'Kini' }, { xn: 24 / maxBln, text: '2 th' }, { xn: 48 / maxBln, text: '4 th' },
     { xn: 72 / maxBln, text: '6 th' },
   ];
 
-  // Timeline: Agus B+C scenario, 7 year house goal (84 bulan)
+  // Timeline: Agus B+C scenario, 7 year house goal
   const TL = 84;
   const segments = [
-    { left: 0, width: (12 / TL) * 100, color: C.soft, border: '#B8C9C5' },   // dev bengkel
-    { left: 0, width: (12 / TL) * 100, color: C.soft, border: '#B8C9C5' },   // dev kelontong (row 2, overlapping represented)
-    { left: (13 / TL) * 100, width: (71 / TL) * 100, color: '#9FE1CB', border: '#0F6E56' }, // earning bengkel
+    { left: 0, width: (12 / TL) * 100, color: C.soft, border: '#B8C9C5' },
+    { left: (13 / TL) * 100, width: (71 / TL) * 100, color: '#9FE1CB', border: '#0F6E56' },
   ];
   const milestones = [
-    { pct: (8 / TL) * 100 },   // dana darurat terpenuhi
-    { pct: (17 / TL) * 100 },  // KPR DP siap
-    { pct: 100 },               // target rumah
+    { pct: (8 / TL) * 100 },
+    { pct: (17 / TL) * 100 },
+    { pct: 100 },
   ];
   const tlLabels = [
     { pct: 0, text: 'Kini' }, { pct: (28 / TL) * 100, text: '2 th' }, { pct: (57 / TL) * 100, text: '4 th' },
-    { pct: (85 / TL) * 100, text: '6 th' }, { pct: 100, text: '7 th' },
+    { pct: (85 / TL) * 100, text: '6 th' }, { pct: 100, text: `${tenggat_tahun} th` },
   ];
 
-  // Scenarios
-  const deadline = 84;
-  const maxDisplay = 266;
+  const bengkelLabel = `+${rpShort(bengkelTambahan)}`;
+  const kelontongLabel = `+${rpShort(kelontongTambahan)}`;
+  const hargaLabel = hargaRealistis != null ? `Budget ${rpShort(hargaRealistis)}` : 'realistis';
+
   const agusScenarios = [
-    { label: 'A · Kondisi sekarang', sub: 'Rp600 jt', bulan: 266, isPast: true },
-    { label: 'B · Omzet bengkel +20%', sub: '+Rp2,2 jt', bulan: 120, isPast: true },
-    { label: 'C · Kelontong +25%', sub: '+Rp750 rb', bulan: 176, isPast: true },
-    { label: 'B + C · Keduanya berkembang', sub: 'gabungan', bulan: 104, isPast: true },
-    { label: 'Budget Rp515 jt + B + C', sub: 'realistis', bulan: 84, isPast: false },
-  ];
+    bulanDasar != null && { label: 'A · Kondisi sekarang', sub: 'Rp600 jt', bulan: bulanDasar, isPast: true },
+    bulanBengkel != null && { label: 'B · Omzet bengkel +20%', sub: bengkelLabel, bulan: bulanBengkel, isPast: true },
+    bulanKelontong != null && { label: 'C · Kelontong +25%', sub: kelontongLabel, bulan: bulanKelontong, isPast: true },
+    bulanGabungan != null && { label: 'B + C · Keduanya berkembang', sub: 'gabungan', bulan: bulanGabungan, isPast: true },
+    bulanRumahRealistis != null && { label: `${hargaLabel} + B + C`, sub: `tepat ${tenggat_tahun} tahun`, bulan: bulanRumahRealistis, isPast: false },
+  ].filter(Boolean);
 
   const phases = [
-    { range: 'Bln 0–12', active: false, title: 'Kembangkan bengkel', sub: 'Target omzet +20%', badge: '+Rp2,2 jt' },
-    { range: 'Bln 0–12', active: false, title: 'Kembangkan kelontong', sub: 'Target omzet +25%', badge: '+Rp750 rb' },
+    { range: 'Bln 0–12', active: false, title: 'Kembangkan bengkel', sub: 'Target omzet +20%', badge: bengkelLabel },
+    { range: 'Bln 0–12', active: false, title: 'Kembangkan kelontong', sub: 'Target omzet +25%', badge: kelontongLabel },
     { range: 'Bln 12–…', active: true, title: 'Stabil & tabung untuk DP', sub: 'Penuhi dana darurat, lalu DP KPR' },
-    { range: 'Bln ~17', active: true, title: 'Siap DP KPR', sub: 'Rumah ±Rp515 jt, DP 20%' },
+    { range: `Bln ~17`, active: true, title: 'Siap DP KPR', sub: hargaRealistis ? `Rumah ±${rpShort(hargaRealistis)}, DP 20%` : 'Rumah realistis, DP 20%' },
   ];
 
   return (
     <>
       <T size={13} color={C.muted}>Usaha keluarga menuju rumah sendiri.</T>
       <StatRow items={[
-        { label: 'Pendapatan', value: rpShort(pendapatan) },
-        { label: 'Sisa/bln', value: rpShort(sisa) },
-        { label: 'Tabungan', value: rpShort(tabungan) },
+        { label: 'Pendapatan', value: pendapatan != null ? rpShort(pendapatan) : '–' },
+        { label: 'Sisa/bln', value: sisa != null ? rpShort(sisa) : '–' },
+        { label: 'Tabungan', value: tabungan != null ? rpShort(tabungan) : '–' },
       ]} />
+      {busy && !sk && <T size={12} color={C.muted} style={{ textAlign: 'center' }}>Memuat skenario dari Langflow…</T>}
+      {err ? <T size={12} color={C.warn}>{err}</T> : null}
+      {!sk && !busy && (
+        <Pressable onPress={muatSkenario} accessibilityRole="button" accessibilityLabel="Muat ulang skenario" style={{ alignSelf: 'center', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 99, backgroundColor: C.soft }}>
+          <T size={13} w={700} color={C.teal}>Muat ulang skenario</T>
+        </Pressable>
+      )}
       <Card>
         <T size={15} w={800} style={{ marginBottom: 12 }}>Garis waktu (skenario B + C)</T>
         <TimelineBar segments={segments} milestones={milestones} deadline={100} labels={tlLabels} />
@@ -420,19 +463,30 @@ function AgusRoadmap({ analysis }) {
         <T size={15} w={800} style={{ marginBottom: 12 }}>Fase</T>
         <PhaseList phases={phases} />
       </Card>
-      <Card>
-        <T size={15} w={800} style={{ marginBottom: 12 }}>Proyeksi pendapatan keluarga</T>
-        <IncomeChart points={incomePoints} baseline={14 / yMax} xLabels={xLabels} yLabels={yLabels} milestoneX={1} />
-      </Card>
-      <Card>
-        <T size={15} w={800} style={{ marginBottom: 12 }}>Rumah tercapai (target 7 tahun)</T>
-        <View style={{ gap: 10 }}>
-          {agusScenarios.map((s, i) => (
-            <ScenarioBar key={i} label={s.label} sublabel={s.sub} bulan={s.bulan} maxBulan={maxDisplay} deadlinePct={deadline / maxDisplay} isPast={s.isPast} />
-          ))}
-        </View>
-      </Card>
-      <TipBox>Rekomendasi: kembangkan bengkel dan kelontong bersama, tetapkan budget rumah ±Rp515 jt agar tercapai 7 tahun, dan KPR 15 tahun (cicilan ±Rp4,95 jt) tetap aman.</TipBox>
+      {incomePoints.length > 0 && (
+        <Card>
+          <T size={15} w={800} style={{ marginBottom: 4 }}>Proyeksi pendapatan keluarga</T>
+          <T size={11} color={C.muted} style={{ marginBottom: 10 }}>
+            {`Baseline ${rpShort(baseIncome)} → +${rpShort(bengkelTambahan)} (bengkel) → +${rpShort(kelontongTambahan)} (kelontong). Ilustrasi: kenaikan diasumsikan di bulan ke-12.`}
+          </T>
+          <IncomeChart points={incomePoints} baseline={baseIncome / 1000000 / yMax} xLabels={xLabels} yLabels={yLabels} milestoneX={13 / maxBln} />
+        </Card>
+      )}
+      {agusScenarios.length > 0 && (
+        <Card>
+          <T size={15} w={800} style={{ marginBottom: 12 }}>Rumah tercapai (target {tenggat_tahun} tahun)</T>
+          <View style={{ gap: 10 }}>
+            {agusScenarios.map((s, i) => (
+              <ScenarioBar key={i} label={s.label} sublabel={s.sub} bulan={s.bulan} maxBulan={maxDisplay} deadlinePct={deadlinePct} isPast={s.isPast} />
+            ))}
+          </View>
+        </Card>
+      )}
+      <TipBox>
+        {hargaRealistis
+          ? `Rekomendasi: kembangkan bengkel dan kelontong bersama, tetapkan budget rumah ±${rpShort(hargaRealistis)} agar tercapai ${tenggat_tahun} tahun.`
+          : 'Kembangkan bengkel dan kelontong bersama untuk mempercepat target rumah.'}
+      </TipBox>
     </>
   );
 }
