@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { View } from 'react-native';
 import { useApp } from '../state/AppContext';
 import { Button, Card, Screen, ScreenHeader, T } from '../components/ui';
@@ -6,61 +6,80 @@ import Icon from '../components/Icon';
 import { C } from '../theme';
 import { rpShort } from '../utils/format';
 
-// ── Jurusan data (from flow 5 output / fallback static) ───────────
-const JURUSAN = [
-  {
-    nama: 'S1 Sistem Informasi',
-    skor: 90,
-    highlight: true,
-    karier: 'Karier: Data Analyst, UI/UX, Software Engineer',
-  },
-  {
-    nama: 'S1 Teknik Informatika / Ilmu Komputer',
-    skor: 89,
-    highlight: true,
-    karier: 'Karier: Software Engineer, Data Scientist',
-  },
-  {
-    nama: 'S1 Sains Data / Statistika',
-    skor: 66,
-    highlight: false,
-    karier: 'Karier: Data Scientist, Data Analyst',
-  },
-  {
-    nama: 'S1 Desain Komunikasi Visual',
-    skor: 60,
-    highlight: false,
-    karier: 'Karier: UI/UX Designer, Creative Director',
-  },
-];
-
-// Kampus data matches design section dini/Pendidikan
-const KAMPUS_NASIONAL = [
-  { qs: '189', nama: 'Universitas Indonesia', jurusan: 'Ilmu Komputer · Sistem Informasi', kota: 'Depok', tipe: 'PTN', biaya: 'UKT Rp0,5–17,5 jt' },
-  { qs: '224', nama: 'Universitas Gadjah Mada', jurusan: 'Ilmu Komputer · Teknologi Informasi', kota: 'Yogyakarta', tipe: 'PTN', biaya: 'UKT Rp0–13,3 jt' },
-  { qs: '255', nama: 'Institut Teknologi Bandung', jurusan: 'Teknik Informatika · Sistem Informasi', kota: 'Bandung', tipe: 'PTN', biaya: 'UKT Rp0–12,5 jt' },
-  { qs: '515', nama: 'Universitas Padjadjaran', jurusan: 'Sistem Informasi · Ilmu Komputer', kota: 'Bandung', tipe: 'PTN', biaya: 'UKT Rp0–8 jt' },
-  { qs: '801–1000', nama: 'ITS Surabaya', jurusan: 'Informatika · Sistem Informasi', kota: 'Surabaya', tipe: 'PTN', biaya: 'UKT Rp0–10 jt' },
-  { qs: '1001–1200', nama: 'Telkom University', jurusan: 'Teknik Informatika · Sistem Informasi', kota: 'Bandung', tipe: 'PTS', biaya: 'SPP Rp15–23 jt/semester' },
-  { qs: '1201–1400', nama: 'Universitas Pendidikan Indonesia', jurusan: 'Ilmu Komputer · Pendidikan Teknik', kota: 'Bandung', tipe: 'PTN', biaya: 'UKT Rp0–7 jt' },
-];
-
-const KOTA_USER = 'Bandung';
-const KAMPUS_LOKAL = KAMPUS_NASIONAL.filter((k) => k.kota === KOTA_USER);
-
 const JALUR_MASUK = [
   'SNBP: berdasarkan nilai rapor dan prestasi (lomba teknologi-mu bisa membantu)',
   'SNBT: berdasarkan skor UTBK, daftar sekitar Maret–April',
   'Seleksi mandiri kampus, biasanya ada uang pangkal (IPI)',
 ];
 
+// Konversi qs_2026 ke angka untuk pengurutan; non-numerik = besar
+function qsToNum(qs) {
+  if (!qs || qs === '-') return 9999;
+  const m = String(qs).match(/^(\d+)/);
+  return m ? parseInt(m[1], 10) : 9999;
+}
+
+// Buat label biaya dari kampus object
+function biayaLabel(k) {
+  if (k.biaya_min == null && k.biaya_max == null) return null;
+  const satuan = k.satuan || '';
+  if (k.biaya_min != null && k.biaya_max != null) {
+    return `${k.satuan?.includes('BPP') ? 'BPP' : k.satuan?.includes('UKT') ? 'UKT' : ''} ${rpShort(k.biaya_min)}–${rpShort(k.biaya_max)}/${satuan.includes('semester') ? 'smt' : 'bln'}`.trim();
+  }
+  if (k.biaya_max != null) return `s/d ${rpShort(k.biaya_max)}/${satuan.includes('semester') ? 'smt' : 'bln'}`;
+  return null;
+}
+
 export default function Pendidikan({ go }) {
   const app = useApp();
+  const karier = app.karier;
   const analisis = app.analysis;
-  const tabungan = analisis?.dana_darurat?.dana_likuid_saat_ini || 2500000;
-  const menabung = 150000;
+
+  // Jurusan dari rekomendasi_jurusan flow 5 (2 teratas)
+  const jurusanList = useMemo(() => {
+    const raw = karier?.hasil?.rekomendasi_jurusan || [];
+    return raw.slice(0, 2);
+  }, [karier]);
+
+  // Kampus: gabungkan kampus dari dua jurusan teratas, deduplicate by nama, filter biaya null, sort QS
+  const kampusNasional = useMemo(() => {
+    const seen = new Set();
+    const all = [];
+    for (const j of jurusanList) {
+      for (const k of (j.kampus || [])) {
+        if (!seen.has(k.nama)) {
+          // Sembunyikan jika biaya_min AND biaya_max keduanya null
+          if (k.biaya_min == null && k.biaya_max == null) continue;
+          seen.add(k.nama);
+          all.push(k);
+        }
+      }
+    }
+    return all.sort((a, b) => qsToNum(a.qs_2026) - qsToNum(b.qs_2026));
+  }, [jurusanList]);
+
+  // Kampus di kota pengguna (Bandung): dari kampus nasional + tambah yang biaya null tapi di_kota_pengguna
+  const kotaUser = 'Bandung';
+  const kampusLokal = useMemo(() => {
+    // Ambil semua kampus di kota pengguna (termasuk yang biaya null) dari semua jurusan
+    const seen = new Set();
+    const all = [];
+    for (const j of jurusanList) {
+      for (const k of (j.kampus || [])) {
+        if (k.di_kota_pengguna && !seen.has(k.nama)) {
+          seen.add(k.nama);
+          all.push(k);
+        }
+      }
+    }
+    return all.sort((a, b) => qsToNum(a.qs_2026) - qsToNum(b.qs_2026));
+  }, [jurusanList]);
+
+  // Data keuangan dari flow 4
+  const tabungan = analisis?.dana_darurat?.dana_likuid_saat_ini ?? null;
+  const menabung = analisis?.alokasi_bulan_ini?.kapasitas_menabung ?? null;
   const bulanLagi = 6;
-  const proyeksi = tabungan + menabung * bulanLagi;
+  const proyeksi = (tabungan != null && menabung != null) ? tabungan + menabung * bulanLagi : null;
 
   return (
     <Screen>
@@ -69,58 +88,74 @@ export default function Pendidikan({ go }) {
       {/* Jurusan yang cocok */}
       <Card style={{ gap: 12 }}>
         <T w={800} size={15}>Jurusan yang cocok</T>
-        {JURUSAN.map((j) => (
-          <View key={j.nama} style={{ gap: 4 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
-              <T size={13} w={j.highlight ? 800 : 600} style={{ flex: 1 }}>{j.nama}</T>
-              <T size={14} w={800} color={j.highlight ? C.teal : C.muted}>{j.skor}</T>
+        {jurusanList.length === 0 && (
+          <T size={13} color={C.muted}>Data jurusan belum tersedia. Muat ulang layar Karier.</T>
+        )}
+        {jurusanList.map((j, idx) => {
+          const highlight = idx < 2;
+          return (
+            <View key={j.id || j.jurusan} style={{ gap: 4 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
+                <T size={13} w={highlight ? 800 : 600} style={{ flex: 1 }}>{j.jurusan}</T>
+                <T size={14} w={800} color={highlight ? C.teal : C.muted}>{j.skor_kecocokan}</T>
+              </View>
+              <View style={{ height: 8, borderRadius: 999, backgroundColor: C.soft, overflow: 'hidden' }}>
+                <View style={{ width: `${j.skor_kecocokan}%`, height: 8, borderRadius: 999, backgroundColor: highlight ? C.teal : '#B8C9C5' }} />
+              </View>
+              {j.karier_terkait?.length > 0 && (
+                <T size={11} color={C.muted} style={{ lineHeight: 16 }}>Karier: {j.karier_terkait.join(', ')}</T>
+              )}
             </View>
-            <View style={{ height: 8, borderRadius: 999, backgroundColor: C.soft, overflow: 'hidden' }}>
-              <View style={{ width: `${j.skor}%`, height: 8, borderRadius: 999, backgroundColor: j.highlight ? C.teal : '#B8C9C5' }} />
-            </View>
-            <T size={11} color={C.muted} style={{ lineHeight: 16 }}>{j.karier}</T>
-          </View>
-        ))}
+          );
+        })}
       </Card>
 
       {/* Kampus nasional */}
-      <Card style={{ gap: 0 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-          <T w={800} size={15} style={{ flex: 1 }}>Kampus untuk SI & Informatika</T>
-          <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: C.soft }}>
-            <T size={12} w={700} color={C.teal}>{KAMPUS_NASIONAL.length} kampus</T>
-          </View>
-        </View>
-        {KAMPUS_NASIONAL.map((k, i) => (
-          <View key={k.nama} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start', paddingVertical: 10, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: C.line }}>
-            <View style={{ width: 42, flexShrink: 0, alignItems: 'center' }}>
-              <T size={10} color={C.muted}>QS</T>
-              <T size={12} w={800} color={C.teal}>{k.qs}</T>
-            </View>
-            <View style={{ flex: 1, gap: 2 }}>
-              <T size={13} w={700}>{k.nama}</T>
-              <T size={11} color={C.muted}>{k.jurusan}</T>
-              <T size={11} color={C.muted}>{k.kota} · {k.tipe} · {k.biaya}</T>
+      {kampusNasional.length > 0 && (
+        <Card style={{ gap: 0 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <T w={800} size={15} style={{ flex: 1 }}>Kampus untuk SI & Informatika</T>
+            <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: C.soft }}>
+              <T size={12} w={700} color={C.teal}>{kampusNasional.length} kampus</T>
             </View>
           </View>
-        ))}
-      </Card>
+          {kampusNasional.map((k, i) => {
+            const bLabel = biayaLabel(k);
+            return (
+              <View key={k.nama} style={{ flexDirection: 'row', gap: 10, alignItems: 'flex-start', paddingVertical: 10, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: C.line }}>
+                <View style={{ width: 42, flexShrink: 0, alignItems: 'center' }}>
+                  <T size={10} color={C.muted}>QS</T>
+                  <T size={12} w={800} color={C.teal}>{k.qs_2026 === '-' ? '–' : k.qs_2026}</T>
+                </View>
+                <View style={{ flex: 1, gap: 2 }}>
+                  <T size={13} w={700}>{k.nama}</T>
+                  <T size={11} color={C.muted}>{(k.prodi || []).join(' · ')}</T>
+                  <T size={11} color={C.muted}>{k.kota} · {k.jenis}{bLabel ? ` · ${bLabel}` : ''}</T>
+                </View>
+              </View>
+            );
+          })}
+        </Card>
+      )}
 
       {/* Kampus di kota pengguna */}
-      {KAMPUS_LOKAL.length > 0 && (
+      {kampusLokal.length > 0 && (
         <Card style={{ gap: 10 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <T w={800} size={15} style={{ flex: 1 }}>Kampus di {KOTA_USER}</T>
+            <T w={800} size={15} style={{ flex: 1 }}>Kampus di {kotaUser}</T>
             <View style={{ paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999, backgroundColor: C.goldSoft }}>
               <T size={12} w={700} color={C.warn}>Dekat rumah</T>
             </View>
           </View>
-          {KAMPUS_LOKAL.map((k) => (
-            <View key={k.nama} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
-              <T size={13} color={C.muted} style={{ flex: 1 }}>{k.nama}</T>
-              <T size={13} w={700} style={{ textAlign: 'right' }}>QS {k.qs} · {k.tipe}</T>
-            </View>
-          ))}
+          {kampusLokal.map((k) => {
+            const bLabel = biayaLabel(k);
+            return (
+              <View key={k.nama} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
+                <T size={13} color={C.muted} style={{ flex: 1 }}>{k.nama}</T>
+                <T size={13} w={700} style={{ textAlign: 'right' }}>QS {k.qs_2026 === '-' ? '–' : k.qs_2026} · {k.jenis}{bLabel ? ` · ${bLabel}` : ''}</T>
+              </View>
+            );
+          })}
           <T size={11} color={C.muted} style={{ lineHeight: 16 }}>Kuliah dekat rumah bisa menghemat biaya kos dan hidup.</T>
         </Card>
       )}
@@ -146,15 +181,15 @@ export default function Pendidikan({ go }) {
         </View>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
           <T size={13} color={C.muted}>Tabungan sekarang</T>
-          <T size={13} w={700} style={{ textAlign: 'right' }}>{rpShort(tabungan)}</T>
+          <T size={13} w={700} style={{ textAlign: 'right' }}>{tabungan != null ? rpShort(tabungan) : '–'}</T>
         </View>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
           <T size={13} color={C.muted}>Menabung rutin</T>
-          <T size={13} w={700} style={{ textAlign: 'right' }}>{rpShort(menabung)}/bulan</T>
+          <T size={13} w={700} style={{ textAlign: 'right' }}>{menabung != null ? `${rpShort(menabung)}/bulan` : '–'}</T>
         </View>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
           <T size={13} color={C.muted}>Perkiraan saat masuk kuliah ({bulanLagi} bulan lagi)</T>
-          <T size={13} w={800} color={C.teal} style={{ textAlign: 'right' }}>±{rpShort(proyeksi)}</T>
+          <T size={13} w={800} color={C.teal} style={{ textAlign: 'right' }}>{proyeksi != null ? `±${rpShort(proyeksi)}` : '–'}</T>
         </View>
         <T size={11} color={C.muted} style={{ lineHeight: 16 }}>UKT PTN ditentukan dari kemampuan ekonomi keluarga, mulai Rp0–0,5 jt untuk golongan terendah. Cek juga KIP Kuliah dan beasiswa kampus.</T>
       </Card>

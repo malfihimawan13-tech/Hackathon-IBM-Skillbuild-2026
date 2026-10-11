@@ -492,97 +492,137 @@ function AgusRoadmap({ analysis }) {
 }
 
 // ── DINI ROADMAP ──────────────────────────────────────────────────
-function DiniRoadmap({ karier }) {
+function DiniRoadmap({ karier, analysis }) {
   const reko = karier?.hasil?.rekomendasi || [];
 
-  // Dini: SMA → kuliah → kerja projection
-  // bulan 0: uang saku 1.5M, bulan 54: mulai kerja ~7M entry DA, bulan 78: mid ~10M
-  const maxBln = 110;
-  const yMax = 30;
+  // Pilih rekomendasi teratas untuk fase & proyeksi pendapatan
+  const topReko = reko[0];
+  const roadmapKarier = topReko?.roadmap_karier || [];
+  const tahapanPendapatan = topReko?.jalur_pendapatan?.tahapan || [];
+
+  // Susun fase dari roadmap_karier flow 5; tambah badge gaji dari pendapatan
+  const phases = roadmapKarier.map((fase) => {
+    const hasPendapatan = fase.pendapatan != null;
+    const badge = hasPendapatan
+      ? `${rpShort(fase.pendapatan.min)}–${rpShort(fase.pendapatan.max)}`
+      : undefined;
+    return {
+      range: `Bln ${fase.mulai_bulan}${fase.selesai_bulan != null ? `–${fase.selesai_bulan}` : '+'}`,
+      active: hasPendapatan,
+      title: fase.fase,
+      sub: (fase.fokus || []).join('; '),
+      badge,
+    };
+  });
+
+  // Proyeksi pendapatan dari jalur_pendapatan.tahapan flow 5
+  // Gunakan nilai_tengah entry sebagai titik awal kerja (bulan ke-54 default)
+  const entryTahap = tahapanPendapatan.find((t) => t.tahap === 'entry');
+  const midTahap = tahapanPendapatan.find((t) => t.tahap === 'mid');
+  const seniorTahap = tahapanPendapatan.find((t) => t.tahap === 'senior');
+  const entryVal = entryTahap ? entryTahap.nilai_tengah / 1e6 : 7;
+  const midVal = midTahap ? midTahap.nilai_tengah / 1e6 : 10;
+  const seniorVal = seniorTahap ? seniorTahap.nilai_tengah / 1e6 : 21.5;
+  // mulai kerja dari roadmap_karier: fase pertama yang punya pendapatan
+  const faseKerja = roadmapKarier.find((f) => f.pendapatan != null);
+  const mulaiKerjaBln = faseKerja?.mulai_bulan ?? 54;
+  const faseMidBln = roadmapKarier.find((f, i) => i > roadmapKarier.indexOf(faseKerja) && f.pendapatan != null)?.mulai_bulan ?? (mulaiKerjaBln + 24);
+
+  const maxBln = 130;
+  const yMax = Math.ceil(Math.max(seniorVal, 30) / 10) * 10;
   const incomePoints = [
     { x: 0, y: 1.5 / yMax },
-    { x: 54 / maxBln, y: 1.5 / yMax },
-    { x: 55 / maxBln, y: 7 / yMax },
-    { x: 78 / maxBln, y: 7 / yMax },
-    { x: 79 / maxBln, y: 10 / yMax },
-    { x: 1, y: 28 / yMax },
+    { x: mulaiKerjaBln / maxBln, y: 1.5 / yMax },
+    { x: (mulaiKerjaBln + 1) / maxBln, y: entryVal / yMax },
+    { x: faseMidBln / maxBln, y: entryVal / yMax },
+    { x: (faseMidBln + 1) / maxBln, y: midVal / yMax },
+    { x: 1, y: seniorVal / yMax },
   ];
   const yLabels = [
-    { yn: 0, text: '0' }, { yn: 8 / yMax, text: '8' }, { yn: 15 / yMax, text: '15' },
-    { yn: 22 / yMax, text: '22' }, { yn: 1, text: '30' },
+    { yn: 0, text: '0' },
+    { yn: (yMax * 0.25) / yMax, text: String(Math.round(yMax * 0.25)) },
+    { yn: (yMax * 0.5) / yMax, text: String(Math.round(yMax * 0.5)) },
+    { yn: (yMax * 0.75) / yMax, text: String(Math.round(yMax * 0.75)) },
+    { yn: 1, text: String(yMax) },
   ];
   const xLabels = [
     { xn: 0, text: 'Kini' }, { xn: 24 / maxBln, text: '2 th' }, { xn: 48 / maxBln, text: '4 th' },
-    { xn: 72 / maxBln, text: '6 th' }, { xn: 96 / maxBln, text: '8 th' }, { xn: 1, text: '10 th' },
+    { xn: 72 / maxBln, text: '6 th' }, { xn: 96 / maxBln, text: '8 th' }, { xn: 1, text: '11 th' },
   ];
 
-  // Timeline segments: SMA-persiapan (grey), kuliah (grey), magang (grey), kerja (green)
-  const TL = 110;
+  // Timeline segments: persiapan (grey), kuliah (grey), magang (grey), kerja (green)
+  const TL = maxBln;
   const segments = [
-    { left: 0, width: (4 / TL) * 100, color: C.soft, border: '#B8C9C5' },        // persiapan SNBT
-    { left: (4.5 / TL) * 100, width: (18 / TL) * 100, color: C.soft, border: '#B8C9C5' }, // kuliah 1-2
-    { left: (23 / TL) * 100, width: (18 / TL) * 100, color: C.soft, border: '#B8C9C5' }, // kuliah 3-4 + magang
-    { left: (41 / TL) * 100, width: (18 / TL) * 100, color: '#9FE1CB', border: '#0F6E56' }, // entry
-    { left: (59 / TL) * 100, width: (41 / TL) * 100, color: '#9FE1CB', border: '#0F6E56' }, // mid+senior
+    { left: 0, width: (4 / TL) * 100, color: C.soft, border: '#B8C9C5' },
+    { left: (4.5 / TL) * 100, width: (18 / TL) * 100, color: C.soft, border: '#B8C9C5' },
+    { left: (23 / TL) * 100, width: (18 / TL) * 100, color: C.soft, border: '#B8C9C5' },
+    { left: (mulaiKerjaBln / TL) * 100, width: ((faseMidBln - mulaiKerjaBln) / TL) * 100, color: '#9FE1CB', border: '#0F6E56' },
+    { left: (faseMidBln / TL) * 100, width: ((TL - faseMidBln) / TL) * 100, color: '#9FE1CB', border: '#0F6E56' },
   ];
   const milestones = [
-    { pct: (4.5 / TL) * 100 },    // masuk kuliah
-    { pct: (40.9 / TL) * 100 },   // mulai kerja
+    { pct: (4.5 / TL) * 100 },
+    { pct: (mulaiKerjaBln / TL) * 100 },
   ];
   const tlLabels = [
     { pct: 0, text: 'Kini' }, { pct: (18 / TL) * 100, text: '2 th' }, { pct: (36 / TL) * 100, text: '4 th' },
     { pct: (54 / TL) * 100, text: '6 th' }, { pct: (72 / TL) * 100, text: '8 th' },
   ];
 
-  const phases = [
-    { range: 'Bln 0–6', active: false, title: 'Persiapan masuk kuliah', sub: 'SNBP/SNBT: S1 Sistem Informasi atau Teknik Informatika' },
-    { range: 'Bln 6–30', active: false, title: 'Kuliah tahun 1–2', sub: 'SQL, pemrograman, statistik, lomba' },
-    { range: 'Bln 30–54', active: false, title: 'Kuliah tahun 3–4', sub: 'Magang + 2 portofolio' },
-    { range: 'Bln 54+', active: true, title: 'Mulai bekerja', sub: 'Entry level di bidang data/tech', badge: 'Rp5–9 jt' },
-    { range: 'Bln 78+', active: true, title: 'Naik level (mid)', sub: 'Spesialisasi & sertifikasi', badge: 'Rp10–14 jt' },
-  ];
+  // Pilihan karier: dari rekomendasi[] flow 5
+  const karierOptions = reko.slice(0, 3).map((r) => {
+    const entry = r.jalur_pendapatan?.tahapan?.find((t) => t.tahap === 'entry');
+    const gaji = entry ? `${rpShort(entry.rentang_min)}–${rpShort(entry.rentang_max)}` : null;
+    return { nama: r.profesi, skor: r.skor_kecocokan, gaji };
+  });
 
-  // Career options from flow 5 or fallback
-  const karierOptions = reko.length >= 3 ? [
-    { nama: reko[0]?.profesi || 'Data Analyst', skor: reko[0]?.skor_kecocokan || 75, gaji: 'Rp5–9 jt' },
-    { nama: reko[1]?.profesi || 'Software Engineer', skor: reko[1]?.skor_kecocokan || 73, gaji: 'Rp6–10 jt' },
-    { nama: reko[2]?.profesi || 'UI/UX Designer', skor: reko[2]?.skor_kecocokan || 73, gaji: 'Rp5–8 jt' },
-  ] : [
-    { nama: 'Data Analyst', skor: 75, gaji: 'Rp5–9 jt' },
-    { nama: 'Software Engineer', skor: 73, gaji: 'Rp6–10 jt' },
-    { nama: 'UI/UX Designer', skor: 73, gaji: 'Rp5–8 jt' },
-  ];
+  // Data keuangan dari flow 4
+  const pendapatan = analysis?.dashboard?.pendapatan ?? null;
+  const menabung = analysis?.alokasi_bulan_ini?.kapasitas_menabung ?? null;
+  const tabungan = analysis?.dana_darurat?.dana_likuid_saat_ini ?? null;
+
+  const topJurusan = (karier?.hasil?.rekomendasi_jurusan || []).slice(0, 2).map((j) => j.jurusan).join(' / ');
 
   return (
     <>
       <T size={13} color={C.muted}>Dari SMA ke kampus terbaik, lalu karier di bidang data dan teknologi.</T>
       <StatRow items={[
-        { label: 'Uang saku', value: 'Rp1,5 jt' },
-        { label: 'Menabung/bln', value: 'Rp150 rb' },
-        { label: 'Tabungan', value: 'Rp2,5 jt' },
+        { label: 'Uang saku', value: pendapatan != null ? rpShort(pendapatan) : '–' },
+        { label: 'Menabung/bln', value: menabung != null ? rpShort(menabung) : '–' },
+        { label: 'Tabungan', value: tabungan != null ? rpShort(tabungan) : '–' },
       ]} />
       <Card>
         <T size={15} w={800} style={{ marginBottom: 12 }}>Garis waktu</T>
         <TimelineBar segments={segments} milestones={milestones} deadline={null} labels={tlLabels} />
       </Card>
-      <Card>
-        <T size={15} w={800} style={{ marginBottom: 12 }}>Fase</T>
-        <PhaseList phases={phases} />
-      </Card>
+      {phases.length > 0 && (
+        <Card>
+          <T size={15} w={800} style={{ marginBottom: 12 }}>Fase ({topReko?.profesi || 'karier teratas'})</T>
+          <PhaseList phases={phases} />
+        </Card>
+      )}
       <Card>
         <T size={15} w={800} style={{ marginBottom: 12 }}>Proyeksi pendapatan</T>
-        <IncomeChart points={incomePoints} baseline={null} xLabels={xLabels} yLabels={yLabels} milestoneX={54 / maxBln} />
+        <IncomeChart points={incomePoints} baseline={null} xLabels={xLabels} yLabels={yLabels} milestoneX={mulaiKerjaBln / maxBln} />
       </Card>
-      <Card>
-        <T size={15} w={800} style={{ marginBottom: 12 }}>Pilihan karier (mulai kerja bulan ke-54)</T>
-        {karierOptions.map((k, i) => (
-          <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10, marginTop: i > 0 ? 6 : 0 }}>
-            <T size={13} color={C.muted}>{k.nama}</T>
-            <T size={13} w={i === 0 ? 800 : 700} color={i === 0 ? C.teal : C.ink} style={{ textAlign: 'right' }}>{k.skor} · awal {k.gaji}</T>
-          </View>
-        ))}
-      </Card>
-      <TipBox>Rekomendasi: targetkan S1 Sistem Informasi atau Teknik Informatika di ITB, UI, UGM, atau Unpad lewat SNBP/SNBT, dengan Telkom University sebagai cadangan di Bandung.</TipBox>
+      {karierOptions.length > 0 && (
+        <Card>
+          <T size={15} w={800} style={{ marginBottom: 12 }}>Pilihan karier (mulai kerja bulan ke-{mulaiKerjaBln})</T>
+          {karierOptions.map((k, i) => (
+            <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10, marginTop: i > 0 ? 6 : 0 }}>
+              <T size={13} color={C.muted}>{k.nama}</T>
+              <T size={13} w={i === 0 ? 800 : 700} color={i === 0 ? C.teal : C.ink} style={{ textAlign: 'right' }}>
+                {k.skor}{k.gaji ? ` · awal ${k.gaji}` : ''}
+              </T>
+            </View>
+          ))}
+        </Card>
+      )}
+      {karierOptions.length === 0 && (
+        <Card>
+          <T size={13} color={C.muted}>Data karier belum tersedia. Buka tab Karier untuk memuat data dari Langflow.</T>
+        </Card>
+      )}
+      <TipBox>Rekomendasi: targetkan {topJurusan || 'S1 Sistem Informasi atau Teknik Informatika'} di ITB, UI, UGM, atau Unpad lewat SNBP/SNBT, dengan Telkom University sebagai cadangan di Bandung.</TipBox>
     </>
   );
 }
@@ -610,7 +650,7 @@ export default function Roadmap({ go }) {
       <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 8, paddingBottom: 100, gap: 14 }} showsVerticalScrollIndicator={false}>
         {uid === 'budi' && <BudiRoadmap analysis={app.analysis} />}
         {uid === 'agus' && <AgusRoadmap analysis={app.analysis} />}
-        {uid === 'dini' && <DiniRoadmap karier={app.karier} />}
+        {uid === 'dini' && <DiniRoadmap karier={app.karier} analysis={app.analysis} />}
         {!['budi', 'agus', 'dini'].includes(uid) && (
           <View style={{ padding: 24, alignItems: 'center', gap: 12 }}>
             <Icon name="route" size={32} color={C.muted} />

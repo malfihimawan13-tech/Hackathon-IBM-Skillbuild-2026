@@ -4,7 +4,7 @@ import Svg, { Circle, Line, Path, Polyline, Text as SvgText } from 'react-native
 import { useApp } from '../state/AppContext';
 import { DEMO } from '../api/demoData';
 import { findPersona } from '../state/persona';
-// Note: DEMO is used as fallback in DiniKarier
+// Note: DEMO is used in BudiKarier (karier_simulasi)
 import { Bar, Button, Card, Chip, EmptyState, ErrorBox, KV, Screen, ScreenHeader, T } from '../components/ui';
 import { ImpactCard } from '../components/forms';
 import Icon from '../components/Icon';
@@ -406,20 +406,8 @@ function BudiKarier({ go }) {
 function DiniKarier({ go }) {
   const app = useApp();
   const hasil = app.karier?.hasil;
-  const rekomendasi = hasil?.rekomendasi || [];
+  const reko = hasil?.rekomendasi || [];
   const [sel, setSel] = useState(0);
-
-  // Fallback data from DEMO.dini.karier
-  const demoKarier = (DEMO.dini || {}).karier;
-  const reko = rekomendasi.length ? rekomendasi : (demoKarier?.rekomendasi || []);
-
-  // compare table data
-  const compareData = [
-    { profesi: 'Data Analyst', skor: 75, gaji: 'awal Rp5–9 jt', gap: 'SQL, visualisasi data, statistik' },
-    { profesi: 'Software Engineer', skor: 73, gaji: 'awal Rp6–10 jt', gap: 'Git, basis data, dasar web/API' },
-    { profesi: 'UI/UX Designer', skor: 73, gaji: 'awal Rp5–8 jt', gap: 'Figma, prototyping, riset pengguna' },
-    { profesi: 'Data Scientist', skor: 70, gaji: 'awal Rp7–11 jt', gap: 'statistik, machine learning, SQL' },
-  ];
 
   const selectedReko = reko[sel];
   const tahap = selectedReko?.jalur_pendapatan?.tahapan || [];
@@ -486,18 +474,27 @@ function DiniKarier({ go }) {
       )}
 
       {/* Bandingkan pilihan */}
-      <Card style={{ gap: 10 }}>
-        <T w={800} size={15}>Bandingkan pilihan</T>
-        {compareData.map((c) => (
-          <View key={c.profesi} style={{ gap: 2 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
-              <T size={13} color={C.muted}>{c.profesi}</T>
-              <T size={13} w={700} color={C.teal} style={{ textAlign: 'right' }}>{c.skor} · {c.gaji}</T>
-            </View>
-            <T size={11} color={C.muted} style={{ lineHeight: 16 }}>Perlu: {c.gap}</T>
-          </View>
-        ))}
-      </Card>
+      {reko.length > 0 && (
+        <Card style={{ gap: 10 }}>
+          <T w={800} size={15}>Bandingkan pilihan</T>
+          {reko.slice(0, 4).map((c) => {
+            const entry = c.jalur_pendapatan?.tahapan?.find((t) => t.tahap === 'entry');
+            const gajiLabel = entry ? `awal ${rpShort(entry.rentang_min)}–${rpShort(entry.rentang_max)}` : null;
+            const gap = [...(c.skill_gap_wajib || [])].slice(0, 3).join(', ');
+            return (
+              <View key={c.id || c.profesi} style={{ gap: 2 }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
+                  <T size={13} color={C.muted}>{c.profesi}</T>
+                  <T size={13} w={700} color={C.teal} style={{ textAlign: 'right' }}>
+                    {c.skor_kecocokan}{gajiLabel ? ` · ${gajiLabel}` : ''}
+                  </T>
+                </View>
+                {gap ? <T size={11} color={C.muted} style={{ lineHeight: 16 }}>Perlu: {gap}</T> : null}
+              </View>
+            );
+          })}
+        </Card>
+      )}
 
       {/* Jenjang & pendapatan selected */}
       {tahap.length > 0 && (
