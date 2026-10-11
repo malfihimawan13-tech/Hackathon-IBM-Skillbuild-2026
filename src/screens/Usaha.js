@@ -127,14 +127,18 @@ function AgusUsaha({ go }) {
   const pctBengkel = Math.round((bengkelBersih / totalBersih) * 100);
   const pctKelontong = 100 - pctBengkel;
 
-  // tambahan_laba_bulanan: laba_bersih × kenaikan_persen (dari persona, dikonfirmasi flow 4)
-  const bengkelTambahan = Math.round(bengkelBersih * 0.2);   // 11jt × 20% = 2.2jt
-  const kelontongTambahan = Math.round(kelontongBersih * 0.25); // 3jt × 25% = 750rb
+  // Ambil sisa sebelum/sesudah dan tambahan_laba_bulanan dari skenario.agus (flow 4)
+  const sk = app.skenario?.agus;
+
+  // tambahan_laba_bulanan diambil dari perubahan_yang_disimulasikan flow 4
+  // Fallback ke perhitungan lokal dari persona.js hanya jika skenario belum dimuat
+  const bengkelTambahan = sk?.bengkel?.perubahan_yang_disimulasikan?.pengembangan_usaha?.[0]?.tambahan_laba_bulanan
+    ?? Math.round(bengkelBersih * 0.2);
+  const kelontongTambahan = sk?.kelontong?.perubahan_yang_disimulasikan?.pengembangan_usaha?.[0]?.tambahan_laba_bulanan
+    ?? Math.round(kelontongBersih * 0.25);
   const gabunganTambahan = bengkelTambahan + kelontongTambahan;
 
-  // Ambil sisa sebelum/sesudah dari skenario.agus (dimuat loadSkenarioAgus)
-  // Setiap skenario menyimpan hasil analisis lengkap (bukan wrapper sebelum/sesudah)
-  const sk = app.skenario?.agus;
+  // sisa sebelum/sesudah dari dashboard.sisa hasil flow 4
   const sisaDasar = sk?.dasar?.dashboard?.sisa ?? app.analysis?.dashboard?.sisa;
   const sisaGabungan = sk?.gabungan?.dashboard?.sisa;
 

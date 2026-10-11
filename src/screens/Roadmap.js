@@ -366,9 +366,12 @@ function AgusRoadmap({ analysis }) {
   const sisa = dashboard.sisa;
   const tabungan = analysis?.dana_darurat?.dana_likuid_saat_ini;
 
-  // Tambahan dari skenario atau kalkulasi persona
-  const bengkelTambahan = sk?.tambahan?.bengkel ?? 2200000;
-  const kelontongTambahan = sk?.tambahan?.kelontong ?? 750000;
+  // tambahan_laba_bulanan dari perubahan_yang_disimulasikan flow 4 (echo dari payload yang dikirim)
+  // Gunakan sk.tambahan sebagai fallback sementara skenario belum dimuat
+  const bengkelTambahan = sk?.bengkel?.perubahan_yang_disimulasikan?.pengembangan_usaha?.[0]?.tambahan_laba_bulanan
+    ?? sk?.tambahan?.bengkel ?? null;
+  const kelontongTambahan = sk?.kelontong?.perubahan_yang_disimulasikan?.pengembangan_usaha?.[0]?.tambahan_laba_bulanan
+    ?? sk?.tambahan?.kelontong ?? null;
 
   // Bulan tercapai dari tiap skenario (opsi_a_menabung.waktu_tercapai_bulan)
   const getRumahBulan = (r) => (r?.target || []).find((t) => t.nama === 'Rumah')?.opsi_a_menabung?.waktu_tercapai_bulan ?? null;
@@ -387,14 +390,15 @@ function AgusRoadmap({ analysis }) {
 
   // Proyeksi pendapatan keluarga: mulai dari dashboard.pendapatan, naik setelah bengkel & kelontong berkembang
   const baseIncome = pendapatan;
-  const afterBengkel = baseIncome != null ? baseIncome + bengkelTambahan : null;
-  const afterGabungan = baseIncome != null ? baseIncome + bengkelTambahan + kelontongTambahan : null;
+  const totalTambahan = (bengkelTambahan ?? 0) + (kelontongTambahan ?? 0);
+  const afterBengkel = baseIncome != null && bengkelTambahan != null ? baseIncome + bengkelTambahan : null;
+  const afterGabungan = baseIncome != null && totalTambahan > 0 ? baseIncome + totalTambahan : null;
   const maxBln = 84;
   const yMax = afterGabungan != null ? Math.ceil(afterGabungan / 1000000 / 5) * 5 + 5 : 25;
-  const incomePoints = baseIncome != null ? [
+  const incomePoints = baseIncome != null && afterGabungan != null ? [
     { x: 0, y: baseIncome / 1000000 / yMax },
     { x: 12 / maxBln, y: baseIncome / 1000000 / yMax },
-    { x: 13 / maxBln, y: afterBengkel / 1000000 / yMax },
+    { x: 13 / maxBln, y: (afterBengkel ?? afterGabungan) / 1000000 / yMax },
     { x: 1, y: afterGabungan / 1000000 / yMax },
   ] : [];
   const yStep = Math.ceil(yMax / 4);
@@ -420,8 +424,8 @@ function AgusRoadmap({ analysis }) {
     { pct: (85 / TL) * 100, text: '6 th' }, { pct: 100, text: `${tenggat_tahun} th` },
   ];
 
-  const bengkelLabel = `+${rpShort(bengkelTambahan)}`;
-  const kelontongLabel = `+${rpShort(kelontongTambahan)}`;
+  const bengkelLabel = bengkelTambahan != null ? `+${rpShort(bengkelTambahan)}` : '–';
+  const kelontongLabel = kelontongTambahan != null ? `+${rpShort(kelontongTambahan)}` : '–';
   const hargaLabel = hargaRealistis != null ? `Budget ${rpShort(hargaRealistis)}` : 'realistis';
 
   const agusScenarios = [
@@ -466,7 +470,7 @@ function AgusRoadmap({ analysis }) {
         <Card>
           <T size={15} w={800} style={{ marginBottom: 4 }}>Proyeksi pendapatan keluarga</T>
           <T size={11} color={C.muted} style={{ marginBottom: 10 }}>
-            {`Baseline ${rpShort(baseIncome)} → +${rpShort(bengkelTambahan)} (bengkel) → +${rpShort(kelontongTambahan)} (kelontong). Ilustrasi: kenaikan diasumsikan di bulan ke-12.`}
+            {`Baseline ${rpShort(baseIncome)}${bengkelTambahan != null ? ` → +${rpShort(bengkelTambahan)} (bengkel)` : ''}${kelontongTambahan != null ? ` → +${rpShort(kelontongTambahan)} (kelontong)` : ''}. Ilustrasi: kenaikan diasumsikan di bulan ke-12.`}
           </T>
           <IncomeChart points={incomePoints} baseline={baseIncome / 1000000 / yMax} xLabels={xLabels} yLabels={yLabels} milestoneX={13 / maxBln} />
         </Card>
