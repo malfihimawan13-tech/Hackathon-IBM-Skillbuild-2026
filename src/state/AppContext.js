@@ -515,8 +515,8 @@ export function AppProvider({ children }) {
   // Untuk persona contoh, mode demo tetap aktif (data demo tersedia tanpa server).
   const loginAs = useCallback(async (uid) => {
     const id = uid.trim().toLowerCase().replace(/\s+/g, '_');
-    // reset state analisis/karier/usaha — tapi PERTAHANKAN chatByUser agar riwayat tiap persona tersimpan
-    setAnalysis(null); setUpdatedAt(null); setKarier(null); setUsaha(null); setSkenario({});
+    // reset state analisis/skenario — tapi PERTAHANKAN karierByUser/usahaByUser (per user) dan chatByUser
+    setAnalysis(null); setUpdatedAt(null); setSkenario({});
     setProfilDraft(EMPTY_PROFIL); setKeuanganDraft(EMPTY_KEUANGAN); setPsikologi({});
     setActiveUserId(id);
     // Muat chat persona ini dari dict (bisa kosong jika belum pernah chat)
@@ -552,9 +552,9 @@ export function AppProvider({ children }) {
         } else {
           r = demoD.usaha_kopi;
         }
-        setUsaha({ input, hasil: r, at: new Date().toISOString() });
+        setUsahaForUser(id, { input, hasil: r, at: new Date().toISOString() });
       } catch (_) {
-        setUsaha({ input: {}, hasil: demoD.usaha_kopi, at: new Date().toISOString() });
+        setUsahaForUser(id, { input: {}, hasil: demoD.usaha_kopi, at: new Date().toISOString() });
       }
     }
     // Untuk Dini: otomatis panggil flow 5_eksplorasi_karier_mycita
@@ -571,19 +571,19 @@ export function AppProvider({ children }) {
           await new Promise((res) => setTimeout(res, 100));
           r = demoD.karier;
         }
-        setKarier({ input: persona?.karierInput || {}, hasil: r, at: new Date().toISOString() });
+        setKarierForUser(id, { input: persona?.karierInput || {}, hasil: r, at: new Date().toISOString() });
       } catch (_) {
-        setKarier({ input: {}, hasil: demoD.karier, at: new Date().toISOString() });
+        setKarierForUser(id, { input: {}, hasil: demoD.karier, at: new Date().toISOString() });
       }
     }
-  }, [settings, setAnalysisNow]);
+  }, [settings, setAnalysisNow, setKarierForUser, setUsahaForUser]);
 
   // Kembali ke layar Masuk
   const logout = useCallback(() => {
     setActiveUserId(null);
-    setAnalysis(null); setUpdatedAt(null); setChat([]); setKarier(null); setUsaha(null); setSkenario({});
+    setAnalysis(null); setUpdatedAt(null); setChat([]); setSkenario({});
     setProfilDraft(EMPTY_PROFIL); setKeuanganDraft(EMPTY_KEUANGAN); setPsikologi({});
-    // chatByUser dipertahankan agar riwayat tiap persona tidak hilang saat logout
+    // chatByUser, karierByUser, usahaByUser dipertahankan agar riwayat tiap persona tidak hilang saat logout
   }, []);
 
   // setChat yang diekspos ke layar: juga perbarui chatByUser (dipakai tombol hapus riwayat di Chat.js)

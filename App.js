@@ -26,6 +26,8 @@ import Masuk from './src/screens/Masuk';
 import Roadmap from './src/screens/Roadmap';
 import Pendidikan from './src/screens/Pendidikan';
 import Pengeluaran from './src/screens/Pengeluaran';
+import TambahKarir from './src/screens/TambahKarir';
+import TambahBisnis from './src/screens/TambahBisnis';
 
 const TABS = [
   { key: 'home', label: 'Beranda', icon: 'home' },
@@ -39,7 +41,7 @@ function BottomNav({ active, go }) {
   const insets = useSafeAreaInsets();
   const activeTab = ['cari', 'tujuan', 'pengeluaran'].includes(active)
     ? 'keuangan'
-    : ['karier', 'usaha'].includes(active)
+    : ['karier', 'usaha', 'tambahkarir', 'tambahbisnis'].includes(active)
     ? 'karirbisnis'
     : active;
   return (
@@ -101,7 +103,7 @@ function Root() {
     openOnboarding: isDemoPersona ? undefined : () => setOnboarding(true),
     onLogout: () => { setRoute({ name: 'home', params: null }); app.logout(); },
   };
-  const screens = { home: Home, karirbisnis: KarirBisnis, karier: Karier, usaha: Usaha, roadmap: Roadmap, pendidikan: Pendidikan, keuangan: Keuangan, tujuan: Tujuan, cari: Cari, chat: Chat, profil: Profil, pengeluaran: Pengeluaran };
+  const screens = { home: Home, karirbisnis: KarirBisnis, karier: Karier, usaha: Usaha, roadmap: Roadmap, pendidikan: Pendidikan, keuangan: Keuangan, tujuan: Tujuan, cari: Cari, chat: Chat, profil: Profil, pengeluaran: Pengeluaran, tambahkarir: TambahKarir, tambahbisnis: TambahBisnis };
   const Screen = screens[route.name] || Home;
   return (
     <View style={{ flex: 1, backgroundColor: C.ground }}>

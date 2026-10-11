@@ -1,10 +1,11 @@
 /**
  * KarirBisnis — Tab ke-2 untuk semua pengguna.
  * Judul layar selalu "Karir dan Bisnis".
- * Kontrol segmen "Karir | Bisnis" tampil untuk semua pengguna:
- * - budi/pengguna baru: kedua opsi aktif.
- * - dini: "Karir" aktif, "Bisnis" nonaktif (disabled, abu-abu).
- * - agus: "Bisnis" aktif, "Karir" nonaktif (disabled, abu-abu).
+ * Kontrol segmen "Karir | Bisnis" SELALU aktif untuk semua pengguna.
+ * - budi: kedua segmen menampilkan data lengkap (karier dan usaha kopi).
+ * - agus: terbuka di "Bisnis"; "Karir" tampilkan empty state atau hasil karier jika sudah ada.
+ * - dini: terbuka di "Karir"; "Bisnis" tampilkan empty state atau hasil bisnis jika sudah ada.
+ * - pengguna baru: kedua segmen menampilkan empty state atau hasil yang sudah disimpan.
  */
 import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
@@ -17,33 +18,30 @@ import { DiniKarierContent } from './Karier';
 import { AgusUsahaContent } from './Usaha';
 import { BudiUsahaContent } from './Usaha';
 
-// Kontrol segmen dengan dukungan opsi disabled per item
-function SegmentedWithDisabled({ options, value, onChange }) {
+// Kontrol segmen standar — kedua opsi selalu aktif
+function Segmented({ value, onChange }) {
+  const options = [
+    { value: 'karir', label: 'Karir' },
+    { value: 'bisnis', label: 'Bisnis' },
+  ];
   return (
     <View style={{ flexDirection: 'row', borderRadius: 14, backgroundColor: C.card, borderWidth: 1, borderColor: C.line, overflow: 'hidden' }}
       accessibilityRole="tablist">
       {options.map((o) => {
         const on = o.value === value;
-        const disabled = !!o.disabled;
         return (
           <Pressable
             key={o.value}
             accessibilityRole="tab"
-            accessibilityState={{ selected: on, disabled }}
+            accessibilityState={{ selected: on }}
             accessibilityLabel={o.label}
-            onPress={disabled ? undefined : () => onChange(o.value)}
+            onPress={() => onChange(o.value)}
             style={[
               { flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', paddingVertical: 10 },
               on && { backgroundColor: C.teal },
             ]}
           >
-            <T
-              w={on ? 700 : 600}
-              size={14}
-              color={on ? C.white : disabled ? C.muted : C.ink}
-            >
-              {o.label}
-            </T>
+            <T w={on ? 700 : 600} size={14} color={on ? C.white : C.ink}>{o.label}</T>
           </Pressable>
         );
       })}
@@ -51,67 +49,110 @@ function SegmentedWithDisabled({ options, value, onChange }) {
   );
 }
 
-function NewUserKarirContent({ go }) {
+// Kartu ringkas hasil karier dengan tombol ubah isian
+function KarierHasilRingkas({ hasil, go }) {
+  const reko = hasil?.rekomendasi || [];
   return (
-    <Card style={{ alignItems: 'center', gap: 10, paddingVertical: 28 }}>
-      <View style={{ width: 52, height: 52, borderRadius: 18, backgroundColor: C.soft, alignItems: 'center', justifyContent: 'center' }}>
-        <Icon name="briefcase" size={26} color={C.teal} />
+    <View style={{ gap: 10 }}>
+      {reko.slice(0, 3).map((r) => (
+        <Card key={r.id || r.profesi} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View style={{ flex: 1 }}>
+            <T w={700} size={14}>{r.profesi}</T>
+            <T size={12} color={C.muted}>Kecocokan {r.skor_kecocokan}</T>
+          </View>
+          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: C.teal }} />
+        </Card>
+      ))}
+      <Button label="Lihat detail & dampak" icon="briefcase" onPress={() => go('tambahkarir')} style={{ minHeight: 44 }} />
+    </View>
+  );
+}
+
+// Kartu ringkas hasil bisnis dengan tombol ubah isian
+function BisnisHasilRingkas({ hasil, go }) {
+  const reko = hasil?.rekomendasi || [];
+  return (
+    <View style={{ gap: 10 }}>
+      {reko.slice(0, 3).map((r) => (
+        <Card key={r.id || r.usaha} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <View style={{ flex: 1 }}>
+            <T w={700} size={14}>{r.usaha}</T>
+            <T size={12} color={C.muted}>Skor {r.skor_kecocokan}</T>
+          </View>
+          <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: C.teal }} />
+        </Card>
+      ))}
+      <Button label="Lihat detail & dampak" icon="store" onPress={() => go('tambahbisnis')} style={{ minHeight: 44 }} />
+    </View>
+  );
+}
+
+// Empty state untuk karir yang belum diisi — atau ringkasan hasil jika sudah ada
+function KarirContent({ go }) {
+  const app = useApp();
+  if (app.karier?.hasil) {
+    return <KarierHasilRingkas hasil={app.karier.hasil} go={go} />;
+  }
+  return (
+    <Card style={{ alignItems: 'center', gap: 14, paddingVertical: 32 }}>
+      <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: C.soft, alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name="briefcase" size={28} color={C.teal} />
       </View>
-      <Button label="Isi data & eksplorasi karier" icon="briefcase" onPress={() => go('profil')} />
+      <T w={700} size={15} style={{ textAlign: 'center' }}>Belum ada rencana karier</T>
+      <T size={13} color={C.muted} style={{ textAlign: 'center', lineHeight: 19 }}>
+        Isi minat, skill, dan pengalaman untuk mendapatkan rekomendasi karier yang cocok.
+      </T>
+      <Button
+        label="Tambah karir"
+        icon="briefcase"
+        onPress={() => go('tambahkarir')}
+        accessibilityLabel="Tambah karir"
+        style={{ minHeight: 44, alignSelf: 'stretch' }}
+      />
     </Card>
   );
 }
 
-function NewUserUsahaContent({ go }) {
+// Empty state untuk bisnis yang belum diisi — atau ringkasan hasil jika sudah ada
+function BisnisContent({ go }) {
+  const app = useApp();
+  if (app.usaha?.hasil) {
+    return <BisnisHasilRingkas hasil={app.usaha.hasil} go={go} />;
+  }
   return (
-    <Card style={{ alignItems: 'center', gap: 10, paddingVertical: 28 }}>
-      <View style={{ width: 52, height: 52, borderRadius: 18, backgroundColor: C.goldSoft, alignItems: 'center', justifyContent: 'center' }}>
-        <Icon name="store" size={26} color={C.warn} />
+    <Card style={{ alignItems: 'center', gap: 14, paddingVertical: 32 }}>
+      <View style={{ width: 56, height: 56, borderRadius: 18, backgroundColor: C.goldSoft, alignItems: 'center', justifyContent: 'center' }}>
+        <Icon name="store" size={28} color={C.warn} />
       </View>
-      <Button label="Isi data & eksplorasi usaha" icon="store" onPress={() => go('profil')} />
+      <T w={700} size={15} style={{ textAlign: 'center' }}>Belum ada rencana bisnis</T>
+      <T size={13} color={C.muted} style={{ textAlign: 'center', lineHeight: 19 }}>
+        Isi minat, skill, dan modal untuk menemukan ide usaha yang paling cocok untukmu.
+      </T>
+      <Button
+        label="Tambah bisnis"
+        icon="store"
+        onPress={() => go('tambahbisnis')}
+        accessibilityLabel="Tambah bisnis"
+        style={{ minHeight: 44, alignSelf: 'stretch' }}
+      />
     </Card>
   );
 }
 
-// Tentukan opsi segmen (disabled/aktif) dan nilai awal berdasarkan persona
-function getSegConfig(uid, paramTab) {
-  if (uid === 'agus') {
-    return {
-      options: [
-        { value: 'karir', label: 'Karir', disabled: true },
-        { value: 'bisnis', label: 'Bisnis', disabled: false },
-      ],
-      initial: 'bisnis',
-    };
-  }
-  if (uid === 'dini') {
-    return {
-      options: [
-        { value: 'karir', label: 'Karir', disabled: false },
-        { value: 'bisnis', label: 'Bisnis', disabled: true },
-      ],
-      initial: 'karir',
-    };
-  }
-  // budi & pengguna baru: keduanya aktif
-  return {
-    options: [
-      { value: 'karir', label: 'Karir', disabled: false },
-      { value: 'bisnis', label: 'Bisnis', disabled: false },
-    ],
-    initial: paramTab === 'bisnis' ? 'bisnis' : 'karir',
-  };
+// Tentukan nilai awal segmen berdasarkan persona
+function getInitialSeg(uid, paramTab) {
+  if (uid === 'agus') return 'bisnis';
+  if (uid === 'dini') return 'karir';
+  return paramTab === 'bisnis' ? 'bisnis' : 'karir';
 }
 
 export default function KarirBisnis({ go, params }) {
   const app = useApp();
   const uid = app.activeUserId;
 
-  const { options, initial } = getSegConfig(uid, params?.tab);
-  const [seg, setSeg] = useState(initial);
+  const [seg, setSeg] = useState(() => getInitialSeg(uid, params?.tab));
 
   // Konten per kombinasi persona × segmen
-  // Pilihan disabled tidak pernah menghasilkan konten persona lain
   const renderContent = () => {
     if (uid === 'budi') {
       return seg === 'karir'
@@ -119,23 +160,25 @@ export default function KarirBisnis({ go, params }) {
         : <BudiUsahaContent go={go} />;
     }
     if (uid === 'agus') {
-      // "Karir" disabled — selalu tampilkan bisnis
-      return <AgusUsahaContent go={go} />;
+      return seg === 'bisnis'
+        ? <AgusUsahaContent go={go} />
+        : <KarirContent go={go} />;
     }
     if (uid === 'dini') {
-      // "Bisnis" disabled — selalu tampilkan karir
-      return <DiniKarierContent go={go} />;
+      return seg === 'karir'
+        ? <DiniKarierContent go={go} />
+        : <BisnisContent go={go} />;
     }
-    // Pengguna baru
+    // Pengguna baru: segmen menampilkan hasil atau empty state
     return seg === 'karir'
-      ? <NewUserKarirContent go={go} />
-      : <NewUserUsahaContent go={go} />;
+      ? <KarirContent go={go} />
+      : <BisnisContent go={go} />;
   };
 
   return (
     <Screen>
       <ScreenHeader title="Karir dan Bisnis" onBack={() => go('home')} />
-      <SegmentedWithDisabled options={options} value={seg} onChange={setSeg} />
+      <Segmented value={seg} onChange={setSeg} />
       {renderContent()}
     </Screen>
   );
