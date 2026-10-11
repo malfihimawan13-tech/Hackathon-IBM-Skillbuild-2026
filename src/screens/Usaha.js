@@ -217,6 +217,45 @@ function ScenarioBar({ label, bulan, maxBulan, deadlinePct, isPast }) {
   );
 }
 
+// Helper: konversi teks Langflow ("5 tahun 6 bulan", "22 tahun 1 bulan", dll.) ke bulan
+function teksKeBulan(teks) {
+  if (!teks) return null;
+  const th = teks.match(/(\d+)\s*tahun/);
+  const bl = teks.match(/(\d+)\s*bulan/);
+  return (th ? parseInt(th[1], 10) * 12 : 0) + (bl ? parseInt(bl[1], 10) : 0);
+}
+
+// ── Budi: batang skenario mobil (dari skenario.budi / demo karier_simulasi) ──
+function BudiScenarioBarsCard() {
+  const app = useApp();
+  const sk = app.skenario?.budi;
+  // Pakai data dari skenario.budi (Langflow) jika tersedia, fallback ke demo
+  const demo = DEMO.budi?.karier_simulasi || {};
+  const get = (key) => {
+    const t = sk?.[key]?.sesudah?.target?.Mobil ?? demo[key]?.sesudah?.target?.Mobil;
+    return teksKeBulan(t);
+  };
+  const baseline = teksKeBulan(sk?.dasar?.sesudah?.target?.Mobil ?? demo?.data_scientist?.sebelum?.target?.Mobil);
+  const bDS = get('data_scientist');
+  const bDA = get('data_analyst');
+  const bKopi = get('kopi_pesimis');
+  const bDSKopiP = get('data_scientist_kopi_pesimis');
+  const maxDisplay = 270;
+  const deadlinePct = 60 / maxDisplay;
+  if (!bDS && !bDA) return null;
+  return (
+    <Card style={{ gap: 10 }}>
+      <T w={800} size={15}>Dampak ke mobil Rp250 jt</T>
+      <View style={{ gap: 10 }}>
+        <ScenarioBar label="Tetap kerja sekarang" bulan={baseline ?? 265} maxBulan={maxDisplay} deadlinePct={deadlinePct} isPast />
+        {bKopi != null && <ScenarioBar label="Usaha kopi saja (pesimis)" bulan={bKopi} maxBulan={maxDisplay} deadlinePct={deadlinePct} isPast />}
+        {bDS != null && <ScenarioBar label="Data Scientist saja" bulan={bDS} maxBulan={maxDisplay} deadlinePct={deadlinePct} isPast />}
+        {bDSKopiP != null && <ScenarioBar label="Data Scientist + kopi (pesimis)" bulan={bDSKopiP} maxBulan={maxDisplay} deadlinePct={deadlinePct} isPast={false} />}
+      </View>
+    </Card>
+  );
+}
+
 // ── Budi usaha: detail card ───────────────────────────────────────
 function UsahaDetailCard({ h, go }) {
   const app = useApp();
@@ -226,7 +265,10 @@ function UsahaDetailCard({ h, go }) {
 
   const lihatDampak = async () => {
     setBusy(true); setErr('');
-    try { setImpact((await app.simulateRoadmap(h.simulasi_siap_pakai, ['usaha', h.id])).perbandingan); }
+    try {
+      const simulasi = h.simulasi_siap_pakai_per_skenario?.pesimis ?? h.simulasi_siap_pakai;
+      setImpact((await app.simulateRoadmap(simulasi, ['usaha', h.id])).perbandingan);
+    }
     catch (e) { setErr(e.message); }
     setBusy(false);
   };
@@ -301,16 +343,8 @@ function UsahaDetailCard({ h, go }) {
       <ErrorBox message={err} />
       <ImpactCard perbandingan={impact} title={`Jika membuka ${h.usaha.toLowerCase()} (skenario pesimis)`} />
 
-      {/* Dampak ke mobil — scenario bars */}
-      <Card style={{ gap: 10 }}>
-        <T w={800} size={15}>Dampak ke mobil Rp250 jt</T>
-        <View style={{ gap: 10 }}>
-          <ScenarioBar label="Tetap kerja sekarang" bulan={265} maxBulan={250} deadlinePct={60 / 250} isPast />
-          <ScenarioBar label="Usaha kopi saja (pesimis)" bulan={83} maxBulan={250} deadlinePct={60 / 250} isPast />
-          <ScenarioBar label="Data Scientist saja" bulan={66} maxBulan={250} deadlinePct={60 / 250} isPast />
-          <ScenarioBar label="Data Scientist + kopi (pesimis)" bulan={49} maxBulan={250} deadlinePct={60 / 250} isPast={false} />
-        </View>
-      </Card>
+      {/* Dampak ke mobil — scenario bars (data dari skenario.budi) */}
+      <BudiScenarioBarsCard />
 
       {/* Risiko */}
       {h.risiko?.length ? (

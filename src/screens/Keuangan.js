@@ -39,7 +39,7 @@ function HistoryChart({ sisa }) {
   );
 }
 
-function ExpenseBreakdown({ pengeluaran, total }) {
+function ExpenseBreakdown({ pengeluaran, total, onPress }) {
   if (!pengeluaran || pengeluaran.length === 0) return null;
   const items = pengeluaran
     .map((e) => ({ label: e.label, val: Number(String(e.nominal || '').replace(/[^0-9]/g, '')) || 0 }))
@@ -47,18 +47,30 @@ function ExpenseBreakdown({ pengeluaran, total }) {
   if (items.length === 0) return null;
   const maxVal = Math.max(...items.map((e) => e.val));
   return (
-    <Card style={{ gap: 10 }}>
-      <T w={800} size={16}>Rincian pengeluaran</T>
-      {items.map((e) => (
-        <View key={e.label} style={{ gap: 4 }}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <T size={13} color={C.muted}>{e.label}</T>
-            <T w={700} size={13}>{rpShort(e.val)}</T>
-          </View>
-          <Bar ratio={maxVal > 0 ? e.val / maxVal : 0} color={C.teal} />
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel="Lihat dan ubah rincian pengeluaran"
+      onPress={onPress}
+    >
+      <Card style={{ gap: 10 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <T w={800} size={16} style={{ flex: 1 }}>Rincian pengeluaran</T>
+          <T size={12} color={C.teal}>Lihat semua ›</T>
         </View>
-      ))}
-    </Card>
+        {items.slice(0, 5).map((e) => (
+          <View key={e.label} style={{ gap: 4 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+              <T size={13} color={C.muted}>{e.label}</T>
+              <T w={700} size={13}>{rpShort(e.val)}</T>
+            </View>
+            <Bar ratio={maxVal > 0 ? e.val / maxVal : 0} color={C.teal} />
+          </View>
+        ))}
+        {items.length > 5 && (
+          <T size={12} color={C.muted}>{items.length - 5} kategori lainnya — ketuk untuk melihat semua</T>
+        )}
+      </Card>
+    </Pressable>
   );
 }
 
@@ -72,7 +84,7 @@ function Ratio({ label, value, note, ok }) {
   );
 }
 
-function Kondisi({ a, pengeluaran, showTotalMismatch, totalPersona, totalFlow4 }) {
+function Kondisi({ a, pengeluaran, showTotalMismatch, totalPersona, totalFlow4, onViewPengeluaran }) {
   const k = a.kesehatan_keuangan;
   const dd = a.dana_darurat;
   const bars = Object.entries(k.rincian_skor || {}).map(([label, v]) => {
@@ -114,7 +126,7 @@ function Kondisi({ a, pengeluaran, showTotalMismatch, totalPersona, totalFlow4 }
         <View style={{ height: 1, backgroundColor: C.line }} />
         <KV k="Sisa (disposable income)" v={rp(k.disposable_income)} strong />
       </Card>
-      <ExpenseBreakdown pengeluaran={pengeluaran} total={k.pengeluaran_rutin} />
+      <ExpenseBreakdown pengeluaran={pengeluaran} total={k.pengeluaran_rutin} onPress={onViewPengeluaran} />
       {showTotalMismatch ? (
         <Card style={{ gap: 6, borderColor: C.warn, borderWidth: 1 }}>
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
@@ -237,7 +249,7 @@ export default function Keuangan({ go, params }) {
       ) : (
         <>
           <Segmented options={[{ value: 'kondisi', label: 'Kondisi' }, { value: 'atur', label: 'Atur' }]} value={tab} onChange={setTab} />
-          {tab === 'kondisi' ? <Kondisi a={analysis} pengeluaran={pengeluaran} showTotalMismatch={showTotalMismatch} totalPersona={totalPersona} totalFlow4={totalFlow4} /> : <Atur a={analysis} />}
+          {tab === 'kondisi' ? <Kondisi a={analysis} pengeluaran={pengeluaran} showTotalMismatch={showTotalMismatch} totalPersona={totalPersona} totalFlow4={totalFlow4} onViewPengeluaran={() => go('pengeluaran', { from: 'keuangan' })} /> : <Atur a={analysis} />}
           <Pressable accessibilityRole="button" onPress={() => setShowAsumsi(!showAsumsi)}>
             <T w={700} size={13} color={C.teal}>{showAsumsi ? 'Sembunyikan asumsi & sumber' : 'Lihat asumsi & sumber data'}</T>
           </Pressable>

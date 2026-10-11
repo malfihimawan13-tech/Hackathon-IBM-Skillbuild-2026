@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Platform, Pressable, ScrollView, View } from 'react-native';
 import Svg, { Circle, Line, Path, Polygon, Polyline, Rect, Text as SvgText } from 'react-native-svg';
 import { useApp } from '../state/AppContext';
@@ -166,23 +166,66 @@ function PhaseList({ phases }) {
   );
 }
 
+// Helper: konversi teks waktu ("5 tahun 6 bulan") ke jumlah bulan
+function teksKeBulan(teks) {
+  if (!teks) return null;
+  const th = teks.match(/(\d+)\s*tahun/);
+  const bl = teks.match(/(\d+)\s*bulan/);
+  return (th ? parseInt(th[1], 10) * 12 : 0) + (bl ? parseInt(bl[1], 10) : 0);
+}
+
 // ── BUDI ROADMAP ──────────────────────────────────────────────────
 function BudiRoadmap({ analysis }) {
-  const dashboard = analysis?.dashboard || {};
-  const pendapatan = dashboard.pendapatan || 9000000;
-  const sisa = dashboard.sisa || 2650000;
-  const tabungan = analysis?.dana_darurat?.dana_likuid_saat_ini || 10000000;
+  const app = useApp();
+  const [loadingS, setLoadingS] = useState(false);
+  const [errS, setErrS] = useState('');
 
-  // Budi income projection: baseline → data scientist
-  // bulan 0: 9M, bulan 4: 9M, bulan 28: 14M (mid DS), bulan 66: 28M (senior DS)
+  const dashboard = analysis?.dashboard || {};
+  const pendapatan = dashboard.pendapatan;
+  const sisa = dashboard.sisa;
+  const tabungan = analysis?.dana_darurat?.dana_likuid_saat_ini;
+
+  // Muat skenario saat pertama kali render jika belum ada
+  const sk = app.skenario?.budi;
+  useEffect(() => {
+    if (!sk && app.loadSkenarioBudi) {
+      setLoadingS(true);
+      app.loadSkenarioBudi().catch((e) => setErrS(e.message)).finally(() => setLoadingS(false));
+    }
+  }, []); // eslint-disable-line
+
+  // DS jalur_pendapatan tahapan (dari karier Langflow atau demo)
+  const karierReko = app.karier?.hasil?.rekomendasi || [];
+  const dsReko = karierReko.find((r) => r.id === 'data_scientist') || DEMO.budi?.karier?.rekomendasi?.find((r) => r.id === 'data_scientist');
+  const dsTahapan = dsReko?.jalur_pendapatan?.tahapan || [];
+  const entryMin = dsTahapan[0]?.rentang_min;
+  const entryMax = dsTahapan[0]?.rentang_max;
+  const midMin = dsTahapan[1]?.rentang_min;
+  const midMax = dsTahapan[1]?.rentang_max;
+  const seniorMin = dsTahapan[2]?.rentang_min;
+  const seniorMax = dsTahapan[2]?.rentang_max;
+
+  // Ambil jadwal dari DS simulasi_siap_pakai (nilai tengah per tahap dari Langflow)
+  const dsJadwal = dsReko?.jadwal_pendapatan_untuk_simulasi || DEMO.budi?.karier?.rekomendasi?.find((r) => r.id === 'data_scientist')?.jadwal_pendapatan_untuk_simulasi || [];
+  const entryStart = dsJadwal.find((j) => j.mulai_bulan === 4)?.mulai_bulan ?? 4;
+  const midStart = dsJadwal.find((j) => j.penghasilan > 9000000 && j.mulai_bulan > 4)?.mulai_bulan ?? 28;
+  const seniorStart = dsJadwal.find((j) => j.mulai_bulan >= 60)?.mulai_bulan ?? 64;
+
+  // Income projection: mulai dari pendapatan Langflow, titik selanjutnya dari jalur_pendapatan (Langflow/demo)
+  const basePendapatan = pendapatan ?? 7500000;
+  const entryMid = entryMin && entryMax ? Math.round((entryMin + entryMax) / 2) : 9000000;
+  const midMidVal = midMin && midMax ? Math.round((midMin + midMax) / 2) : 11750000;
+  const seniorMidVal = seniorMin && seniorMax ? Math.round((seniorMin + seniorMax) / 2) : 27500000;
+  const hasKarierData = dsTahapan.length > 0;
+
   const maxBln = 84;
   const yMax = 32; // jt
   const incomePoints = [
-    { x: 0 / maxBln, y: 9 / yMax },
-    { x: 4 / maxBln, y: 9 / yMax },
-    { x: 28 / maxBln, y: 14 / yMax },
-    { x: 66 / maxBln, y: 28 / yMax },
-    { x: 1, y: 28 / yMax },
+    { x: 0 / maxBln, y: basePendapatan / (yMax * 1e6) },
+    { x: entryStart / maxBln, y: basePendapatan / (yMax * 1e6) },
+    { x: midStart / maxBln, y: entryMid / (yMax * 1e6) },
+    { x: seniorStart / maxBln, y: midMidVal / (yMax * 1e6) },
+    { x: 1, y: seniorMidVal / (yMax * 1e6) },
   ];
   const yLabels = [
     { yn: 0, text: '0' }, { yn: 8 / yMax, text: '8' }, { yn: 16 / yMax, text: '16' },
@@ -193,9 +236,8 @@ function BudiRoadmap({ analysis }) {
     { xn: 72 / maxBln, text: '6 th' }, { xn: 1, text: '8 th' },
   ];
 
-  // Timeline segments: Budi data-scientist scenario
-  // 0-2 prep (grey), 2-4 portfolio (grey), 4-28 junior DS (green), 28-66 senior DS (green), 66+ principal (green)
-  const TL = 96; // total months for timeline normalisation
+  // Timeline segments (tetap statis — dari roadmap_karier DS)
+  const TL = 96;
   const segments = [
     { left: 0, width: (2 / TL) * 100, color: C.soft, border: '#B8C9C5' },
     { left: (2.5 / TL) * 100, width: (2 / TL) * 100, color: C.soft, border: '#B8C9C5' },
@@ -203,43 +245,69 @@ function BudiRoadmap({ analysis }) {
     { left: (29.5 / TL) * 100, width: (37 / TL) * 100, color: '#9FE1CB', border: '#0F6E56' },
     { left: (67 / TL) * 100, width: (29 / TL) * 100, color: '#9FE1CB', border: '#0F6E56' },
   ];
+
+  // Milestone mobil: dari skenario.budi.data_scientist (sesudah.target.Mobil)
+  const mobileMonthDS = teksKeBulan(sk?.data_scientist?.sesudah?.target?.Mobil);
   const milestones = [
-    { pct: (35 / TL) * 100 },  // target menikah
-    { pct: (66 / TL) * 100 },  // target mobil (with DS)
+    { pct: (35 / TL) * 100 },
+    ...(mobileMonthDS ? [{ pct: Math.min(mobileMonthDS / TL, 1) * 100 }] : [{ pct: (66 / TL) * 100 }]),
   ];
   const tlLabels = [
     { pct: 0, text: 'Kini' }, { pct: 25, text: '2 th' }, { pct: 50, text: '4 th' },
     { pct: 75, text: '6 th' }, { pct: 100, text: '8 th' },
   ];
 
-  // Scenario bar data (target: Avanza ~Rp250 jt)
-  const deadline = 60; // 5 tahun tenggat
-  const maxDisplay = 270;
-  const scenarios = [
-    { label: 'A · Tetap kerja sekarang', sub: 'gaji tetap', bulan: 265, isPast: true },
-    { label: 'B · Pindah ke Data Scientist', sub: 'mulai bln 4', bulan: 66, isPast: true },
-    { label: 'C · Data Analyst', sub: 'mulai bln 6', bulan: 72, isPast: true },
-    { label: 'D · Kopi keliling (pesimis)', sub: 'mulai bln 1', bulan: 83, isPast: true },
-    { label: 'E · Data Scientist + kopi pesimis', sub: 'gabungan', bulan: 49, isPast: false },
-    { label: 'F · Data Scientist + kopi moderat', sub: 'gabungan', bulan: 40, isPast: false },
-  ];
+  // Badge fase: pakai rentang dari jalur_pendapatan (bukan 14M - gaji)
+  const badgeEntry = entryMin && entryMax
+    ? `Rp${Math.round(entryMin / 1e6)}–${Math.round(entryMax / 1e6)} jt/bln`
+    : 'Rp7–11 jt/bln';
+  const badgeMid = midMin && midMax
+    ? `Rp${Math.round(midMin / 1e6)}–${Math.round(midMax / 1e6)} jt/bln`
+    : 'Rp8–19 jt/bln';
+  const badgeSenior = seniorMin && seniorMax
+    ? `Rp${Math.round(seniorMin / 1e6)}–${Math.round(seniorMax / 1e6)} jt/bln`
+    : 'Rp20–35 jt/bln';
 
   const phases = [
     { range: 'Bln 0–2', active: false, title: 'Perdalam statistik & ML', sub: 'Tetap bekerja sambil belajar' },
     { range: 'Bln 2–4', active: false, title: 'Portofolio & melamar', sub: '2 proyek ML end-to-end' },
-    { range: 'Bln 4–28', active: true, title: 'Junior Data Scientist', sub: 'Level awal', badge: `+Rp${Math.round((14000000 - pendapatan) / 1000000)} jt/bln` },
-    { range: 'Bln 28–66', active: true, title: 'Data Scientist (mid)', sub: 'Pengembangan skill lanjutan', badge: '+Rp5 jt/bln' },
-    { range: 'Bln 66+', active: true, title: 'Senior Data Scientist', sub: 'Target gaji Rp28 jt', badge: '+Rp14 jt/bln' },
+    { range: `Bln 4–${midStart}`, active: true, title: 'Junior Data Scientist', sub: 'Level awal', badge: badgeEntry },
+    { range: `Bln ${midStart}–${seniorStart}`, active: true, title: 'Data Scientist (mid)', sub: 'Pengembangan skill lanjutan', badge: badgeMid },
+    { range: `Bln ${seniorStart}+`, active: true, title: 'Senior Data Scientist', sub: `Target gaji Rp${Math.round(seniorMidVal / 1e6)} jt`, badge: badgeSenior },
+  ];
+
+  // Scenario bars: dari skenario.budi (Langflow) — fallback ke demo karier_simulasi
+  const demoKS = DEMO.budi?.karier_simulasi || {};
+  const getB = (key) => teksKeBulan(sk?.[key]?.sesudah?.target?.Mobil ?? demoKS[key]?.sesudah?.target?.Mobil);
+  // baseline: sebelum simulasi (tanpa perubahan karir)
+  const baselineMonths = teksKeBulan(sk?.dasar?.sesudah?.target?.Mobil ?? demoKS?.data_scientist?.sebelum?.target?.Mobil);
+  const bDS = getB('data_scientist');
+  const bDA = getB('data_analyst');
+  const bKopi = getB('kopi_pesimis');
+  const bDSKopiP = getB('data_scientist_kopi_pesimis');
+  const bDSKopiM = getB('data_scientist_kopi_moderat');
+
+  const deadline = 60; // 5 tahun tenggat Mobil
+  const maxDisplay = 270;
+  const scenarios = [
+    { label: 'A · Tetap kerja sekarang', sub: 'gaji tetap', bulan: baselineMonths ?? 265, isPast: true },
+    { label: 'B · Pindah ke Data Scientist', sub: 'mulai bln 4', bulan: bDS ?? 66, isPast: true },
+    { label: 'C · Data Analyst', sub: 'mulai bln 6', bulan: bDA ?? 72, isPast: true },
+    { label: 'D · Kopi keliling (pesimis)', sub: 'mulai bln 1', bulan: bKopi ?? 83, isPast: true },
+    { label: 'E · Data Scientist + kopi pesimis', sub: 'gabungan', bulan: bDSKopiP ?? 49, isPast: false },
+    { label: 'F · Data Scientist + kopi moderat', sub: 'gabungan', bulan: bDSKopiM ?? 40, isPast: false },
   ];
 
   return (
     <>
       <T size={13} color={C.muted}>Career switch ke Data Scientist sambil menyiapkan menikah dan mobil.</T>
-      <StatRow items={[
-        { label: 'Gaji kini', value: rpShort(pendapatan) },
-        { label: 'Sisa/bln', value: rpShort(sisa) },
-        { label: 'Tabungan', value: rpShort(tabungan) },
-      ]} />
+      {pendapatan != null ? (
+        <StatRow items={[
+          { label: 'Gaji kini', value: rpShort(pendapatan) },
+          { label: 'Sisa/bln', value: rpShort(sisa) },
+          { label: 'Tabungan', value: rpShort(tabungan) },
+        ]} />
+      ) : null}
       <Card>
         <T size={15} w={800} style={{ marginBottom: 12 }}>Garis waktu</T>
         <TimelineBar segments={segments} milestones={milestones} deadline={(60 / TL) * 100} labels={tlLabels} />
@@ -249,18 +317,29 @@ function BudiRoadmap({ analysis }) {
         <PhaseList phases={phases} />
       </Card>
       <Card>
-        <T size={15} w={800} style={{ marginBottom: 12 }}>Proyeksi pendapatan per bulan</T>
-        <IncomeChart points={incomePoints} baseline={pendapatan / (yMax * 1e6)} xLabels={xLabels} yLabels={yLabels} milestoneX={35 / maxBln} />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+          <T size={15} w={800} style={{ flex: 1 }}>Proyeksi pendapatan per bulan</T>
+          {!hasKarierData && <T size={11} color={C.muted}>Ilustrasi</T>}
+        </View>
+        <IncomeChart points={incomePoints} baseline={basePendapatan / (yMax * 1e6)} xLabels={xLabels} yLabels={yLabels} milestoneX={35 / maxBln} />
+        {!hasKarierData && (
+          <T size={11} color={C.muted} style={{ marginTop: 4 }}>Proyeksi ilustratif. Muat data karier untuk nilai dari Langflow.</T>
+        )}
       </Card>
       <Card>
         <T size={15} w={800} style={{ marginBottom: 12 }}>Mobil Rp250 jt tercapai</T>
-        <View style={{ gap: 10 }}>
-          {scenarios.map((s, i) => (
-            <ScenarioBar key={i} label={s.label} sublabel={s.sub} bulan={s.bulan} maxBulan={maxDisplay} deadlinePct={deadline / maxDisplay} isPast={s.isPast} />
-          ))}
-        </View>
+        {loadingS ? (
+          <T size={13} color={C.muted}>Memuat skenario…</T>
+        ) : (
+          <View style={{ gap: 10 }}>
+            {scenarios.map((s, i) => (
+              <ScenarioBar key={i} label={s.label} sublabel={s.sub} bulan={s.bulan} maxBulan={maxDisplay} deadlinePct={deadline / maxDisplay} isPast={s.isPast} />
+            ))}
+          </View>
+        )}
+        {errS ? <T size={12} color={C.warn} style={{ marginTop: 6 }}>{errS}</T> : null}
       </Card>
-      <TipBox>Rekomendasi: tetap bekerja selama 4 bulan persiapan, lalu pindah ke Data Scientist. Usaha kopi sampingan di akhir pekan mempercepat target; dengan skenario pesimis pun mobil tercapai 4 th 1 bl, sebelum tenggat 5 tahun.</TipBox>
+      <TipBox>Rekomendasi: tetap bekerja selama 4 bulan persiapan, lalu pindah ke Data Scientist. Usaha kopi sampingan di akhir pekan mempercepat target; dengan skenario pesimis pun mobil tercapai sebelum tenggat 5 tahun.</TipBox>
     </>
   );
 }

@@ -32,6 +32,7 @@ export const PERSONAS = [
         { label: 'Orang tua', nominal: 500000 },
         { label: 'Lainnya', nominal: 400000 },
       ],
+      hutang: [],
       tabungan_saat_ini: 35000000,
     },
     // Level skill (diisi pengguna, bukan hasil hitung Langflow)
@@ -89,6 +90,7 @@ export const PERSONAS = [
         { label: 'Hiburan', nominal: 300000 },
         { label: 'Lainnya', nominal: 450000 },
       ],
+      hutang: [],
       tabungan_saat_ini: 45000000,
     },
     // Data usaha (input, bukan hasil hitung Langflow)
@@ -138,6 +140,7 @@ export const PERSONAS = [
         { label: 'Pendidikan & kursus', nominal: 200000 },
         { label: 'Lainnya', nominal: 50000 },
       ],
+      hutang: [],
       tabungan_saat_ini: 2500000,
       tabungan_rutin_bulanan: 150000,
     },

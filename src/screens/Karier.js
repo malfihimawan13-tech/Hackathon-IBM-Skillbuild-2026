@@ -5,7 +5,7 @@ import { useApp } from '../state/AppContext';
 import { DEMO } from '../api/demoData';
 import { findPersona } from '../state/persona';
 // Note: DEMO is used as fallback in DiniKarier
-import { Bar, Button, Card, Chip, ErrorBox, KV, Screen, ScreenHeader, T } from '../components/ui';
+import { Bar, Button, Card, Chip, EmptyState, ErrorBox, KV, Screen, ScreenHeader, T } from '../components/ui';
 import { ImpactCard } from '../components/forms';
 import Icon from '../components/Icon';
 import { C, R } from '../theme';
@@ -118,7 +118,7 @@ function DetailCard({ h, isTarget }) {
   const [err, setErr] = useState('');
   const tahap = h.jalur_pendapatan?.tahapan || [];
   const belajar = h.jalur_belajar || {};
-  const gajiSekarang = app.analysis?.dashboard?.pendapatan || 9000000;
+  const gajiSekarang = app.analysis?.dashboard?.pendapatan;
 
   const lihatDampak = async () => {
     setBusy(true); setErr('');
@@ -276,7 +276,7 @@ function BandingkanJalur({ rekomendasi }) {
     }
   }, [app.live]); // eslint-disable-line
 
-  const gajiSekarang = app.analysis?.dashboard?.pendapatan || 9000000;
+  const gajiSekarang = app.analysis?.dashboard?.pendapatan;
 
   return (
     <Card style={{ gap: 10 }}>
@@ -287,7 +287,7 @@ function BandingkanJalur({ rekomendasi }) {
         const targetAvanza = s?.target?.['Toyota Avanza'];
         const tahap0 = r.jalur_pendapatan?.tahapan?.[0];
         const gajiAwal = tahap0 ? tahap0.nilai_tengah : null;
-        const selisih = gajiAwal != null ? gajiAwal - gajiSekarang : null;
+        const selisih = gajiAwal != null && gajiSekarang != null ? gajiAwal - gajiSekarang : null;
         return (
           <View key={r.id} style={{ gap: 2 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
@@ -331,13 +331,8 @@ function BudiKarier({ go }) {
     setBusy(true); setErr('');
     try {
       await app.exploreKarier({
-        user_id: 'budi',
-        minat: ['angka', 'komputer', 'data', 'AI'],
-        skill: persona?.skills?.map((s) => s.nama) || [],
-        pendidikan_terakhir: 'S1',
-        kota: 'Tangerang',
+        user_id: app.activeUserId,
         target_profesi: 'Data Scientist',
-        pengalaman: [{ bidang: 'IT software', tahun: 2 }],
       });
       setSel(0);
     } catch (e) { setErr(e.message); }
@@ -538,6 +533,27 @@ function DiniKarier({ go }) {
 export default function Karier({ go }) {
   const app = useApp();
   const uid = app.activeUserId;
+
+  // Hooks harus dipanggil tanpa kondisi — redirect Agus ditangani di sini
+  useEffect(() => {
+    if (uid === 'agus') go('usaha');
+  }, [uid]);
+
+  if (uid === 'budi') return <BudiKarier go={go} />;
   if (uid === 'dini') return <DiniKarier go={go} />;
-  return <BudiKarier go={go} />;
+  // Agus: App.js sudah arahkan tab ke-2 ke Usaha; jika layar ini terbuka lewat jalan lain,
+  // useEffect di atas yang redirect. Tampilkan null sementara.
+  if (uid === 'agus') return null;
+  // Pengguna lain yang belum mengisi data karier
+  return (
+    <Screen>
+      <EmptyState
+        icon="briefcase"
+        title="Belum ada data karier"
+        body="Isi profil dan eksplorasi jalur karier untuk melihat rekomendasi dan roadmap-mu di sini."
+        action="Isi data profil"
+        onAction={() => go('profil')}
+      />
+    </Screen>
+  );
 }

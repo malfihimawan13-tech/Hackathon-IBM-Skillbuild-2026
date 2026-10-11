@@ -126,7 +126,7 @@ function BarChart6({ bars, label, note }) {
 // ─── Donat pengeluaran ─────────────────────────────────────────────────────
 
 function DonutChart({ items, total }) {
-  // items: [{label, nilai, color}]
+  // items: [{label, nilai, color}] — sudah diurutkan dari terbesar
   const R_OUTER = 56; const SW = 20;
   const SIZE = (R_OUTER + SW) * 2 + 4;
   const circumference = 2 * Math.PI * R_OUTER;
@@ -139,6 +139,14 @@ function DonutChart({ items, total }) {
     return s;
   });
   const cx = SIZE / 2; const cy = SIZE / 2;
+
+  // Legenda: 5 teratas + baris "Lainnya" untuk sisanya
+  const TOP = 5;
+  const topSlices = slices.slice(0, TOP);
+  const restSlices = slices.slice(TOP);
+  const restTotal = restSlices.reduce((s, it) => s + it.nilai, 0);
+  const restCount = restSlices.length;
+
   return (
     <View style={{ flexDirection: 'row', gap: 14, alignItems: 'center' }}>
       <Svg width={SIZE} height={SIZE} viewBox={`0 0 ${SIZE} ${SIZE}`}
@@ -156,13 +164,20 @@ function DonutChart({ items, total }) {
         <SvgText x={cx} y={cy + 12} fontSize="10" fill={C.muted} textAnchor="middle">per bulan</SvgText>
       </Svg>
       <View style={{ flex: 1, gap: 5 }}>
-        {slices.slice(0, 5).map((s, i) => (
+        {topSlices.map((s, i) => (
           <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: s.color }} />
-            <T size={11} color={C.muted} style={{ flex: 1 }}>{s.label}</T>
+            <T size={11} color={C.muted} style={{ flex: 1 }} numberOfLines={1}>{s.label}</T>
             <T w={700} size={11}>{rpShort(s.nilai)}</T>
           </View>
         ))}
+        {restCount > 0 && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: C.muted }} />
+            <T size={11} color={C.muted} style={{ flex: 1 }}>Lainnya ({restCount} pos)</T>
+            <T w={700} size={11}>{rpShort(restTotal)}</T>
+          </View>
+        )}
       </View>
     </View>
   );
@@ -202,7 +217,11 @@ function SavingsChart({ currentAmount, monthlyAdd }) {
 function DebtEmergencyRow({ analysis }) {
   const dd = analysis?.dana_darurat;
   const hutangTotal = analysis?.dashboard?.total_hutang ?? 0;
-  const ddPct = dd ? Math.min(1, (dd.cukup_untuk_bulan || 0) / (dd.target_bulan || 6)) : 0;
+  // Pakai field asli dari flow 4: dana_likuid_saat_ini, target_dipakai, cukup_untuk_bulan
+  const ddLikuid = dd?.dana_likuid_saat_ini ?? 0;
+  const ddTarget = dd?.target_dipakai ?? 0;
+  const ddBulan = dd?.cukup_untuk_bulan ?? 0;
+  const ddPct = ddTarget > 0 ? Math.min(1, ddLikuid / ddTarget) : 0;
 
   return (
     <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -223,14 +242,14 @@ function DebtEmergencyRow({ analysis }) {
         </View>
         {dd ? (
           <>
-            <T w={800} size={18}>{pct(ddPct * 100)}</T>
+            <T w={800} size={18}>{`${rpShort(ddLikuid)} / ${rpShort(ddTarget)}`}</T>
             <Bar ratio={ddPct} color={ddPct >= 1 ? C.teal : C.gold} height={8} />
             <T size={11} color={C.muted} style={{ lineHeight: 16 }}>
-              {`${rpShort(dd.dana_darurat_saat_ini || 0)} / ${rpShort(dd.dana_darurat_target || 0)}`}
+              {`${String(ddBulan).replace('.', ',')} bulan`}
             </T>
           </>
         ) : (
-          <T w={800} size={18}>{dd === null ? '–' : `${analysis?.dashboard?.dana_darurat_bulan || 0} bln`}</T>
+          <T w={800} size={18}>–</T>
         )}
       </Card>
     </View>
@@ -251,9 +270,15 @@ function TargetCards({ targets, go }) {
       </View>
       {targets.slice(0, 3).map((t, i) => {
         const opsiA = t.opsi_a_menabung;
+        // Pakai harga_saat_ini (field asli flow 4) dan waktu_tercapai dari opsi_a_menabung
+        const harga = t.harga_saat_ini ?? t.harga_target ?? t.harga ?? 0;
+        const statusLabel = opsiA?.waktu_tercapai || t.tenggat || '';
+        // Progress: gunakan persen_tercapai jika ada, fallback ke 0
         const progress = opsiA?.persen_tercapai != null ? opsiA.persen_tercapai / 100 : 0;
-        const statusLabel = opsiA?.waktu_tercapai || (t.status_opsi_a || '');
-        const tone = t.label_kesulitan === 'Realistis' ? 'teal' : 'gold';
+        // Kesulitan: gunakan status dari flow 4 (realistis/perlu_penyesuaian)
+        const isRealistis = (t.status || t.label_kesulitan || '').toLowerCase().startsWith('realistis');
+        const tone = isRealistis ? 'teal' : 'gold';
+        const toneLabel = isRealistis ? 'Realistis' : (t.label_kesulitan || 'Perlu perhatian');
         return (
           <View key={i} style={{ gap: 6 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -262,9 +287,9 @@ function TargetCards({ targets, go }) {
               </View>
               <View style={{ flex: 1 }}>
                 <T w={700} size={14}>{t.nama}</T>
-                <T size={11} color={C.muted}>{`${rpShort(t.harga_target || t.harga || 0)} · ${statusLabel}`}</T>
+                <T size={11} color={C.muted}>{`${rpShort(harga)} · ${statusLabel}`}</T>
               </View>
-              <Chip label={t.label_kesulitan || 'Proses'} tone={tone} />
+              <Chip label={toneLabel} tone={tone} />
             </View>
             <Bar ratio={progress} color={tone === 'teal' ? C.teal : C.gold} height={8} />
           </View>
@@ -276,31 +301,132 @@ function TargetCards({ targets, go }) {
 
 // ─── Kartu roadmap mini ───────────────────────────────────────────────────
 
-function RoadmapCard({ karier, usaha, go }) {
-  const k = karier?.hasil?.rekomendasi?.[0];
-  const u = usaha?.hasil?.rekomendasi?.[0];
+function RoadmapCard({ uid, karier, usaha, go }) {
+  // Ambil nama dari hasil flow 5/6 yang tersimpan
+  const karierNama = karier?.hasil?.rekomendasi?.[0]?.profesi;
+  const usahaNama = usaha?.hasil?.rekomendasi?.[0]?.usaha || usaha?.hasil?.rekomendasi?.[0]?.nama;
+
+  // ── Budi: karier DS + kopi keliling ──────────────────────────────
+  if (uid === 'budi') {
+    return (
+      <Card style={{ gap: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Icon name="route" size={20} color={C.teal} />
+          <T w={800} size={15} style={{ flex: 1 }}>Roadmap-mu</T>
+        </View>
+        <Pressable onPress={() => go('karier')} accessibilityRole="button" accessibilityLabel="Buka layar Karier"
+          style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+          <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: C.soft, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="briefcase" size={19} color={C.teal} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <T w={700} size={14}>{karierNama || 'Data Scientist'}</T>
+            <T size={12} color={C.muted}>Jalur karier baru yang kamu targetkan</T>
+          </View>
+        </Pressable>
+        <Pressable onPress={() => go('usaha')} accessibilityRole="button" accessibilityLabel="Buka layar Usaha"
+          style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+          <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: C.goldSoft, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="store" size={19} color={C.warn} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <T w={700} size={14}>{usahaNama || 'Kopi keliling sampingan'}</T>
+            <T size={12} color={C.muted}>Usaha sampingan sedang dieksplorasi</T>
+          </View>
+        </Pressable>
+      </Card>
+    );
+  }
+
+  // ── Agus: usaha keluarga + roadmap rumah ─────────────────────────
+  if (uid === 'agus') {
+    return (
+      <Card style={{ gap: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Icon name="route" size={20} color={C.teal} />
+          <T w={800} size={15} style={{ flex: 1 }}>Roadmap-mu</T>
+        </View>
+        <Pressable onPress={() => go('usaha')} accessibilityRole="button" accessibilityLabel="Buka layar Usaha"
+          style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+          <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: C.goldSoft, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="store" size={19} color={C.warn} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <T w={700} size={14}>Usaha keluarga: bengkel + kelontong</T>
+            <T size={12} color={C.muted}>Dua usaha yang sudah berjalan</T>
+          </View>
+        </Pressable>
+        <Pressable onPress={() => go('roadmap')} accessibilityRole="button" accessibilityLabel="Buka layar Roadmap"
+          style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+          <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: C.soft, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="home" size={19} color={C.teal} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <T w={700} size={14}>Roadmap rumah</T>
+            <T size={12} color={C.muted}>Simulasi dan rencana beli rumah</T>
+          </View>
+        </Pressable>
+      </Card>
+    );
+  }
+
+  // ── Dini: jurusan + karier ────────────────────────────────────────
+  if (uid === 'dini') {
+    return (
+      <Card style={{ gap: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Icon name="route" size={20} color={C.teal} />
+          <T w={800} size={15} style={{ flex: 1 }}>Roadmap-mu</T>
+        </View>
+        <Pressable onPress={() => go('pendidikan')} accessibilityRole="button" accessibilityLabel="Buka layar Pendidikan"
+          style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+          <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: C.soft, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="target" size={19} color={C.teal} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <T w={700} size={14}>Jurusan &amp; kampus</T>
+            <T size={12} color={C.muted}>Pilih jurusan yang paling cocok untukmu</T>
+          </View>
+        </Pressable>
+        <Pressable onPress={() => go('karier')} accessibilityRole="button" accessibilityLabel="Buka layar Karier"
+          style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+          <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: C.goldSoft, alignItems: 'center', justifyContent: 'center' }}>
+            <Icon name="briefcase" size={19} color={C.warn} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <T w={700} size={14}>Pilihan karier</T>
+            <T size={12} color={C.muted}>Profesi yang bisa kamu tuju setelah lulus</T>
+          </View>
+        </Pressable>
+      </Card>
+    );
+  }
+
+  // ── Pengguna baru / belum mengisi data ───────────────────────────
   return (
     <Card style={{ gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Icon name="route" size={20} color={C.teal} />
         <T w={800} size={15} style={{ flex: 1 }}>Roadmap-mu</T>
       </View>
-      <Pressable onPress={() => go('karier')} accessibilityRole="button" style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+      <Pressable onPress={() => go('karier')} accessibilityRole="button" accessibilityLabel="Buka layar Karier"
+        style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
         <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: C.soft, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="briefcase" size={19} color={C.teal} />
         </View>
         <View style={{ flex: 1 }}>
-          <T w={700} size={14}>{k ? k.profesi : 'Temukan arah kariermu'}</T>
-          <T size={12} color={C.muted}>{k ? `Kecocokan ${k.skor_kecocokan}` : 'Cocokkan minat & skill dengan data profesi'}</T>
+          <T w={700} size={14}>Temukan arah kariermu</T>
+          <T size={12} color={C.muted}>Cocokkan minat &amp; skill dengan data profesi</T>
         </View>
       </Pressable>
-      <Pressable onPress={() => go('usaha')} accessibilityRole="button" style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+      <Pressable onPress={() => go('usaha')} accessibilityRole="button" accessibilityLabel="Buka layar Usaha"
+        style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
         <View style={{ width: 38, height: 38, borderRadius: 12, backgroundColor: C.goldSoft, alignItems: 'center', justifyContent: 'center' }}>
           <Icon name="store" size={19} color={C.warn} />
         </View>
         <View style={{ flex: 1 }}>
-          <T w={700} size={14}>{u ? u.usaha : 'Jelajahi peluang usaha'}</T>
-          <T size={12} color={C.muted}>{u ? `Modal awal ${rpShort(u.modal_awal || 0)}` : 'Simulasi modal, laba, dan balik modal'}</T>
+          <T w={700} size={14}>Jelajahi peluang usaha</T>
+          <T size={12} color={C.muted}>Simulasi modal, laba, dan balik modal</T>
         </View>
       </Pressable>
     </Card>
@@ -360,22 +486,24 @@ function SkillBar({ skor }) {
 
 // ─── Rekomendasi jurusan Dini ──────────────────────────────────────────────
 
-function JurusanList({ rekomendasi, go }) {
-  const list = rekomendasi?.slice(0, 3) || [];
+// JurusanList pakai rekomendasi_jurusan[] dari flow 5 mode pelajar
+// field: jurusan, skor_kecocokan, karier_terkait[]
+function JurusanList({ rekomendasiJurusan, go }) {
+  const list = rekomendasiJurusan?.slice(0, 3) || [];
   if (!list.length) return null;
   const maxSkor = 100;
   return (
     <Card style={{ gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <T w={800} size={15} style={{ flex: 1 }}>Rekomendasi jurusan</T>
-        <Pressable onPress={() => go('karier')} accessibilityRole="button">
+        <Pressable onPress={() => go('pendidikan')} accessibilityRole="button">
           <T w={700} size={12} color={C.teal}>Kampus</T>
         </Pressable>
       </View>
       {list.map((r, i) => {
-        const skor = r.skor_kecocokan ?? r.skor ?? 0;
-        const nama = r.profesi ?? r.jurusan ?? r.nama ?? '–';
-        const karier = r.jalur_pendapatan?.[0] || '';
+        const skor = r.skor_kecocokan ?? 0;
+        const nama = r.jurusan ?? r.nama ?? '–';
+        const karierTerkait = r.karier_terkait?.[0] || '';
         return (
           <View key={i} style={{ gap: 4 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
@@ -383,7 +511,7 @@ function JurusanList({ rekomendasi, go }) {
               <T w={800} size={14} color={i < 2 ? C.teal : C.muted}>{skor}</T>
             </View>
             <Bar ratio={skor / maxSkor} color={i < 2 ? C.teal : C.line} height={8} />
-            {karier ? <T size={11} color={C.muted}>{`Karier: ${karier}`}</T> : null}
+            {karierTerkait ? <T size={11} color={C.muted}>{`Karier: ${karierTerkait}`}</T> : null}
           </View>
         );
       })}
@@ -393,28 +521,28 @@ function JurusanList({ rekomendasi, go }) {
 
 // ─── Hero card Dini: jurusan terbaik ──────────────────────────────────────
 
-function DiniHeroCard({ rekomendasi }) {
-  const top = rekomendasi?.[0];
-  const second = rekomendasi?.[1];
+// DiniHeroCard pakai rekomendasi_jurusan[] (bukan rekomendasi/profesi)
+function DiniHeroCard({ rekomendasiJurusan }) {
+  const top = rekomendasiJurusan?.[0];
+  const second = rekomendasiJurusan?.[1];
   if (!top && !second) return null;
-  const basis = top?.jalur_belajar?.[0] || 'minat, skill, dan aktivitas';
   return (
     <Card tone="teal" style={{ gap: 10, borderRadius: 24, padding: 16 }}>
       <T size={12} color="rgba(255,255,255,0.85)">Jurusan kuliah paling cocok untukmu</T>
       {top ? (
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
-          <T w={800} size={19} color={C.white} style={{ flex: 1 }}>{top.profesi ?? top.jurusan ?? '–'}</T>
-          <T w={800} size={18} color={C.gold}>{top.skor_kecocokan ?? top.skor ?? ''}</T>
+          <T w={800} size={19} color={C.white} style={{ flex: 1 }}>{top.jurusan ?? '–'}</T>
+          <T w={800} size={18} color={C.gold}>{top.skor_kecocokan ?? ''}</T>
         </View>
       ) : null}
       {second ? (
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', gap: 10 }}>
-          <T w={700} size={16} color={C.white} style={{ flex: 1 }}>{second.profesi ?? second.jurusan ?? '–'}</T>
-          <T w={800} size={16} color={C.gold}>{second.skor_kecocokan ?? second.skor ?? ''}</T>
+          <T w={700} size={16} color={C.white} style={{ flex: 1 }}>{second.jurusan ?? '–'}</T>
+          <T w={800} size={16} color={C.gold}>{second.skor_kecocokan ?? ''}</T>
         </View>
       ) : null}
       <T size={12} color="rgba(255,255,255,0.9)" style={{ lineHeight: 18 }}>
-        {`Dihitung dari ${basis}.`}
+        Berdasarkan minat, skill, dan aktivitasmu.
       </T>
     </Card>
   );
@@ -426,7 +554,7 @@ function SkillProfile({ skills, minat }) {
   return (
     <Card style={{ gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <T w={800} size={15} style={{ flex: 1 }}>Profil kemampuan</T>
+        <T w={800} size={15} style={{ flex: 1 }}>Kemampuan</T>
         <Chip label={`${skills.length} skill`} />
       </View>
       {skills.map((s, i) => (
@@ -537,21 +665,18 @@ export default function Home({ go }) {
   const barsIncome = isDini
     ? MONTHS_DEMO.map(() => ({ val: 1500000, income: 1500000 }))
     : MONTHS_DEMO.map((_, i) => ({
-        income: (d?.pengeluaran || 5500000) * (0.94 + i * 0.01),
-        extra: (d?.pendapatan || 7500000) - (d?.pengeluaran || 5500000),
+        income: (d?.pengeluaran) * (0.94 + i * 0.01),
+        extra: (d?.pendapatan) - (d?.pengeluaran),
       }));
 
-  // Pengeluaran breakdown untuk donat (gunakan alokasi_bulan_ini jika ada)
-  const alokasi = analysis?.alokasi_bulan_ini;
-  const donutItems = alokasi
-    ? Object.entries(alokasi)
-        .filter(([, v]) => v > 0)
-        .map(([k, v], i) => ({
-          label: k.replace(/_/g, ' '),
-          nilai: v,
-          color: ['#0F4C47', '#1F6F66', '#5DCAA5', '#F2A93B', '#E8C27A', '#D85A30', '#B8C9C5'][i % 7],
-        }))
+  // Pengeluaran breakdown untuk donat: pakai rincian pengeluaran dari persona, diurutkan dari terbesar
+  const donutColors = ['#0F4C47', '#1F6F66', '#5DCAA5', '#F2A93B', '#E8C27A', '#D85A30', '#B8C9C5'];
+  const personaPengeluaran = persona?.keuangan?.pengeluaran;
+  const donutItemsRaw = personaPengeluaran && personaPengeluaran.length > 0
+    ? personaPengeluaran.map((p) => ({ label: p.label, nilai: Number(p.nominal) || 0 }))
     : [];
+  const donutItemsSorted = [...donutItemsRaw].sort((a, b) => b.nilai - a.nilai);
+  const donutItems = donutItemsSorted.map((p, i) => ({ ...p, color: donutColors[i % donutColors.length] }));
 
   return (
     <Screen refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.teal} />}>
@@ -581,16 +706,16 @@ export default function Home({ go }) {
       ) : isDini ? (
         /* ── DINI: Career-discovery layout ─────────────────── */
         <>
-          {/* Hero: jurusan terbaik dari Langflow */}
-          <DiniHeroCard rekomendasi={karier?.hasil?.rekomendasi} />
+          {/* Hero: jurusan terbaik — pakai rekomendasi_jurusan[] dari flow 5 mode pelajar */}
+          <DiniHeroCard rekomendasiJurusan={karier?.hasil?.rekomendasi_jurusan} />
 
-          {/* Profil kemampuan (dari persona.js) */}
+          {/* Kemampuan (dari persona.js) */}
           {persona?.skills ? <SkillProfile skills={persona.skills} minat={persona.minat} /> : null}
 
-          {/* Jurusan dari flow karier */}
-          <JurusanList rekomendasi={karier?.hasil?.rekomendasi} go={go} />
+          {/* Daftar jurusan dari flow 5 mode pelajar */}
+          <JurusanList rekomendasiJurusan={karier?.hasil?.rekomendasi_jurusan} go={go} />
 
-          {/* Karier pilihan setelah lulus */}
+          {/* Karier pilihan setelah lulus — tetap pakai rekomendasi[] (profesi) */}
           <KarierCards rekomendasi={karier?.hasil?.rekomendasi} go={go} />
 
           {/* Keuangan pelajar ringkas */}
@@ -602,6 +727,9 @@ export default function Home({ go }) {
 
           {/* Hutang & dana darurat */}
           <DebtEmergencyRow analysis={analysis} />
+
+          {/* Roadmap-mu */}
+          <RoadmapCard uid={userId} karier={karier} usaha={usaha} go={go} />
 
           {/* Saran utama dari Langflow */}
           <TopReco text={analysis?.rekomendasi_utama?.[0]} />
@@ -625,15 +753,22 @@ export default function Home({ go }) {
             note={d?.sisa != null ? `Rata-rata sisa ${rpShort(d.sisa)}` : undefined}
           />
 
-          {/* Donat pengeluaran */}
+          {/* Donat pengeluaran — kartu bisa diketuk ke layar Pengeluaran */}
           {donutItems.length > 0 ? (
-            <Card style={{ gap: 12 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <T w={800} size={15} style={{ flex: 1 }}>Pengeluaran bulan ini</T>
-                <Chip label={cleanStatus(d?.status_pengeluaran) || 'Sehat'} />
-              </View>
-              <DonutChart items={donutItems} total={d?.pengeluaran || 0} />
-            </Card>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Lihat rincian pengeluaran bulan ini"
+              onPress={() => go('pengeluaran', { from: 'home' })}
+            >
+              <Card style={{ gap: 12 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <T w={800} size={15} style={{ flex: 1 }}>Pengeluaran rumah tangga bulan ini</T>
+                  <Chip label={cleanStatus(d?.status_pengeluaran) || 'Sehat'} />
+                </View>
+                <DonutChart items={donutItems} total={d?.pengeluaran || 0} />
+                <T size={12} color={C.teal} style={{ textAlign: 'right' }}>Lihat semua ›</T>
+              </Card>
+            </Pressable>
           ) : null}
 
           {/* Hutang & dana darurat */}
@@ -657,8 +792,8 @@ export default function Home({ go }) {
           {/* Tujuan */}
           <TargetCards targets={targets} go={go} />
 
-          {/* Roadmap mini */}
-          <RoadmapCard karier={karier} usaha={usaha} go={go} />
+          {/* Roadmap mini — per-persona */}
+          <RoadmapCard uid={userId} karier={karier} usaha={usaha} go={go} />
 
           {/* Saran utama */}
           <TopReco text={analysis?.rekomendasi_utama?.[0]} />

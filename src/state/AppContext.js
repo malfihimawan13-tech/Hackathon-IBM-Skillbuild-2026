@@ -65,6 +65,7 @@ export function AppProvider({ children }) {
   const [chat, setChat] = useState([]);
   const [karier, setKarier] = useState(null);
   const [usaha, setUsaha] = useState(null);
+  const [skenario, setSkenario] = useState({});
   const loaded = useRef(false);
 
   useEffect(() => {
@@ -83,6 +84,7 @@ export function AppProvider({ children }) {
           if (s.chat) setChat(s.chat.slice(-40));
           if (s.karier) setKarier(s.karier);
           if (s.usaha) setUsaha(s.usaha);
+          if (s.skenario) setSkenario(s.skenario);
         }
       } catch (_) { /* penyimpanan kosong atau rusak: mulai baru */ }
       loaded.current = true;
@@ -93,9 +95,9 @@ export function AppProvider({ children }) {
   useEffect(() => {
     if (!loaded.current) return;
     AsyncStorage.setItem(STORE_KEY, JSON.stringify({
-      activeUserId, settings, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chat: chat.slice(-40), karier, usaha,
+      activeUserId, settings, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chat: chat.slice(-40), karier, usaha, skenario,
     })).catch(() => {});
-  }, [activeUserId, settings, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chat, karier, usaha]);
+  }, [activeUserId, settings, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chat, karier, usaha, skenario]);
 
   const live = !settings.demo;
   // Pengguna aktif: hanya dari activeUserId (layar Masuk). settings.userId lama diabaikan.
@@ -254,9 +256,125 @@ export function AppProvider({ children }) {
       : 'Langflow dan flow CITA terhubung, data pengguna ditemukan.';
   }, [settings, activeUserId]);
 
+  // Muat semua skenario Budi: dasar, DS, DA, kopi pesimis, DS+kopi pesimis, DS+kopi moderat.
+  // Dipanggil dari Roadmap saat data karier & usaha sudah tersedia.
+  const loadSkenarioBudi = useCallback(async () => {
+    // Ambil simulasi_siap_pakai dari karier (DS dan DA)
+    const karierHasil = karier?.hasil?.rekomendasi || [];
+    const dsReko = karierHasil.find((r) => r.id === 'data_scientist');
+    const daReko = karierHasil.find((r) => r.id === 'data_analyst');
+    // Ambil simulasi kopi dari usaha
+    const usahaHasil = usaha?.hasil?.rekomendasi || [];
+    const kopiReko = usahaHasil.find((r) => r.id === 'kopi_keliling');
+    const kopiPesimis = kopiReko?.simulasi_siap_pakai_per_skenario?.pesimis;
+    const kopiModerat = kopiReko?.simulasi_siap_pakai_per_skenario?.moderat;
+
+    if (!live) {
+      // Mode demo: gunakan karier_simulasi dari demoData
+      const d = demoForUser('budi');
+      const ks = d.karier_simulasi || {};
+      setSkenario((prev) => ({
+        ...prev,
+        budi: {
+          dasar: ks.data_scientist ? { sesudah: ks.data_scientist.sebelum } : null,
+          data_scientist: ks.data_scientist || null,
+          data_analyst: ks.data_analyst || null,
+          kopi_pesimis: ks.kopi_pesimis || null,
+          data_scientist_kopi_pesimis: ks.data_scientist_kopi_pesimis || null,
+          data_scientist_kopi_moderat: ks.data_scientist_kopi_moderat || null,
+        },
+      }));
+      return;
+    }
+
+    requireUser();
+    const run = async (simulasi) => {
+      const payload = { user_id: userId };
+      if (simulasi) payload.simulasi = simulasi;
+      const r = await callTool(settings, 'analisis', payload);
+      if (r.status === 'data_belum_lengkap') throw new Error(r.pesan);
+      return r;
+    };
+
+    const [rDasar, rDS, rDA, rKopiP, rDSKopiP, rDSKopiM] = await Promise.all([
+      run(null),
+      dsReko?.simulasi_siap_pakai ? run(dsReko.simulasi_siap_pakai) : Promise.resolve(null),
+      daReko?.simulasi_siap_pakai ? run(daReko.simulasi_siap_pakai) : Promise.resolve(null),
+      kopiPesimis ? run(kopiPesimis) : Promise.resolve(null),
+      (dsReko?.simulasi_siap_pakai && kopiPesimis)
+        ? run({
+            jadwal_pendapatan: dsReko.simulasi_siap_pakai.jadwal_pendapatan,
+            pendapatan_tambahan_jadwal: kopiPesimis.pendapatan_tambahan_jadwal,
+            biaya_awal: kopiPesimis.biaya_awal,
+          })
+        : Promise.resolve(null),
+      (dsReko?.simulasi_siap_pakai && kopiModerat)
+        ? run({
+            jadwal_pendapatan: dsReko.simulasi_siap_pakai.jadwal_pendapatan,
+            pendapatan_tambahan_jadwal: kopiModerat.pendapatan_tambahan_jadwal,
+            biaya_awal: kopiModerat.biaya_awal,
+          })
+        : Promise.resolve(null),
+    ]);
+
+    // Bungkus hasil analisis menjadi format {sebelum, sesudah} seperti demo untuk konsistensi
+    const wrap = (rBefore, rAfter) => rAfter ? {
+      sebelum: {
+        sisa: rBefore?.dashboard?.sisa,
+        skor: rBefore?.dashboard?.skor_kesehatan,
+        target: Object.fromEntries((rBefore?.target || []).map((t) => [t.nama, t.opsi_a_menabung?.waktu_tercapai])),
+      },
+      sesudah: {
+        sisa: rAfter?.dashboard?.sisa,
+        skor: rAfter?.dashboard?.skor_kesehatan,
+        target: Object.fromEntries((rAfter?.target || []).map((t) => [t.nama, t.opsi_a_menabung?.waktu_tercapai])),
+      },
+    } : null;
+
+    setSkenario((prev) => ({
+      ...prev,
+      budi: {
+        dasar: rDasar ? wrap(rDasar, rDasar) : null,
+        data_scientist: wrap(rDasar, rDS),
+        data_analyst: wrap(rDasar, rDA),
+        kopi_pesimis: wrap(rDasar, rKopiP),
+        data_scientist_kopi_pesimis: wrap(rDasar, rDSKopiP),
+        data_scientist_kopi_moderat: wrap(rDasar, rDSKopiM),
+      },
+    }));
+  }, [live, settings, userId, karier, usaha, requireUser]);
+
+  // Simpan pengeluaran yang diubah: kirim data lengkap ke flow 2, lalu tandai skenario perlu dimuat ulang.
+  // PENTING: flow 2 INSERT OR REPLACE, harus selalu sertakan hutang dan tabungan.
+  const savePengeluaran = useCallback(async (uid, pengeluaranItems) => {
+    if (!live) throw new Error('Mode demo aktif. Matikan Mode Demo untuk menyimpan perubahan.');
+    const id = (uid || userId).trim().toLowerCase().replace(/\s+/g, '_');
+    if (!id) throw new Error('User ID belum diisi.');
+    // Susun pengeluaran sebagai objek {label: nominal}
+    const pengeluaran = {};
+    pengeluaranItems.forEach((e) => { if (e.nominal >= 0) pengeluaran[e.label] = Number(e.nominal) || 0; });
+    // Ambil hutang dan tabungan dari persona (data asli, bukan hasil hitung)
+    const persona = findPersona(id);
+    const keu = persona?.keuangan || {};
+    const hutang = (keu.hutang || []).map((h) => {
+      const o = { nama: h.nama || 'Hutang', jenis: h.jenis || 'lainnya', cicilan_bulanan: Number(h.cicilan_bulanan) || 0, sisa_pokok: Number(h.sisa_pokok) || 0, sisa_tenor_bulan: Number(h.sisa_tenor_bulan) || 0 };
+      if (h.bunga_tahunan != null) o.bunga_tahunan = Number(h.bunga_tahunan) || 0;
+      return o;
+    });
+    const tabungan_saat_ini = Number(keu.tabungan_saat_ini) || 0;
+    // Simpan ke persona lokal supaya layar lain ikut berubah sebelum analisis kembali
+    if (persona) {
+      persona.keuangan.pengeluaran = pengeluaranItems.map((e) => ({ label: e.label, nominal: e.nominal }));
+    }
+    const r = await callTool(settings, 'keuangan', { user_id: id, pengeluaran, hutang, tabungan_saat_ini });
+    // Tandai skenario perlu dimuat ulang (kosongkan skenario untuk user ini)
+    setSkenario((prev) => { const next = { ...prev }; delete next[id]; return next; });
+    return r;
+  }, [live, settings, userId]);
+
   const deleteAllData = useCallback(async () => {
     if (live && userId) await callTool(settings, 'hapus', { user_id: userId, konfirmasi: true });
-    setAnalysis(null); setUpdatedAt(null); setChat([]); setKarier(null); setUsaha(null);
+    setAnalysis(null); setUpdatedAt(null); setChat([]); setKarier(null); setUsaha(null); setSkenario({});
     setProfilDraft(EMPTY_PROFIL); setKeuanganDraft(EMPTY_KEUANGAN); setPsikologi({});
   }, [live, settings, userId]);
 
@@ -265,7 +383,7 @@ export function AppProvider({ children }) {
   const loginAs = useCallback(async (uid) => {
     const id = uid.trim().toLowerCase().replace(/\s+/g, '_');
     // reset state sesi sebelumnya
-    setAnalysis(null); setUpdatedAt(null); setChat([]); setKarier(null); setUsaha(null);
+    setAnalysis(null); setUpdatedAt(null); setChat([]); setKarier(null); setUsaha(null); setSkenario({});
     setProfilDraft(EMPTY_PROFIL); setKeuanganDraft(EMPTY_KEUANGAN); setPsikologi({});
     setActiveUserId(id);
     // Muat analisis: pakai mode live jika server dikonfigurasi, fallback ke demo
@@ -324,17 +442,17 @@ export function AppProvider({ children }) {
   // Kembali ke layar Masuk
   const logout = useCallback(() => {
     setActiveUserId(null);
-    setAnalysis(null); setUpdatedAt(null); setChat([]); setKarier(null); setUsaha(null);
+    setAnalysis(null); setUpdatedAt(null); setChat([]); setKarier(null); setUsaha(null); setSkenario({});
     setProfilDraft(EMPTY_PROFIL); setKeuanganDraft(EMPTY_KEUANGAN); setPsikologi({});
   }, []);
 
   const value = useMemo(() => ({
     ready, settings, setSettings, live, userId, activeUserId,
-    profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chat, setChat, karier, usaha,
-    exploreKarier, exploreUsaha, exploreUsahaKopi, simulateRoadmap, refreshAnalysis, submitOnboarding, searchPrice, addTarget, removeTarget, whatIf, askCoach,
-    testConnection, deleteAllData, loginAs, logout,
-  }), [ready, settings, live, userId, activeUserId, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chat, karier, usaha,
-    exploreKarier, exploreUsaha, exploreUsahaKopi, simulateRoadmap, refreshAnalysis, submitOnboarding, searchPrice, addTarget, removeTarget, whatIf, askCoach, testConnection, deleteAllData, loginAs, logout]);
+    profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chat, setChat, karier, usaha, skenario,
+    exploreKarier, exploreUsaha, exploreUsahaKopi, simulateRoadmap, loadSkenarioBudi, refreshAnalysis, submitOnboarding, searchPrice, addTarget, removeTarget, whatIf, askCoach,
+    testConnection, deleteAllData, loginAs, logout, savePengeluaran,
+  }), [ready, settings, live, userId, activeUserId, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chat, karier, usaha, skenario,
+    exploreKarier, exploreUsaha, exploreUsahaKopi, simulateRoadmap, loadSkenarioBudi, refreshAnalysis, submitOnboarding, searchPrice, addTarget, removeTarget, whatIf, askCoach, testConnection, deleteAllData, loginAs, logout, savePengeluaran]);
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }

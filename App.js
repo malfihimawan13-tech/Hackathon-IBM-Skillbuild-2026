@@ -24,6 +24,7 @@ import Usaha from './src/screens/Usaha';
 import Masuk from './src/screens/Masuk';
 import Roadmap from './src/screens/Roadmap';
 import Pendidikan from './src/screens/Pendidikan';
+import Pengeluaran from './src/screens/Pengeluaran';
 
 // Tab ke-2 bergantung persona: Karier untuk Budi/Dini, Usaha untuk Agus
 function getTabs(userId) {
@@ -41,7 +42,7 @@ function getTabs(userId) {
 
 function BottomNav({ active, go, userId }) {
   const insets = useSafeAreaInsets();
-  const activeTab = ['cari', 'tujuan'].includes(active) ? 'keuangan' : active;
+  const activeTab = ['cari', 'tujuan', 'pengeluaran'].includes(active) ? 'keuangan' : active;
   const TABS = getTabs(userId);
   return (
     <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: C.white, borderTopWidth: 1, borderTopColor: C.line, flexDirection: 'row', paddingHorizontal: 6, paddingTop: 6, paddingBottom: Math.max(insets.bottom, 8) }}
@@ -102,7 +103,7 @@ function Root() {
     openOnboarding: isDemoPersona ? undefined : () => setOnboarding(true),
     onLogout: () => { setRoute({ name: 'home', params: null }); app.logout(); },
   };
-  const screens = { home: Home, karier: Karier, usaha: Usaha, roadmap: Roadmap, pendidikan: Pendidikan, keuangan: Keuangan, tujuan: Tujuan, cari: Cari, chat: Chat, profil: Profil };
+  const screens = { home: Home, karier: Karier, usaha: Usaha, roadmap: Roadmap, pendidikan: Pendidikan, keuangan: Keuangan, tujuan: Tujuan, cari: Cari, chat: Chat, profil: Profil, pengeluaran: Pengeluaran };
   const Screen = screens[route.name] || Home;
   return (
     <View style={{ flex: 1, backgroundColor: C.ground }}>
