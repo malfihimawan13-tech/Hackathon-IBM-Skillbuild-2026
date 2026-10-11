@@ -4,6 +4,7 @@ import Svg, { Circle, Line, Path, Polyline, Text as SvgText } from 'react-native
 import { useApp } from '../state/AppContext';
 import { DEMO } from '../api/demoData';
 import { findPersona } from '../state/persona';
+// Note: DEMO is used as fallback in DiniKarier
 import { Bar, Button, Card, Chip, ErrorBox, KV, Screen, ScreenHeader, T } from '../components/ui';
 import { ImpactCard } from '../components/forms';
 import Icon from '../components/Icon';
@@ -223,18 +224,69 @@ function DetailCard({ h, isTarget }) {
 }
 
 // ── Budi: compare table ───────────────────────────────────────────
-function BandingkanJalur({ rekomendasi, karier_simulasi }) {
+// Dalam mode live: memuat simulasi tiap profesi dari Langflow saat komponen mount.
+// Dalam mode demo: memakai karier_simulasi yang sudah ada.
+function BandingkanJalur({ rekomendasi }) {
   if (!rekomendasi?.length) return null;
-  const sim = karier_simulasi || {};
+  const app = useApp();
+  const [simData, setSimData] = React.useState({});
+  const [loading, setLoading] = React.useState(false);
+
+  React.useEffect(() => {
+    if (app.live) {
+      // Muat simulasi dari Langflow untuk setiap profesi
+      setLoading(true);
+      Promise.allSettled(
+        rekomendasi.map((r) =>
+          r.simulasi_siap_pakai
+            ? app.simulateRoadmap(r.simulasi_siap_pakai, null)
+                .then((res) => ({ id: r.id, perbandingan: res.perbandingan }))
+            : Promise.resolve(null),
+        ),
+      ).then((results) => {
+        const map = {};
+        results.forEach((res) => {
+          if (res.status === 'fulfilled' && res.value) {
+            map[res.value.id] = res.value.perbandingan;
+          }
+        });
+        setSimData(map);
+        setLoading(false);
+      });
+    } else {
+      // Mode demo: ambil dari DEMO.budi.karier_simulasi
+      const d = app.analysis ? {} : {};
+      // simulasi tersedia via simulateRoadmap dengan demoKey
+      // Pra-muat semua skenario karier dari demo
+      Promise.allSettled(
+        rekomendasi.map((r) =>
+          app.simulateRoadmap(r.simulasi_siap_pakai, ['karier', r.id])
+            .then((res) => ({ id: r.id, perbandingan: res.perbandingan }))
+            .catch(() => null),
+        ),
+      ).then((results) => {
+        const map = {};
+        results.forEach((res) => {
+          if (res.status === 'fulfilled' && res.value) {
+            map[res.value.id] = res.value.perbandingan;
+          }
+        });
+        setSimData(map);
+      });
+    }
+  }, [app.live]); // eslint-disable-line
+
+  const gajiSekarang = app.analysis?.dashboard?.pendapatan || 9000000;
+
   return (
     <Card style={{ gap: 10 }}>
       <T w={800} size={15}>Bandingkan jalur</T>
+      {loading && <T size={12} color={C.muted}>Memuat perbandingan…</T>}
       {rekomendasi.map((r) => {
-        const s = sim[r.id]?.sesudah;
+        const s = simData[r.id]?.sesudah;
         const targetAvanza = s?.target?.['Toyota Avanza'];
         const tahap0 = r.jalur_pendapatan?.tahapan?.[0];
         const gajiAwal = tahap0 ? tahap0.nilai_tengah : null;
-        const gajiSekarang = 9000000;
         const selisih = gajiAwal != null ? gajiAwal - gajiSekarang : null;
         return (
           <View key={r.id} style={{ gap: 2 }}>
@@ -333,7 +385,7 @@ function BudiKarier({ go }) {
             <DetailCard key={sorted[sel].id} h={sorted[sel]} isTarget={sorted[sel].id === 'data_scientist'} />
           )}
 
-          <BandingkanJalur rekomendasi={sorted} karier_simulasi={DEMO.karier_simulasi} />
+          <BandingkanJalur rekomendasi={sorted} />
 
           {/* Portfolio suggestions */}
           <Card style={{ gap: 10 }}>
@@ -362,8 +414,9 @@ function DiniKarier({ go }) {
   const rekomendasi = hasil?.rekomendasi || [];
   const [sel, setSel] = useState(0);
 
-  // Fallback data from DEMO
-  const reko = rekomendasi.length ? rekomendasi : (DEMO.karier?.rekomendasi || []);
+  // Fallback data from DEMO.dini.karier
+  const demoKarier = (DEMO.dini || DEMO.budi || {}).karier;
+  const reko = rekomendasi.length ? rekomendasi : (demoKarier?.rekomendasi || []);
 
   // compare table data
   const compareData = [

@@ -1,663 +1,4789 @@
-// Data demo dihasilkan dari backend myCITA asli (persona Budi). Dipakai saat Mode Demo aktif.
+// Data demo dihasilkan otomatis oleh scripts/ambil-data-demo.mjs dari Langflow.
+// JANGAN DIEDIT MANUAL. Jalankan kembali skrip untuk memperbarui.
+// Dihasilkan: 2026-10-10T18:14:59.095Z
+
 export const DEMO = {
- "profil_input": {
-  "user_id": "budi",
-  "nama": "Budi Santoso",
-  "jenis_kelamin": "laki-laki",
-  "tanggal_lahir": "1998-05-12",
-  "kota": "Bogor",
-  "pendidikan_terakhir": "S1",
-  "status_pernikahan": "single",
-  "pekerjaan": [
-   {
-    "nama": "Software Engineer",
-    "jenis": "full_time",
-    "lama_kerja_bulan": 24,
-    "penghasilan": 7000000
+ "budi": {
+  "analisis": {
+   "status": "ok",
+   "user_id": "budi",
+   "mode": "analisis",
+   "pesan": "Analisis selesai dan tersimpan.",
+   "ringkasan": "Budi: pendapatan Rp7.500.000, pengeluaran Rp5.500.000, sisa Rp2.000.000. Skor kesehatan 100/100 (Sangat sehat 🟢), saving rate 26.7%. Target Menikah: dengan menabung tercapai dalam 3 tahun. Target Mobil: dengan menabung tercapai dalam 22 tahun 1 bulan.",
+   "dashboard": {
+    "nama": "Budi",
+    "pendapatan": 7500000,
+    "pengeluaran": 5500000,
+    "sisa": 2000000,
+    "skor_kesehatan": 100,
+    "status": "Sangat sehat 🟢",
+    "saving_rate_persen": 26.7
    },
-   {
-    "nama": "Freelance Web Developer",
-    "jenis": "freelance",
-    "lama_kerja_bulan": 12,
-    "penghasilan": 2000000,
-    "penghasilan_min": 1000000
+   "kesehatan_keuangan": {
+    "penghasilan": 7500000,
+    "penghasilan_konservatif": 7500000,
+    "pengeluaran_rutin": 5500000,
+    "pengeluaran_keinginan": 300000,
+    "total_cicilan": 0,
+    "total_pengeluaran": 5500000,
+    "disposable_income": 2000000,
+    "kapasitas_menabung": 2000000,
+    "saving_rate_persen": 26.7,
+    "rasio_cicilan_persen": 0,
+    "rasio_keinginan_persen": 4,
+    "rincian_skor": {
+     "saving_rate (maks 30)": 30,
+     "rasio_cicilan (maks 25)": 25,
+     "dana_darurat (maks 25)": 25,
+     "pengeluaran_keinginan (maks 10)": 10,
+     "hutang_berbunga_tinggi (maks 10)": 10
+    },
+    "skor": 100,
+    "status": "Sangat sehat 🟢"
+   },
+   "dana_darurat": {
+    "dana_likuid_saat_ini": 35000000,
+    "cukup_untuk_bulan": 6.4,
+    "target_minimum": 16500000,
+    "target_ideal": 33000000,
+    "target_dipakai": 16500000,
+    "kekurangan": 0,
+    "perkiraan_waktu_terpenuhi": "sudah tercapai"
+   },
+   "alokasi_bulan_ini": {
+    "kapasitas_menabung": 2000000,
+    "untuk_dana_darurat": 0,
+    "untuk_target": 2000000,
+    "catatan": "Alokasi berubah otomatis: setelah dana darurat terpenuhi atau cicilan lunas, dananya dialihkan ke target."
+   },
+   "strategi_hutang": [],
+   "target": [
+    {
+     "nama": "Menikah",
+     "kategori": "menikah",
+     "prioritas": 1,
+     "harga_saat_ini": 60000000,
+     "sumber_harga": "diisi pengguna",
+     "kenaikan_harga_per_tahun_persen": 4,
+     "tenggat_bulan": 36,
+     "tenggat": "3 tahun",
+     "setoran_bulan_pertama": 1360884,
+     "opsi_a_menabung": {
+      "waktu_tercapai_bulan": 36,
+      "waktu_tercapai": "3 tahun",
+      "perkiraan_harga_saat_tercapai": 67491840,
+      "jika_hanya_fokus_target_ini": "2 tahun",
+      "harga_saat_tenggat": 67491840,
+      "tercapai_sesuai_tenggat": true
+     },
+     "catatan_kredit": "Kredit/pinjaman tidak disarankan untuk tujuan konsumtif ini; prioritaskan menabung.",
+     "status": "realistis",
+     "opsi_disarankan": "menabung"
+    },
+    {
+     "nama": "Mobil",
+     "kategori": "mobil",
+     "prioritas": 2,
+     "harga_saat_ini": 250000000,
+     "sumber_harga": "diisi pengguna",
+     "kenaikan_harga_per_tahun_persen": 3,
+     "tenggat_bulan": 60,
+     "tenggat": "5 tahun",
+     "setoran_bulan_pertama": 639116,
+     "opsi_a_menabung": {
+      "waktu_tercapai_bulan": 265,
+      "waktu_tercapai": "22 tahun 1 bulan",
+      "perkiraan_harga_saat_tercapai": 480207259,
+      "jika_hanya_fokus_target_ini": "15 tahun 11 bulan",
+      "harga_saat_tenggat": 289818519,
+      "tercapai_sesuai_tenggat": false
+     },
+     "opsi_b_kredit": {
+      "dp_persen": 20,
+      "dp": 56972824,
+      "waktu_kumpulkan_dp_bulan": 53,
+      "waktu_kumpulkan_dp": "4 tahun 5 bulan",
+      "perkiraan_harga_saat_beli": 284864120,
+      "pinjaman": 227891296,
+      "bunga_tahunan_persen": 10,
+      "cicilan_lama_saat_itu": 0,
+      "pilihan_tenor": [
+       {
+        "tenor_tahun": 3,
+        "cicilan_bulanan": 7353411,
+        "total_bunga": 36831504,
+        "total_dibayar": 321695624,
+        "rasio_cicilan_setelah_kredit_persen": 98,
+        "aman": false
+       },
+       {
+        "tenor_tahun": 4,
+        "cicilan_bulanan": 5779912,
+        "total_bunga": 49544480,
+        "total_dibayar": 334408600,
+        "rasio_cicilan_setelah_kredit_persen": 77.1,
+        "aman": false
+       },
+       {
+        "tenor_tahun": 5,
+        "cicilan_bulanan": 4842017,
+        "total_bunga": 62629697,
+        "total_dibayar": 347493817,
+        "rasio_cicilan_setelah_kredit_persen": 64.6,
+        "aman": false
+       }
+      ],
+      "tenor_aman_terpendek": null
+     },
+     "opsi_c_kombinasi": {
+      "dp_persen": 35,
+      "dp": 106035189,
+      "waktu_kumpulkan_dp_bulan": 78,
+      "waktu_kumpulkan_dp": "6 tahun 6 bulan",
+      "perkiraan_harga_saat_beli": 302957682,
+      "pinjaman": 196922493,
+      "bunga_tahunan_persen": 10,
+      "cicilan_lama_saat_itu": 0,
+      "pilihan_tenor": [
+       {
+        "tenor_tahun": 3,
+        "cicilan_bulanan": 6354135,
+        "total_bunga": 31826365,
+        "total_dibayar": 334784047,
+        "rasio_cicilan_setelah_kredit_persen": 84.7,
+        "aman": false
+       },
+       {
+        "tenor_tahun": 4,
+        "cicilan_bulanan": 4994463,
+        "total_bunga": 42811739,
+        "total_dibayar": 345769421,
+        "rasio_cicilan_setelah_kredit_persen": 66.6,
+        "aman": false
+       },
+       {
+        "tenor_tahun": 5,
+        "cicilan_bulanan": 4184021,
+        "total_bunga": 54118768,
+        "total_dibayar": 357076450,
+        "rasio_cicilan_setelah_kredit_persen": 55.8,
+        "aman": false
+       }
+      ],
+      "tenor_aman_terpendek": null,
+      "keterangan": "Menabung lebih lama untuk DP 35% agar pinjaman dan total bunga lebih kecil."
+     },
+     "status": "perlu_penyesuaian",
+     "opsi_disarankan": "sesuaikan_rencana",
+     "alternatif": {
+      "tambahan_tabungan_per_bulan_agar_tepat_waktu": 3646839,
+      "harga_maksimal_terjangkau_sesuai_tenggat": 61000000,
+      "perpanjang_tenggat_menjadi": "22 tahun 1 bulan"
+     }
+    }
+   ],
+   "rekomendasi_utama": [
+    "Target 'Mobil' belum realistis dalam 5 tahun. Pilihan: perpanjang tenggat menjadi 22 tahun 1 bulan, atau turunkan budget ke ±Rp61.000.000, atau tambah tabungan/penghasilan ±Rp3.646.839/bulan."
+   ],
+   "psikologi": null,
+   "asumsi": {
+    "inflasi_umum_persen": 3.2,
+    "kenaikan_harga_persen": {
+     "rumah": 4,
+     "rumah_subsidi": 3,
+     "mobil": 3,
+     "motor": 3,
+     "menikah": 4,
+     "pendidikan": 6,
+     "default": 3.2
+    },
+    "bunga_kredit_persen": {
+     "rumah": 11,
+     "rumah_subsidi": 5,
+     "mobil": 10,
+     "motor": 15
+    },
+    "dp_persen": {
+     "rumah": 20,
+     "rumah_subsidi": 1,
+     "mobil": 20,
+     "motor": 15
+    },
+    "tenor_tahun": {
+     "rumah": [
+      10,
+      15,
+      20
+     ],
+     "rumah_subsidi": [
+      10,
+      15,
+      20
+     ],
+     "mobil": [
+      3,
+      4,
+      5
+     ],
+     "motor": [
+      1,
+      2,
+      3
+     ]
+    },
+    "imbal_hasil_tabungan_persen": 0,
+    "kenaikan_penghasilan_persen": 0,
+    "pakai_penghasilan_konservatif": false,
+    "batas_aman_cicilan_persen": 30,
+    "porsi_dana_darurat_persen": 50
+   },
+   "sumber_asumsi": [
+    "Inflasi umum 3,2%: inflasi tahunan Indonesia Agustus 2026 tercatat 3,19% (BPS via Databoks); sasaran BI 2,5±1%.",
+    "Bunga KPR 11%: bunga floating KPR BCA 11% (Mandiri 13%, CIMB Niaga 13,5%), Kontan Agustus 2026.",
+    "KPR subsidi 5% tetap dan batas harga rumah subsidi Rp166-185 juta: Kompas.com 2026.",
+    "Kenaikan harga barang, bunga kredit kendaraan, DP, dan porsi alokasi adalah asumsi myCITA yang dapat diubah.",
+    "Penghasilan dan pengeluaran dianggap tetap (konservatif); ubah 'kenaikan_penghasilan_persen' untuk skenario kenaikan gaji."
+   ],
+   "disclaimer": "myCITA adalah alat edukasi dan perencanaan keuangan, bukan nasihat investasi atau rekomendasi produk keuangan tertentu. Semua angka adalah estimasi berdasarkan data yang kamu isi dan asumsi yang tercantum."
+  },
+  "simulasi_gaji": null,
+  "karier": {
+   "status": "ok",
+   "user_id": "budi",
+   "pesan": "Eksplorasi karier selesai: Data Scientist, Supply Chain Analyst, Data Analyst.",
+   "rekomendasi_jurusan": [],
+   "mode_pelajar": false,
+   "rekomendasi": [
+    {
+     "id": "data_scientist",
+     "profesi": "Data Scientist",
+     "bidang": "Teknologi & Data",
+     "skor_kecocokan": 71,
+     "target_pengguna": true,
+     "alasan": [
+      "Cocok dengan minatmu: , a, ai, c, d, data, e, i, komputer, matematika, n, s, t.",
+      "Kamu sudah punya 2 dari 4 skill wajib.",
+      "Perlu diperdalam (masih level dasar): statistik & probabilitas, machine learning."
+     ],
+     "deskripsi": "Membangun model statistik dan machine learning untuk memprediksi, mengelompokkan, atau mengotomatiskan keputusan bisnis.",
+     "jenjang_karier": [
+      "Junior Data Scientist",
+      "Data Scientist",
+      "Senior Data Scientist",
+      "Lead Data Scientist",
+      "Head of Data Science"
+     ],
+     "pendidikan_umum": "S1 Informatika, Statistika, Matematika, Sains Data, atau setara; jalur umum: dari Data Analyst dengan portofolio machine learning",
+     "skill_sudah_dimiliki": [
+      "Python (pandas, scikit-learn)",
+      "SQL",
+      "deep learning"
+     ],
+     "skill_perlu_diperdalam": [
+      "statistik & probabilitas",
+      "machine learning"
+     ],
+     "skill_gap_wajib": [],
+     "skill_gap_pendukung": [
+      "deployment model (MLOps dasar)",
+      "komunikasi hasil analisis"
+     ],
+     "jalur_pendapatan": {
+      "tahapan": [
+       {
+        "tahap": "entry",
+        "rentang_min": 7000000,
+        "rentang_max": 11000000,
+        "nilai_tengah": 9000000,
+        "perkiraan_tahun_ke": "0-2",
+        "sumber": [
+         "Glassdoor via Tempo Institute (Januari 2026)"
+        ]
+       },
+       {
+        "tahap": "mid",
+        "rentang_min": 8000000,
+        "rentang_max": 19166667,
+        "nilai_tengah": 11750000,
+        "perkiraan_tahun_ke": "2-5",
+        "sumber": [
+         "Glassdoor - Data Scientist Jakarta (Februari 2026)",
+         "Glassdoor via Tempo Institute (Januari 2026)"
+        ]
+       },
+       {
+        "tahap": "senior",
+        "rentang_min": 20000000,
+        "rentang_max": 35000000,
+        "nilai_tengah": 27500000,
+        "perkiraan_tahun_ke": "5-seterusnya",
+        "sumber": [
+         "KantorKu - Gaji Data Scientist 2026 (2026)"
+        ]
+       }
+      ]
+     },
+     "jalur_belajar": {
+      "jalur_utama": [],
+      "opsional_jangka_panjang": [
+       {
+        "program": "Sertifikasi BNSP Data Analyst",
+        "jenis": "Sertifikasi kompetensi",
+        "biaya_min": 800000,
+        "biaya_max": 2500000,
+        "satuan": "per sertifikasi",
+        "durasi": "pembekalan ±5-7 hari",
+        "sumber": "LSP Ditekindo; dilatih.co (2026)"
+       },
+       {
+        "program": "Universitas Terbuka - S1 Sains Data",
+        "jenis": "Kuliah jarak jauh",
+        "biaya_min": 1900000,
+        "biaya_max": 1900000,
+        "satuan": "per semester",
+        "durasi": "±8 semester",
+        "sumber": "Kompas.com Edu (2026)"
+       }
+      ],
+      "estimasi_biaya_jalur_utama": {
+       "min": 0,
+       "max": 0
+      },
+      "catatan": [
+       "Jalur utama lewat portofolio dan belajar mandiri; biaya bootcamp spesifik belum ada di database."
+      ]
+     },
+     "perkiraan_persiapan_bulan": 4,
+     "rekomendasi_pendidikan": [
+      {
+       "jurusan": "S1 Sains Data / Statistika",
+       "skill_dibangun": [
+        "statistik",
+        "Python",
+        "SQL",
+        "visualisasi data",
+        "machine learning dasar"
+       ],
+       "biaya_referensi": [
+        {
+         "program": "Universitas Terbuka - S1 Sains Data",
+         "biaya_min": 1900000,
+         "biaya_max": 1900000,
+         "satuan": "per semester",
+         "sumber": "Kompas.com Edu (2026)"
+        },
+        {
+         "program": "UKT Universitas Indonesia - S1",
+         "biaya_min": 500000,
+         "biaya_max": 16900000,
+         "satuan": "per semester",
+         "sumber": "Kontan (rilis UKT UI 2026) (2026)"
+        }
+       ]
+      },
+      {
+       "jurusan": "S1 Informatika / Ilmu Komputer",
+       "skill_dibangun": [
+        "pemrograman",
+        "struktur data & algoritma",
+        "basis data",
+        "rekayasa perangkat lunak"
+       ],
+       "biaya_referensi": [
+        {
+         "program": "UKT Universitas Indonesia - S1",
+         "biaya_min": 500000,
+         "biaya_max": 16900000,
+         "satuan": "per semester",
+         "sumber": "Kontan (rilis UKT UI 2026) (2026)"
+        },
+        {
+         "program": "Universitas Terbuka - S1 (umum)",
+         "biaya_min": 1300000,
+         "biaya_max": 1300000,
+         "satuan": "per semester",
+         "sumber": "Kompas.com Edu; laman admisi UT (2026)"
+        }
+       ]
+      },
+      {
+       "jurusan": "S1 Matematika / Statistika",
+       "skill_dibangun": [
+        "statistik & probabilitas",
+        "pemodelan matematika",
+        "analisis data"
+       ],
+       "biaya_referensi": [
+        {
+         "program": "UKT Universitas Indonesia - S1",
+         "biaya_min": 500000,
+         "biaya_max": 16900000,
+         "satuan": "per semester",
+         "sumber": "Kontan (rilis UKT UI 2026) (2026)"
+        },
+        {
+         "program": "Universitas Terbuka - S1 (umum)",
+         "biaya_min": 1300000,
+         "biaya_max": 1300000,
+         "satuan": "per semester",
+         "sumber": "Kompas.com Edu; laman admisi UT (2026)"
+        }
+       ]
+      },
+      {
+       "jurusan": "Jalur non-gelar: bootcamp + sertifikasi",
+       "skill_dibangun": [
+        "skill praktis sesuai program",
+        "portofolio proyek"
+       ],
+       "biaya_referensi": [
+        {
+         "program": "Bootcamp Data Analyst (umum)",
+         "biaya_min": 2000000,
+         "biaya_max": 40000000,
+         "satuan": "per program",
+         "sumber": "tempatbelajar.id (2026)"
+        },
+        {
+         "program": "Sertifikasi BNSP (skema umum)",
+         "biaya_min": 800000,
+         "biaya_max": 1500000,
+         "satuan": "per sertifikasi",
+         "sumber": "LSP Ditekindo (2026)"
+        }
+       ]
+      }
+     ],
+     "portofolio_disarankan": [
+      "Model prediksi (mis. churn/harga) end-to-end dengan scikit-learn",
+      "Analisis eksploratif + uji statistik di Jupyter Notebook",
+      "Model yang di-deploy sebagai API/web app sederhana (Streamlit)"
+     ],
+     "roadmap_karier": [
+      {
+       "fase": "Tutup skill gap",
+       "mulai_bulan": 0,
+       "selesai_bulan": 2,
+       "fokus": [
+        "Perdalam: statistik & probabilitas, machine learning",
+        "Tetap bekerja di pekerjaan sekarang selama belajar"
+       ]
+      },
+      {
+       "fase": "Portofolio & melamar",
+       "mulai_bulan": 2,
+       "selesai_bulan": 4,
+       "fokus": [
+        "Selesaikan portofolio: Model prediksi (mis. churn/harga) end-to-end dengan scikit-learn; Analisis eksploratif + uji statistik di Jupyter Notebook",
+        "Lamar posisi Junior Data Scientist"
+       ]
+      },
+      {
+       "fase": "Junior Data Scientist",
+       "mulai_bulan": 4,
+       "selesai_bulan": 28,
+       "fokus": [
+        "Perkiraan gaji Rp7.000.000 - Rp11.000.000/bulan"
+       ],
+       "pendapatan": {
+        "min": 7000000,
+        "max": 11000000
+       }
+      },
+      {
+       "fase": "Data Scientist",
+       "mulai_bulan": 28,
+       "selesai_bulan": 64,
+       "fokus": [
+        "Perkiraan gaji Rp8.000.000 - Rp19.166.667/bulan"
+       ],
+       "pendapatan": {
+        "min": 8000000,
+        "max": 19166667
+       }
+      },
+      {
+       "fase": "Senior Data Scientist",
+       "mulai_bulan": 64,
+       "selesai_bulan": null,
+       "fokus": [
+        "Perkiraan gaji Rp20.000.000 - Rp35.000.000/bulan"
+       ],
+       "pendapatan": {
+        "min": 20000000,
+        "max": 35000000
+       }
+      }
+     ],
+     "jadwal_pendapatan_untuk_simulasi": [
+      {
+       "mulai_bulan": 0,
+       "penghasilan": 7500000,
+       "keterangan": "penghasilan pekerjaan utama saat ini"
+      },
+      {
+       "mulai_bulan": 4,
+       "penghasilan": 9000000,
+       "keterangan": "perkiraan tahap entry (nilai tengah rentang)"
+      },
+      {
+       "mulai_bulan": 28,
+       "penghasilan": 11750000,
+       "keterangan": "perkiraan tahap mid (nilai tengah rentang)"
+      },
+      {
+       "mulai_bulan": 64,
+       "penghasilan": 27500000,
+       "keterangan": "perkiraan tahap senior (nilai tengah rentang)"
+      }
+     ],
+     "simulasi_siap_pakai": {
+      "jadwal_pendapatan": [
+       {
+        "mulai_bulan": 0,
+        "penghasilan": 7500000,
+        "keterangan": "penghasilan pekerjaan utama saat ini"
+       },
+       {
+        "mulai_bulan": 4,
+        "penghasilan": 9000000,
+        "keterangan": "perkiraan tahap entry (nilai tengah rentang)"
+       },
+       {
+        "mulai_bulan": 28,
+        "penghasilan": 11750000,
+        "keterangan": "perkiraan tahap mid (nilai tengah rentang)"
+       },
+       {
+        "mulai_bulan": 64,
+        "penghasilan": 27500000,
+        "keterangan": "perkiraan tahap senior (nilai tengah rentang)"
+       }
+      ]
+     },
+     "selisih_tahap_awal_vs_sekarang": 1500000
+    },
+    {
+     "id": "supply_chain_analyst",
+     "profesi": "Supply Chain Analyst",
+     "bidang": "Rantai Pasok",
+     "skor_kecocokan": 83,
+     "target_pengguna": false,
+     "alasan": [
+      "Cocok dengan minatmu: , a, ai, c, d, data, e, i, komputer, n, s, t.",
+      "Kamu sudah punya 3 dari 4 skill wajib.",
+      "Pengalaman kerjamu sangat relevan, jadi bisa masuk tanpa mulai dari nol.",
+      "Perhatian: gaji tahap awal diperkirakan lebih rendah Rp250.000/bulan dari pekerjaan utamamu sekarang sebelum naik di tahap berikutnya."
+     ],
+     "deskripsi": "Menganalisis data persediaan, pemasok, dan distribusi untuk menekan biaya dan mencegah kehabisan stok.",
+     "jenjang_karier": [
+      "Supply Chain Staff",
+      "Supply Chain Analyst",
+      "Senior Analyst",
+      "Supply Chain Supervisor/Lead",
+      "Supply Chain Manager"
+     ],
+     "pendidikan_umum": "S1 Teknik Industri, Manajemen, Statistik, atau Logistik; sertifikasi analisis data membantu",
+     "skill_sudah_dimiliki": [
+      "Excel lanjutan (pivot, lookup)",
+      "SQL dasar",
+      "dashboard (Power BI/Looker Studio)",
+      "Python dasar"
+     ],
+     "skill_perlu_diperdalam": [],
+     "skill_gap_wajib": [
+      "analisis persediaan"
+     ],
+     "skill_gap_pendukung": [
+      "forecasting",
+      "pengetahuan pengadaan & distribusi"
+     ],
+     "jalur_pendapatan": {
+      "tahapan": [
+       {
+        "tahap": "entry",
+        "rentang_min": 4000000,
+        "rentang_max": 10000000,
+        "nilai_tengah": 7250000,
+        "perkiraan_tahun_ke": "0-2",
+        "sumber": [
+         "HRBS Global - Average Salary in Indonesia 2026 (2026)",
+         "KantorKu - Gaji Supply Chain Staff 2026 (2026)"
+        ]
+       },
+       {
+        "tahap": "senior",
+        "rentang_min": 12000000,
+        "rentang_max": 20000000,
+        "nilai_tengah": 16000000,
+        "perkiraan_tahun_ke": "5-seterusnya",
+        "sumber": [
+         "HRBS Global - Average Salary in Indonesia 2026 (2026)"
+        ]
+       }
+      ]
+     },
+     "jalur_belajar": {
+      "jalur_utama": [
+       {
+        "program": "Google Data Analytics Professional Certificate (Coursera)",
+        "jenis": "Kursus online bersertifikat",
+        "biaya_min": null,
+        "biaya_max": null,
+        "satuan": "±USD 49 per bulan",
+        "durasi": "beberapa bulan, mandiri",
+        "sumber": "tempatbelajar.id (rangkuman bootcamp 2026) (2026)"
+       },
+       {
+        "program": "Sertifikasi BNSP Data Analyst",
+        "jenis": "Sertifikasi kompetensi",
+        "biaya_min": 800000,
+        "biaya_max": 2500000,
+        "satuan": "per sertifikasi",
+        "durasi": "pembekalan ±5-7 hari",
+        "sumber": "LSP Ditekindo; dilatih.co (2026)"
+       }
+      ],
+      "opsional_jangka_panjang": [
+       {
+        "program": "Universitas Terbuka - S1 (umum)",
+        "jenis": "Kuliah jarak jauh (cocok sambil bekerja)",
+        "biaya_min": 1300000,
+        "biaya_max": 1300000,
+        "satuan": "per semester",
+        "durasi": "±8 semester",
+        "sumber": "Kompas.com Edu; laman admisi UT (2026)"
+       }
+      ],
+      "estimasi_biaya_jalur_utama": {
+       "min": 800000,
+       "max": 2500000
+      },
+      "catatan": [
+       "Sebagian program berbiaya langganan (lihat satuan), belum termasuk di total."
+      ]
+     },
+     "perkiraan_persiapan_bulan": 6,
+     "rekomendasi_pendidikan": [
+      {
+       "jurusan": "S1 Teknik Industri",
+       "skill_dibangun": [
+        "perencanaan produksi",
+        "analisis data",
+        "optimasi proses",
+        "manajemen persediaan"
+       ],
+       "biaya_referensi": [
+        {
+         "program": "UKT Universitas Indonesia - S1",
+         "biaya_min": 500000,
+         "biaya_max": 16900000,
+         "satuan": "per semester",
+         "sumber": "Kontan (rilis UKT UI 2026) (2026)"
+        },
+        {
+         "program": "Universitas Terbuka - S1 (umum)",
+         "biaya_min": 1300000,
+         "biaya_max": 1300000,
+         "satuan": "per semester",
+         "sumber": "Kompas.com Edu; laman admisi UT (2026)"
+        }
+       ]
+      },
+      {
+       "jurusan": "S1 Manajemen",
+       "skill_dibangun": [
+        "manajemen",
+        "pemasaran",
+        "keuangan dasar",
+        "kepemimpinan"
+       ],
+       "biaya_referensi": [
+        {
+         "program": "UKT Universitas Indonesia - S1",
+         "biaya_min": 500000,
+         "biaya_max": 16900000,
+         "satuan": "per semester",
+         "sumber": "Kontan (rilis UKT UI 2026) (2026)"
+        },
+        {
+         "program": "Universitas Terbuka - S1 (umum)",
+         "biaya_min": 1300000,
+         "biaya_max": 1300000,
+         "satuan": "per semester",
+         "sumber": "Kompas.com Edu; laman admisi UT (2026)"
+        }
+       ]
+      },
+      {
+       "jurusan": "S1 Teknik Industri",
+       "skill_dibangun": [
+        "perencanaan produksi",
+        "optimasi",
+        "statistik industri"
+       ],
+       "biaya_referensi": [
+        {
+         "program": "UKT Universitas Indonesia - S1",
+         "biaya_min": 500000,
+         "biaya_max": 16900000,
+         "satuan": "per semester",
+         "sumber": "Kontan (rilis UKT UI 2026) (2026)"
+        },
+        {
+         "program": "Universitas Terbuka - S1 (umum)",
+         "biaya_min": 1300000,
+         "biaya_max": 1300000,
+         "satuan": "per semester",
+         "sumber": "Kompas.com Edu; laman admisi UT (2026)"
+        }
+       ]
+      }
+     ],
+     "portofolio_disarankan": [
+      "Dashboard persediaan & perputaran stok (Power BI/Looker Studio)",
+      "Analisis ABC/XYZ produk dengan SQL",
+      "Forecast permintaan sederhana dengan Excel/Python"
+     ],
+     "roadmap_karier": [
+      {
+       "fase": "Tutup skill gap",
+       "mulai_bulan": 0,
+       "selesai_bulan": 4,
+       "fokus": [
+        "Pelajari: analisis persediaan",
+        "Tetap bekerja di pekerjaan sekarang selama belajar"
+       ]
+      },
+      {
+       "fase": "Portofolio & melamar",
+       "mulai_bulan": 4,
+       "selesai_bulan": 6,
+       "fokus": [
+        "Selesaikan portofolio: Dashboard persediaan & perputaran stok (Power BI/Looker Studio); Analisis ABC/XYZ produk dengan SQL",
+        "Lamar posisi Supply Chain Staff"
+       ]
+      },
+      {
+       "fase": "Supply Chain Staff",
+       "mulai_bulan": 6,
+       "selesai_bulan": 66,
+       "fokus": [
+        "Perkiraan gaji Rp4.000.000 - Rp10.000.000/bulan"
+       ],
+       "pendapatan": {
+        "min": 4000000,
+        "max": 10000000
+       }
+      },
+      {
+       "fase": "Senior Analyst",
+       "mulai_bulan": 66,
+       "selesai_bulan": null,
+       "fokus": [
+        "Perkiraan gaji Rp12.000.000 - Rp20.000.000/bulan"
+       ],
+       "pendapatan": {
+        "min": 12000000,
+        "max": 20000000
+       }
+      }
+     ],
+     "jadwal_pendapatan_untuk_simulasi": [
+      {
+       "mulai_bulan": 0,
+       "penghasilan": 7500000,
+       "keterangan": "penghasilan pekerjaan utama saat ini"
+      },
+      {
+       "mulai_bulan": 6,
+       "penghasilan": 7250000,
+       "keterangan": "perkiraan tahap entry (nilai tengah rentang)"
+      },
+      {
+       "mulai_bulan": 66,
+       "penghasilan": 16000000,
+       "keterangan": "perkiraan tahap senior (nilai tengah rentang)"
+      }
+     ],
+     "simulasi_siap_pakai": {
+      "jadwal_pendapatan": [
+       {
+        "mulai_bulan": 0,
+        "penghasilan": 7500000,
+        "keterangan": "penghasilan pekerjaan utama saat ini"
+       },
+       {
+        "mulai_bulan": 6,
+        "penghasilan": 7250000,
+        "keterangan": "perkiraan tahap entry (nilai tengah rentang)"
+       },
+       {
+        "mulai_bulan": 66,
+        "penghasilan": 16000000,
+        "keterangan": "perkiraan tahap senior (nilai tengah rentang)"
+       }
+      ]
+     },
+     "selisih_tahap_awal_vs_sekarang": -250000
+    },
+    {
+     "id": "data_analyst",
+     "profesi": "Data Analyst",
+     "bidang": "Teknologi & Data",
+     "skor_kecocokan": 76,
+     "target_pengguna": false,
+     "alasan": [
+      "Cocok dengan minatmu: , a, c, d, data, e, i, komputer, matematika, n, s, t.",
+      "Kamu sudah punya 3 dari 4 skill wajib.",
+      "Perlu diperdalam (masih level dasar): statistik dasar.",
+      "Perhatian: gaji tahap awal diperkirakan lebih rendah Rp500.000/bulan dari pekerjaan utamamu sekarang sebelum naik di tahap berikutnya."
+     ],
+     "deskripsi": "Mengolah data menjadi laporan dan dashboard untuk membantu keputusan bisnis.",
+     "jenjang_karier": [
+      "Junior Data Analyst",
+      "Data Analyst",
+      "Senior Data Analyst",
+      "Analytics Lead",
+      "Head of Data/Analytics"
+     ],
+     "pendidikan_umum": "S1 berbagai jurusan (Statistik, Matematika, Informatika, Sistem Informasi, Teknik Industri); banyak career switcher masuk lewat bootcamp + portofolio",
+     "skill_sudah_dimiliki": [
+      "Excel/Google Sheets",
+      "SQL",
+      "visualisasi data (Power BI/Tableau/Looker Studio)",
+      "Python (pandas)",
+      "storytelling data"
+     ],
+     "skill_perlu_diperdalam": [
+      "statistik dasar"
+     ],
+     "skill_gap_wajib": [],
+     "skill_gap_pendukung": [
+      "pemahaman bisnis"
+     ],
+     "jalur_pendapatan": {
+      "tahapan": [
+       {
+        "tahap": "entry",
+        "rentang_min": 5000000,
+        "rentang_max": 9000000,
+        "nilai_tengah": 7000000,
+        "perkiraan_tahun_ke": "0-2",
+        "sumber": [
+         "HRBS Global - Average Salary in Indonesia 2026 (2026)"
+        ]
+       },
+       {
+        "tahap": "mid",
+        "rentang_min": 7635417,
+        "rentang_max": 14000000,
+        "nilai_tengah": 10000000,
+        "perkiraan_tahun_ke": "2-5",
+        "sumber": [
+         "Glassdoor - Data Analyst Jakarta (Oktober 2026)"
+        ]
+       },
+       {
+        "tahap": "senior",
+        "rentang_min": 15000000,
+        "rentang_max": 28000000,
+        "nilai_tengah": 21500000,
+        "perkiraan_tahun_ke": "5-seterusnya",
+        "sumber": [
+         "HRBS Global - Average Salary in Indonesia 2026 (2026)"
+        ]
+       }
+      ]
+     },
+     "jalur_belajar": {
+      "jalur_utama": [
+       {
+        "program": "Bootcamp Data Analyst (umum)",
+        "jenis": "Bootcamp",
+        "biaya_min": 2000000,
+        "biaya_max": 40000000,
+        "satuan": "per program",
+        "durasi": "1-6 bulan",
+        "sumber": "tempatbelajar.id (2026)"
+       },
+       {
+        "program": "Sertifikasi BNSP Data Analyst",
+        "jenis": "Sertifikasi kompetensi",
+        "biaya_min": 800000,
+        "biaya_max": 2500000,
+        "satuan": "per sertifikasi",
+        "durasi": "pembekalan ±5-7 hari",
+        "sumber": "LSP Ditekindo; dilatih.co (2026)"
+       }
+      ],
+      "opsional_jangka_panjang": [
+       {
+        "program": "Universitas Terbuka - S1 Sains Data",
+        "jenis": "Kuliah jarak jauh",
+        "biaya_min": 1900000,
+        "biaya_max": 1900000,
+        "satuan": "per semester",
+        "durasi": "±8 semester",
+        "sumber": "Kompas.com Edu (2026)"
+       }
+      ],
+      "estimasi_biaya_jalur_utama": {
+       "min": 2800000,
+       "max": 42500000
+      },
+      "catatan": []
+     },
+     "perkiraan_persiapan_bulan": 3,
+     "rekomendasi_pendidikan": [
+      {
+       "jurusan": "S1 Sistem Informasi",
+       "skill_dibangun": [
+        "basis data/SQL",
+        "analisis sistem",
+        "pemrograman",
+        "manajemen proyek TI"
+       ],
+       "biaya_referensi": [
+        {
+         "program": "Universitas Terbuka - S1 Sistem Informasi",
+         "biaya_min": 1800000,
+         "biaya_max": 1800000,
+         "satuan": "per semester",
+         "sumber": "Kompas.com Edu (2026)"
+        },
+        {
+         "program": "UKT Universitas Indonesia - S1",
+         "biaya_min": 500000,
+         "biaya_max": 16900000,
+         "satuan": "per semester",
+         "sumber": "Kontan (rilis UKT UI 2026) (2026)"
+        }
+       ]
+      },
+      {
+       "jurusan": "S1 Sains Data / Statistika",
+       "skill_dibangun": [
+        "statistik",
+        "Python",
+        "SQL",
+        "visualisasi data",
+        "machine learning dasar"
+       ],
+       "biaya_referensi": [
+        {
+         "program": "Universitas Terbuka - S1 Sains Data",
+         "biaya_min": 1900000,
+         "biaya_max": 1900000,
+         "satuan": "per semester",
+         "sumber": "Kompas.com Edu (2026)"
+        },
+        {
+         "program": "UKT Universitas Indonesia - S1",
+         "biaya_min": 500000,
+         "biaya_max": 16900000,
+         "satuan": "per semester",
+         "sumber": "Kontan (rilis UKT UI 2026) (2026)"
+        }
+       ]
+      },
+      {
+       "jurusan": "S1 Informatika / Ilmu Komputer",
+       "skill_dibangun": [
+        "pemrograman",
+        "struktur data & algoritma",
+        "basis data",
+        "rekayasa perangkat lunak"
+       ],
+       "biaya_referensi": [
+        {
+         "program": "UKT Universitas Indonesia - S1",
+         "biaya_min": 500000,
+         "biaya_max": 16900000,
+         "satuan": "per semester",
+         "sumber": "Kontan (rilis UKT UI 2026) (2026)"
+        },
+        {
+         "program": "Universitas Terbuka - S1 (umum)",
+         "biaya_min": 1300000,
+         "biaya_max": 1300000,
+         "satuan": "per semester",
+         "sumber": "Kompas.com Edu; laman admisi UT (2026)"
+        }
+       ]
+      },
+      {
+       "jurusan": "S1 Matematika / Statistika",
+       "skill_dibangun": [
+        "statistik & probabilitas",
+        "pemodelan matematika",
+        "analisis data"
+       ],
+       "biaya_referensi": [
+        {
+         "program": "UKT Universitas Indonesia - S1",
+         "biaya_min": 500000,
+         "biaya_max": 16900000,
+         "satuan": "per semester",
+         "sumber": "Kontan (rilis UKT UI 2026) (2026)"
+        },
+        {
+         "program": "Universitas Terbuka - S1 (umum)",
+         "biaya_min": 1300000,
+         "biaya_max": 1300000,
+         "satuan": "per semester",
+         "sumber": "Kompas.com Edu; laman admisi UT (2026)"
+        }
+       ]
+      },
+      {
+       "jurusan": "Jalur non-gelar: bootcamp + sertifikasi",
+       "skill_dibangun": [
+        "skill praktis sesuai program",
+        "portofolio proyek"
+       ],
+       "biaya_referensi": [
+        {
+         "program": "Bootcamp Data Analyst (umum)",
+         "biaya_min": 2000000,
+         "biaya_max": 40000000,
+         "satuan": "per program",
+         "sumber": "tempatbelajar.id (2026)"
+        },
+        {
+         "program": "Sertifikasi BNSP (skema umum)",
+         "biaya_min": 800000,
+         "biaya_max": 1500000,
+         "satuan": "per sertifikasi",
+         "sumber": "LSP Ditekindo (2026)"
+        }
+       ]
+      }
+     ],
+     "portofolio_disarankan": [
+      "Dashboard penjualan interaktif (Power BI/Looker Studio)",
+      "Analisis data publik (mis. BPS/Kaggle) dengan SQL + Python",
+      "Laporan insight bisnis 1 halaman dari dataset nyata"
+     ],
+     "roadmap_karier": [
+      {
+       "fase": "Tutup skill gap",
+       "mulai_bulan": 0,
+       "selesai_bulan": 1,
+       "fokus": [
+        "Perdalam: statistik dasar",
+        "Tetap bekerja di pekerjaan sekarang selama belajar"
+       ]
+      },
+      {
+       "fase": "Portofolio & melamar",
+       "mulai_bulan": 1,
+       "selesai_bulan": 3,
+       "fokus": [
+        "Selesaikan portofolio: Dashboard penjualan interaktif (Power BI/Looker Studio); Analisis data publik (mis. BPS/Kaggle) dengan SQL + Python",
+        "Lamar posisi Junior Data Analyst"
+       ]
+      },
+      {
+       "fase": "Junior Data Analyst",
+       "mulai_bulan": 3,
+       "selesai_bulan": 27,
+       "fokus": [
+        "Perkiraan gaji Rp5.000.000 - Rp9.000.000/bulan"
+       ],
+       "pendapatan": {
+        "min": 5000000,
+        "max": 9000000
+       }
+      },
+      {
+       "fase": "Data Analyst",
+       "mulai_bulan": 27,
+       "selesai_bulan": 63,
+       "fokus": [
+        "Perkiraan gaji Rp7.635.417 - Rp14.000.000/bulan"
+       ],
+       "pendapatan": {
+        "min": 7635417,
+        "max": 14000000
+       }
+      },
+      {
+       "fase": "Senior Data Analyst",
+       "mulai_bulan": 63,
+       "selesai_bulan": null,
+       "fokus": [
+        "Perkiraan gaji Rp15.000.000 - Rp28.000.000/bulan"
+       ],
+       "pendapatan": {
+        "min": 15000000,
+        "max": 28000000
+       }
+      }
+     ],
+     "jadwal_pendapatan_untuk_simulasi": [
+      {
+       "mulai_bulan": 0,
+       "penghasilan": 7500000,
+       "keterangan": "penghasilan pekerjaan utama saat ini"
+      },
+      {
+       "mulai_bulan": 3,
+       "penghasilan": 7000000,
+       "keterangan": "perkiraan tahap entry (nilai tengah rentang)"
+      },
+      {
+       "mulai_bulan": 27,
+       "penghasilan": 10000000,
+       "keterangan": "perkiraan tahap mid (nilai tengah rentang)"
+      },
+      {
+       "mulai_bulan": 63,
+       "penghasilan": 21500000,
+       "keterangan": "perkiraan tahap senior (nilai tengah rentang)"
+      }
+     ],
+     "simulasi_siap_pakai": {
+      "jadwal_pendapatan": [
+       {
+        "mulai_bulan": 0,
+        "penghasilan": 7500000,
+        "keterangan": "penghasilan pekerjaan utama saat ini"
+       },
+       {
+        "mulai_bulan": 3,
+        "penghasilan": 7000000,
+        "keterangan": "perkiraan tahap entry (nilai tengah rentang)"
+       },
+       {
+        "mulai_bulan": 27,
+        "penghasilan": 10000000,
+        "keterangan": "perkiraan tahap mid (nilai tengah rentang)"
+       },
+       {
+        "mulai_bulan": 63,
+        "penghasilan": 21500000,
+        "keterangan": "perkiraan tahap senior (nilai tengah rentang)"
+       }
+      ]
+     },
+     "selisih_tahap_awal_vs_sekarang": -500000
+    }
+   ],
+   "profesi_lain": [
+    {
+     "profesi": "Staff PPIC",
+     "skor_kecocokan": 74
+    },
+    {
+     "profesi": "Data Engineer",
+     "skor_kecocokan": 71
+    },
+    {
+     "profesi": "Supervisor Gudang",
+     "skor_kecocokan": 66
+    },
+    {
+     "profesi": "Software Engineer",
+     "skor_kecocokan": 62
+    },
+    {
+     "profesi": "Teknisi Listrik",
+     "skor_kecocokan": 55
+    },
+    {
+     "profesi": "Teknisi Mekanik / Mekanik",
+     "skor_kecocokan": 55
+    },
+    {
+     "profesi": "Akuntan",
+     "skor_kecocokan": 54
+    },
+    {
+     "profesi": "Insinyur Teknik Industri",
+     "skor_kecocokan": 54
+    },
+    {
+     "profesi": "UI/UX Designer",
+     "skor_kecocokan": 45
+    },
+    {
+     "profesi": "Digital Marketing",
+     "skor_kecocokan": 45
+    },
+    {
+     "profesi": "Dokter Umum",
+     "skor_kecocokan": 45
+    },
+    {
+     "profesi": "Dokter Spesialis",
+     "skor_kecocokan": 45
+    },
+    {
+     "profesi": "Dokter Hewan",
+     "skor_kecocokan": 45
+    },
+    {
+     "profesi": "Perawat",
+     "skor_kecocokan": 45
+    },
+    {
+     "profesi": "Apoteker",
+     "skor_kecocokan": 45
+    },
+    {
+     "profesi": "Psikolog",
+     "skor_kecocokan": 45
+    },
+    {
+     "profesi": "IT Support",
+     "skor_kecocokan": 45
+    },
+    {
+     "profesi": "Guru",
+     "skor_kecocokan": 45
+    },
+    {
+     "profesi": "TNI (Tentara)",
+     "skor_kecocokan": 45
+    },
+    {
+     "profesi": "Polisi",
+     "skor_kecocokan": 45
+    }
+   ],
+   "konteks_wilayah": {
+    "jenis": "UMK 2026",
+    "wilayah": "Kota Tangerang",
+    "nilai": 5399405
+   },
+   "catatan_target": null,
+   "total_pengalaman_tahun": 10,
+   "catatan_metode": [
+    "Skor kecocokan 0-100: minat (35), skill wajib yang sudah dimiliki (35), relevansi pengalaman (20), kesesuaian pendidikan (10).",
+    "Jadwal pendapatan menggantikan penghasilan pekerjaan utama saja; pendapatan sampingan dan pasangan tetap dihitung terpisah. Rentang gaji dari database eksternal myCITA beserta sumbernya; jadwal pendapatan memakai nilai tengah rentang dan asumsi umum lama jenjang (entry 0-2 th, mid 2-5 th, senior 5+ th).",
+    "Rekomendasi tidak memakai jenis kelamin, usia, agama, atau asal daerah sebagai faktor."
+   ],
+   "sumber_data": "Database Eksternal myCITA v1.0 (Oktober 2026)",
+   "memakai_data_tersimpan": [
+    "minat",
+    "skill",
+    "pengalaman",
+    "pendidikan_terakhir",
+    "kota"
+   ],
+   "disclaimer": "Rekomendasi adalah gambaran awal berdasarkan data yang kamu isi dan data referensi pasar. Keputusan tetap di tanganmu."
+  },
+  "karier_simulasi": {
+   "data_scientist": {
+    "sebelum": {
+     "sisa": 2000000,
+     "skor": 100,
+     "target": {
+      "Menikah": "3 tahun",
+      "Mobil": "22 tahun 1 bulan"
+     }
+    },
+    "sesudah": {
+     "sisa": 2000000,
+     "skor": 100,
+     "target": {
+      "Menikah": "3 tahun",
+      "Mobil": "5 tahun 6 bulan"
+     }
+    }
+   },
+   "data_analyst": {
+    "sebelum": {
+     "sisa": 2000000,
+     "skor": 100,
+     "target": {
+      "Menikah": "3 tahun",
+      "Mobil": "22 tahun 1 bulan"
+     }
+    },
+    "sesudah": {
+     "sisa": 2000000,
+     "skor": 100,
+     "target": {
+      "Menikah": "3 tahun",
+      "Mobil": "6 tahun"
+     }
+    }
+   },
+   "kopi_pesimis": {
+    "sebelum": {
+     "sisa": 2000000,
+     "skor": 100,
+     "target": {
+      "Menikah": "3 tahun",
+      "Mobil": "22 tahun 1 bulan"
+     }
+    },
+    "sesudah": {
+     "sisa": 2000000,
+     "skor": 100,
+     "target": {
+      "Menikah": "3 tahun",
+      "Mobil": "6 tahun 11 bulan"
+     }
+    }
+   },
+   "data_scientist_kopi_pesimis": {
+    "sebelum": {
+     "sisa": 2000000,
+     "skor": 100,
+     "target": {
+      "Menikah": "3 tahun",
+      "Mobil": "22 tahun 1 bulan"
+     }
+    },
+    "sesudah": {
+     "sisa": 2000000,
+     "skor": 100,
+     "target": {
+      "Menikah": "2 tahun 8 bulan",
+      "Mobil": "4 tahun 1 bulan"
+     }
+    }
+   },
+   "data_scientist_kopi_moderat": {
+    "sebelum": {
+     "sisa": 2000000,
+     "skor": 100,
+     "target": {
+      "Menikah": "3 tahun",
+      "Mobil": "22 tahun 1 bulan"
+     }
+    },
+    "sesudah": {
+     "sisa": 2000000,
+     "skor": 100,
+     "target": {
+      "Menikah": "1 tahun 8 bulan",
+      "Mobil": "3 tahun 4 bulan"
+     }
+    }
    }
-  ],
-  "pendapatan_tambahan": [],
-  "jumlah_tanggungan": 0,
-  "psikologi": {
-   "impulsif": 4,
-   "fomo": 3,
-   "menghindar": 2,
-   "emosional": 3,
-   "terlalu_hemat": 1,
-   "disiplin": 2
+  },
+  "usaha_kopi": {
+   "status": "ok",
+   "user_id": "budi",
+   "pesan": "Eksplorasi usaha selesai: Kopi keliling, Es teh jumbo / minuman kekinian, Warung kopi (warkop / warmindo).",
+   "rekomendasi": [
+    {
+     "id": "kopi_keliling",
+     "usaha": "Kopi keliling",
+     "bidang": "Makanan & Minuman",
+     "skor_kecocokan": 80,
+     "pilihan_pengguna": false,
+     "alasan": [
+      "Modalmu Rp3.000.000 melebihi kebutuhan modal awal (Rp1.000.000-Rp2.500.000); sisanya bisa jadi dana cadangan usaha.",
+      "Sesuai minatmu: kopi, kuliner, minuman."
+     ],
+     "modal_awal": {
+      "min": 1000000,
+      "max": 2500000,
+      "dipakai_simulasi": 2500000,
+      "kekurangan": 0
+     },
+     "biaya_operasional_bulanan": "Bahan baku harian, bensin",
+     "model_pendapatan": "Kopi Rp5-15 rb per gelas",
+     "skenario": {
+      "pesimis": {
+       "omzet_bulanan_stabil": 6000000,
+       "margin_persen": 40,
+       "laba_bulanan_stabil": 2400000,
+       "laba_tahun_pertama": 23760000,
+       "balik_modal_bulan": 3,
+       "balik_modal": "3 bulan"
+      },
+      "moderat": {
+       "omzet_bulanan_stabil": 9000000,
+       "margin_persen": 48,
+       "laba_bulanan_stabil": 4275000,
+       "laba_tahun_pertama": 42322500,
+       "balik_modal_bulan": 2,
+       "balik_modal": "2 bulan"
+      },
+      "optimis": {
+       "omzet_bulanan_stabil": 12000000,
+       "margin_persen": 55,
+       "laba_bulanan_stabil": 6600000,
+       "laba_tahun_pertama": 65340000,
+       "balik_modal_bulan": 2,
+       "balik_modal": "2 bulan"
+      }
+     },
+     "balik_modal_menurut_sumber": "-",
+     "modal_belum_cukup": false,
+     "skill_sudah_dimiliki": [
+      "meracik kopi"
+     ],
+     "skill_gap": [
+      "pemasaran lokal",
+      "manajemen waktu"
+     ],
+     "risiko": [
+      "cuaca",
+      "izin berjualan",
+      "persaingan"
+     ],
+     "dasar_angka": "Modal Rp1-2,5 jt dan omzet Rp6-12 jt/bulan (Medcom, September 2026); margin dari contoh laba Rp300-400 rb per Rp700 rb omzet harian",
+     "sumber": "Medcom (2026)",
+     "roadmap_usaha": [
+      {
+       "fase": "Bulan 0-1: Persiapan",
+       "langkah": [
+        "Riset lokasi, calon pelanggan, dan pesaing sekitar",
+        "Urus NIB lewat OSS untuk usaha mikro",
+        "Siapkan alat dan pisahkan rekening usaha dari rekening pribadi"
+       ]
+      },
+      {
+       "fase": "Bulan 1-3: Uji pasar",
+       "langkah": [
+        "Mulai promosi lokal (WhatsApp, Google Maps, media sosial)",
+        "Catat setiap pemasukan dan pengeluaran harian",
+        "Kumpulkan masukan pelanggan pertama"
+       ]
+      },
+      {
+       "fase": "Bulan 4-6: Stabilkan",
+       "langkah": [
+        "Evaluasi harga, biaya, dan jam operasional",
+        "Bangun pelanggan tetap (program langganan/loyalitas)",
+        "Sisihkan dana cadangan usaha"
+       ]
+      },
+      {
+       "fase": "Bulan 7-12: Evaluasi & kembangkan",
+       "langkah": [
+        "Bandingkan laba nyata dengan skenario myCITA",
+        "Jika laba stabil, pertimbangkan tambah kapasitas atau layanan",
+        "Jika di bawah skenario pesimis, tinjau ulang lokasi atau model usaha"
+       ]
+      }
+     ],
+     "mode": "sampingan",
+     "simulasi_siap_pakai": {
+      "pendapatan_tambahan_jadwal": [
+       {
+        "mulai_bulan": 0,
+        "nilai": 1282500
+       },
+       {
+        "mulai_bulan": 1,
+        "nilai": 1881000
+       },
+       {
+        "mulai_bulan": 2,
+        "nilai": 2479500
+       },
+       {
+        "mulai_bulan": 3,
+        "nilai": 3078000
+       },
+       {
+        "mulai_bulan": 4,
+        "nilai": 3676500
+       },
+       {
+        "mulai_bulan": 5,
+        "nilai": 4275000
+       }
+      ],
+      "biaya_awal": 2500000
+     },
+     "simulasi_siap_pakai_per_skenario": {
+      "pesimis": {
+       "pendapatan_tambahan_jadwal": [
+        {
+         "mulai_bulan": 0,
+         "nilai": 720000
+        },
+        {
+         "mulai_bulan": 1,
+         "nilai": 1056000
+        },
+        {
+         "mulai_bulan": 2,
+         "nilai": 1392000
+        },
+        {
+         "mulai_bulan": 3,
+         "nilai": 1728000
+        },
+        {
+         "mulai_bulan": 4,
+         "nilai": 2064000
+        },
+        {
+         "mulai_bulan": 5,
+         "nilai": 2400000
+        }
+       ],
+       "biaya_awal": 2500000
+      },
+      "moderat": {
+       "pendapatan_tambahan_jadwal": [
+        {
+         "mulai_bulan": 0,
+         "nilai": 1282500
+        },
+        {
+         "mulai_bulan": 1,
+         "nilai": 1881000
+        },
+        {
+         "mulai_bulan": 2,
+         "nilai": 2479500
+        },
+        {
+         "mulai_bulan": 3,
+         "nilai": 3078000
+        },
+        {
+         "mulai_bulan": 4,
+         "nilai": 3676500
+        },
+        {
+         "mulai_bulan": 5,
+         "nilai": 4275000
+        }
+       ],
+       "biaya_awal": 2500000
+      },
+      "optimis": {
+       "pendapatan_tambahan_jadwal": [
+        {
+         "mulai_bulan": 0,
+         "nilai": 1980000
+        },
+        {
+         "mulai_bulan": 1,
+         "nilai": 2904000
+        },
+        {
+         "mulai_bulan": 2,
+         "nilai": 3828000
+        },
+        {
+         "mulai_bulan": 3,
+         "nilai": 4752000
+        },
+        {
+         "mulai_bulan": 4,
+         "nilai": 5676000
+        },
+        {
+         "mulai_bulan": 5,
+         "nilai": 6600000
+        }
+       ],
+       "biaya_awal": 2500000
+      }
+     }
+    },
+    {
+     "id": "es_teh_jumbo",
+     "usaha": "Es teh jumbo / minuman kekinian",
+     "bidang": "Makanan & Minuman",
+     "skor_kecocokan": 80,
+     "pilihan_pengguna": false,
+     "alasan": [
+      "Modalmu Rp3.000.000 sudah masuk kisaran modal awal Rp1.000.000-Rp20.000.000.",
+      "Sesuai minatmu: kuliner, minuman."
+     ],
+     "modal_awal": {
+      "min": 1000000,
+      "max": 20000000,
+      "dipakai_simulasi": 3000000,
+      "kekurangan": 0
+     },
+     "biaya_operasional_bulanan": "Bahan baku, sewa lapak",
+     "model_pendapatan": "Penjualan per cup",
+     "skenario": {
+      "pesimis": {
+       "omzet_bulanan_stabil": 6000000,
+       "margin_persen": 35,
+       "laba_bulanan_stabil": 2100000,
+       "laba_tahun_pertama": 20790000,
+       "balik_modal_bulan": 4,
+       "balik_modal": "4 bulan"
+      },
+      "moderat": {
+       "omzet_bulanan_stabil": 10500000,
+       "margin_persen": 42,
+       "laba_bulanan_stabil": 4462500,
+       "laba_tahun_pertama": 44178750,
+       "balik_modal_bulan": 2,
+       "balik_modal": "2 bulan"
+      },
+      "optimis": {
+       "omzet_bulanan_stabil": 15000000,
+       "margin_persen": 50,
+       "laba_bulanan_stabil": 7500000,
+       "laba_tahun_pertama": 74250000,
+       "balik_modal_bulan": 2,
+       "balik_modal": "2 bulan"
+      }
+     },
+     "balik_modal_menurut_sumber": "1-3 bulan (klaim franchisor)",
+     "modal_belum_cukup": false,
+     "skill_sudah_dimiliki": [
+      "meracik minuman"
+     ],
+     "skill_gap": [
+      "pemilihan lokasi",
+      "pencatatan kas"
+     ],
+     "risiko": [
+      "tren cepat berubah",
+      "persaingan gerai",
+      "musim hujan"
+     ],
+     "dasar_angka": "Paket franchise Rp1-9 jt, gerai lengkap ±Rp20 jt, laba klaim franchisor Rp3,3-7,7 jt/bulan (Detik; OCBC); usaha rumahan laba ±Rp2,3 jt (UNP Kediri, 2026); omzet & margin disetarakan ASUMSI myCITA",
+     "sumber": "Detik Finance; OCBC; UNP Kediri (2026)",
+     "roadmap_usaha": [
+      {
+       "fase": "Bulan 0-1: Persiapan",
+       "langkah": [
+        "Riset lokasi, calon pelanggan, dan pesaing sekitar",
+        "Urus NIB lewat OSS untuk usaha mikro",
+        "Siapkan alat dan pisahkan rekening usaha dari rekening pribadi"
+       ]
+      },
+      {
+       "fase": "Bulan 1-3: Uji pasar",
+       "langkah": [
+        "Mulai promosi lokal (WhatsApp, Google Maps, media sosial)",
+        "Catat setiap pemasukan dan pengeluaran harian",
+        "Kumpulkan masukan pelanggan pertama"
+       ]
+      },
+      {
+       "fase": "Bulan 4-6: Stabilkan",
+       "langkah": [
+        "Evaluasi harga, biaya, dan jam operasional",
+        "Bangun pelanggan tetap (program langganan/loyalitas)",
+        "Sisihkan dana cadangan usaha"
+       ]
+      },
+      {
+       "fase": "Bulan 7-12: Evaluasi & kembangkan",
+       "langkah": [
+        "Bandingkan laba nyata dengan skenario myCITA",
+        "Jika laba stabil, pertimbangkan tambah kapasitas atau layanan",
+        "Jika di bawah skenario pesimis, tinjau ulang lokasi atau model usaha"
+       ]
+      }
+     ],
+     "mode": "sampingan",
+     "simulasi_siap_pakai": {
+      "pendapatan_tambahan_jadwal": [
+       {
+        "mulai_bulan": 0,
+        "nilai": 1338750
+       },
+       {
+        "mulai_bulan": 1,
+        "nilai": 1963500
+       },
+       {
+        "mulai_bulan": 2,
+        "nilai": 2588250
+       },
+       {
+        "mulai_bulan": 3,
+        "nilai": 3213000
+       },
+       {
+        "mulai_bulan": 4,
+        "nilai": 3837750
+       },
+       {
+        "mulai_bulan": 5,
+        "nilai": 4462500
+       }
+      ],
+      "biaya_awal": 3000000
+     },
+     "simulasi_siap_pakai_per_skenario": {
+      "pesimis": {
+       "pendapatan_tambahan_jadwal": [
+        {
+         "mulai_bulan": 0,
+         "nilai": 630000
+        },
+        {
+         "mulai_bulan": 1,
+         "nilai": 924000
+        },
+        {
+         "mulai_bulan": 2,
+         "nilai": 1218000
+        },
+        {
+         "mulai_bulan": 3,
+         "nilai": 1512000
+        },
+        {
+         "mulai_bulan": 4,
+         "nilai": 1806000
+        },
+        {
+         "mulai_bulan": 5,
+         "nilai": 2100000
+        }
+       ],
+       "biaya_awal": 3000000
+      },
+      "moderat": {
+       "pendapatan_tambahan_jadwal": [
+        {
+         "mulai_bulan": 0,
+         "nilai": 1338750
+        },
+        {
+         "mulai_bulan": 1,
+         "nilai": 1963500
+        },
+        {
+         "mulai_bulan": 2,
+         "nilai": 2588250
+        },
+        {
+         "mulai_bulan": 3,
+         "nilai": 3213000
+        },
+        {
+         "mulai_bulan": 4,
+         "nilai": 3837750
+        },
+        {
+         "mulai_bulan": 5,
+         "nilai": 4462500
+        }
+       ],
+       "biaya_awal": 3000000
+      },
+      "optimis": {
+       "pendapatan_tambahan_jadwal": [
+        {
+         "mulai_bulan": 0,
+         "nilai": 2250000
+        },
+        {
+         "mulai_bulan": 1,
+         "nilai": 3300000
+        },
+        {
+         "mulai_bulan": 2,
+         "nilai": 4350000
+        },
+        {
+         "mulai_bulan": 3,
+         "nilai": 5400000
+        },
+        {
+         "mulai_bulan": 4,
+         "nilai": 6450000
+        },
+        {
+         "mulai_bulan": 5,
+         "nilai": 7500000
+        }
+       ],
+       "biaya_awal": 3000000
+      }
+     }
+    },
+    {
+     "id": "warkop",
+     "usaha": "Warung kopi (warkop / warmindo)",
+     "bidang": "Makanan & Minuman",
+     "skor_kecocokan": 74,
+     "pilihan_pengguna": false,
+     "alasan": [
+      "Modalmu masih kurang Rp2.000.000 dari modal minimal Rp5.000.000. Simulasi mengasumsikan kekurangan ini sudah tertutup (misalnya dari tabungan tambahan), jadi siapkan dulu sebelum memulai.",
+      "Sesuai minatmu: kopi, kuliner, minuman."
+     ],
+     "modal_awal": {
+      "min": 5000000,
+      "max": 10000000,
+      "dipakai_simulasi": 5000000,
+      "kekurangan": 2000000
+     },
+     "biaya_operasional_bulanan": "Sewa 3x4 m Rp2,5-4 jt/tahun, bahan baku, listrik",
+     "model_pendapatan": "Penjualan kopi, mi instan, gorengan",
+     "skenario": {
+      "pesimis": {
+       "omzet_bulanan_stabil": 9000000,
+       "margin_persen": 30,
+       "laba_bulanan_stabil": 2700000,
+       "laba_tahun_pertama": 26730000,
+       "balik_modal_bulan": 4,
+       "balik_modal": "4 bulan"
+      },
+      "moderat": {
+       "omzet_bulanan_stabil": 12000000,
+       "margin_persen": 35,
+       "laba_bulanan_stabil": 4200000,
+       "laba_tahun_pertama": 41580000,
+       "balik_modal_bulan": 3,
+       "balik_modal": "3 bulan"
+      },
+      "optimis": {
+       "omzet_bulanan_stabil": 15000000,
+       "margin_persen": 40,
+       "laba_bulanan_stabil": 6000000,
+       "laba_tahun_pertama": 59400000,
+       "balik_modal_bulan": 3,
+       "balik_modal": "3 bulan"
+      }
+     },
+     "balik_modal_menurut_sumber": "2-3 bulan (jika pendapatan harian ≥Rp300 rb)",
+     "modal_belum_cukup": true,
+     "skill_sudah_dimiliki": [
+      "meracik kopi & mi",
+      "pelayanan pelanggan"
+     ],
+     "skill_gap": [
+      "pencatatan kas"
+     ],
+     "risiko": [
+      "lokasi kurang ramai",
+      "persaingan kafe",
+      "jam kerja panjang"
+     ],
+     "dasar_angka": "Modal contoh Rp10 jt (OCBC); pendapatan harian ≥Rp300 rb dan balik modal 2-3 bulan (Metro TV, 2026); omzet maksimum dan margin ASUMSI myCITA",
+     "sumber": "OCBC; Metro TV (2026)",
+     "roadmap_usaha": [
+      {
+       "fase": "Bulan 0-1: Persiapan",
+       "langkah": [
+        "Riset lokasi, calon pelanggan, dan pesaing sekitar",
+        "Urus NIB lewat OSS untuk usaha mikro",
+        "Siapkan alat dan pisahkan rekening usaha dari rekening pribadi"
+       ]
+      },
+      {
+       "fase": "Bulan 1-3: Uji pasar",
+       "langkah": [
+        "Mulai promosi lokal (WhatsApp, Google Maps, media sosial)",
+        "Catat setiap pemasukan dan pengeluaran harian",
+        "Kumpulkan masukan pelanggan pertama"
+       ]
+      },
+      {
+       "fase": "Bulan 4-6: Stabilkan",
+       "langkah": [
+        "Evaluasi harga, biaya, dan jam operasional",
+        "Bangun pelanggan tetap (program langganan/loyalitas)",
+        "Sisihkan dana cadangan usaha"
+       ]
+      },
+      {
+       "fase": "Bulan 7-12: Evaluasi & kembangkan",
+       "langkah": [
+        "Bandingkan laba nyata dengan skenario myCITA",
+        "Jika laba stabil, pertimbangkan tambah kapasitas atau layanan",
+        "Jika di bawah skenario pesimis, tinjau ulang lokasi atau model usaha"
+       ]
+      }
+     ],
+     "mode": "sampingan",
+     "simulasi_siap_pakai": {
+      "pendapatan_tambahan_jadwal": [
+       {
+        "mulai_bulan": 0,
+        "nilai": 1260000
+       },
+       {
+        "mulai_bulan": 1,
+        "nilai": 1848000
+       },
+       {
+        "mulai_bulan": 2,
+        "nilai": 2436000
+       },
+       {
+        "mulai_bulan": 3,
+        "nilai": 3024000
+       },
+       {
+        "mulai_bulan": 4,
+        "nilai": 3612000
+       },
+       {
+        "mulai_bulan": 5,
+        "nilai": 4200000
+       }
+      ],
+      "biaya_awal": 5000000
+     },
+     "simulasi_siap_pakai_per_skenario": {
+      "pesimis": {
+       "pendapatan_tambahan_jadwal": [
+        {
+         "mulai_bulan": 0,
+         "nilai": 810000
+        },
+        {
+         "mulai_bulan": 1,
+         "nilai": 1188000
+        },
+        {
+         "mulai_bulan": 2,
+         "nilai": 1566000
+        },
+        {
+         "mulai_bulan": 3,
+         "nilai": 1944000
+        },
+        {
+         "mulai_bulan": 4,
+         "nilai": 2322000
+        },
+        {
+         "mulai_bulan": 5,
+         "nilai": 2700000
+        }
+       ],
+       "biaya_awal": 5000000
+      },
+      "moderat": {
+       "pendapatan_tambahan_jadwal": [
+        {
+         "mulai_bulan": 0,
+         "nilai": 1260000
+        },
+        {
+         "mulai_bulan": 1,
+         "nilai": 1848000
+        },
+        {
+         "mulai_bulan": 2,
+         "nilai": 2436000
+        },
+        {
+         "mulai_bulan": 3,
+         "nilai": 3024000
+        },
+        {
+         "mulai_bulan": 4,
+         "nilai": 3612000
+        },
+        {
+         "mulai_bulan": 5,
+         "nilai": 4200000
+        }
+       ],
+       "biaya_awal": 5000000
+      },
+      "optimis": {
+       "pendapatan_tambahan_jadwal": [
+        {
+         "mulai_bulan": 0,
+         "nilai": 1800000
+        },
+        {
+         "mulai_bulan": 1,
+         "nilai": 2640000
+        },
+        {
+         "mulai_bulan": 2,
+         "nilai": 3480000
+        },
+        {
+         "mulai_bulan": 3,
+         "nilai": 4320000
+        },
+        {
+         "mulai_bulan": 4,
+         "nilai": 5160000
+        },
+        {
+         "mulai_bulan": 5,
+         "nilai": 6000000
+        }
+       ],
+       "biaya_awal": 5000000
+      }
+     }
+    }
+   ],
+   "usaha_lain": [
+    {
+     "usaha": "Jualan gorengan",
+     "skor_kecocokan": 55
+    },
+    {
+     "usaha": "Konter pulsa, paket data & token listrik",
+     "skor_kecocokan": 55
+    },
+    {
+     "usaha": "Toko kelontong rumahan",
+     "skor_kecocokan": 50
+    },
+    {
+     "usaha": "Warung / jualan sayur",
+     "skor_kecocokan": 50
+    },
+    {
+     "usaha": "Lapak buah segar",
+     "skor_kecocokan": 50
+    },
+    {
+     "usaha": "Frozen food rumahan",
+     "skor_kecocokan": 40
+    },
+    {
+     "usaha": "Bengkel motor rumahan",
+     "skor_kecocokan": 34
+    },
+    {
+     "usaha": "Agen BRILink / agen laku pandai",
+     "skor_kecocokan": 30
+    },
+    {
+     "usaha": "Laundry kiloan rumahan",
+     "skor_kecocokan": 27
+    },
+    {
+     "usaha": "Lapak ayam potong / daging eceran",
+     "skor_kecocokan": 24
+    },
+    {
+     "usaha": "Warung makan (warteg)",
+     "skor_kecocokan": 23
+    },
+    {
+     "usaha": "Warung sembako / warung Madura",
+     "skor_kecocokan": 9
+    },
+    {
+     "usaha": "Ternak ayam potong skala kecil",
+     "skor_kecocokan": 7
+    },
+    {
+     "usaha": "Laundry kiloan skala kecil profesional",
+     "skor_kecocokan": 6
+    },
+    {
+     "usaha": "Bengkel motor kecil-menengah (ruko)",
+     "skor_kecocokan": 5
+    }
+   ],
+   "mode": "sampingan",
+   "catatan_metode": [
+    "Skor kecocokan 0-100: kecukupan modal (40), minat (30), skill & pengalaman (30).",
+    "Skenario: pesimis = omzet & margin terendah, moderat = nilai tengah, optimis = tertinggi dari database. Masa rintisan: bulan 1 baru 30% dari kondisi stabil, stabil di bulan ke-6.",
+    "simulasi_siap_pakai (skenario moderat) atau simulasi_siap_pakai_per_skenario (pesimis/moderat/optimis) bisa langsung dikirim ke analisis_keuangan_cita. Untuk usaha sampingan paruh waktu/akhir pekan, gunakan skenario pesimis sebagai acuan."
+   ],
+   "catatan_database": "Template usaha masih terbatas (laundry dan bengkel motor). Angka yang ditandai ASUMSI myCITA belum memiliki sumber terverifikasi.",
+   "sumber_data": "Database Eksternal myCITA v1.0 (Oktober 2026)",
+   "disclaimer": "Simulasi usaha adalah skenario berdasarkan data referensi, bukan jaminan keuntungan. Hasil nyata sangat bergantung pada lokasi dan pengelolaan."
+  },
+  "usaha_simulasi": {
+   "kopi_keliling": {
+    "sebelum": {
+     "sisa": 2000000,
+     "skor": 100,
+     "target": {
+      "Menikah": "3 tahun",
+      "Mobil": "22 tahun 1 bulan"
+     }
+    },
+    "sesudah": {
+     "sisa": 2000000,
+     "skor": 100,
+     "target": {
+      "Menikah": "3 tahun",
+      "Mobil": "6 tahun 11 bulan"
+     }
+    }
+   },
+   "data_scientist": {
+    "sebelum": {
+     "sisa": 2000000,
+     "skor": 100,
+     "target": {
+      "Menikah": "3 tahun",
+      "Mobil": "22 tahun 1 bulan"
+     }
+    },
+    "sesudah": {
+     "sisa": 2000000,
+     "skor": 100,
+     "target": {
+      "Menikah": "3 tahun",
+      "Mobil": "5 tahun 6 bulan"
+     }
+    }
+   },
+   "data_scientist_kopi_pesimis": {
+    "sebelum": {
+     "sisa": 2000000,
+     "skor": 100,
+     "target": {
+      "Menikah": "3 tahun",
+      "Mobil": "22 tahun 1 bulan"
+     }
+    },
+    "sesudah": {
+     "sisa": 2000000,
+     "skor": 100,
+     "target": {
+      "Menikah": "2 tahun 8 bulan",
+      "Mobil": "4 tahun 1 bulan"
+     }
+    }
+   },
+   "data_scientist_kopi_moderat": {
+    "sebelum": {
+     "sisa": 2000000,
+     "skor": 100,
+     "target": {
+      "Menikah": "3 tahun",
+      "Mobil": "22 tahun 1 bulan"
+     }
+    },
+    "sesudah": {
+     "sisa": 2000000,
+     "skor": 100,
+     "target": {
+      "Menikah": "1 tahun 8 bulan",
+      "Mobil": "3 tahun 4 bulan"
+     }
+    }
+   }
   }
  },
- "keuangan_input": {
-  "user_id": "budi",
-  "pengeluaran": {
-   "kebutuhan_pokok": 2000000,
-   "kos": 1000000,
-   "listrik": 300000,
-   "internet": 300000,
-   "transportasi": 500000,
-   "hiburan": 500000,
-   "langganan_streaming": 150000,
-   "lainnya": 300000
-  },
-  "hutang": [
-   {
-    "nama": "Cicilan motor",
-    "jenis": "kendaraan",
-    "sisa_pokok": 8000000,
-    "cicilan_bulanan": 800000,
-    "bunga_tahunan": 12,
-    "sisa_tenor_bulan": 10
+ "agus": {
+  "analisis": {
+   "status": "ok",
+   "user_id": "agus",
+   "mode": "analisis",
+   "pesan": "Analisis selesai dan tersimpan.",
+   "ringkasan": "Agus: pendapatan Rp14.000.000, pengeluaran Rp8.500.000, sisa Rp5.500.000. Skor kesehatan 84/100 (Sangat sehat 🟢), saving rate 39.3%. Target Rumah: dengan menabung tercapai dalam 22 tahun 2 bulan.",
+   "dashboard": {
+    "nama": "Agus",
+    "pendapatan": 14000000,
+    "pengeluaran": 8500000,
+    "sisa": 5500000,
+    "skor_kesehatan": 84,
+    "status": "Sangat sehat 🟢",
+    "saving_rate_persen": 39.3
    },
-   {
-    "nama": "Paylater",
-    "jenis": "paylater",
-    "sisa_pokok": 1500000,
-    "cicilan_bulanan": 500000,
-    "sisa_tenor_bulan": 3
+   "kesehatan_keuangan": {
+    "penghasilan": 14000000,
+    "penghasilan_konservatif": 14000000,
+    "pengeluaran_rutin": 8500000,
+    "pengeluaran_keinginan": 300000,
+    "total_cicilan": 0,
+    "total_pengeluaran": 8500000,
+    "disposable_income": 5500000,
+    "kapasitas_menabung": 5500000,
+    "saving_rate_persen": 39.3,
+    "rasio_cicilan_persen": 0,
+    "rasio_keinginan_persen": 2.1,
+    "rincian_skor": {
+     "saving_rate (maks 30)": 30,
+     "rasio_cicilan (maks 25)": 25,
+     "dana_darurat (maks 25)": 8.8,
+     "pengeluaran_keinginan (maks 10)": 10,
+     "hutang_berbunga_tinggi (maks 10)": 10
+    },
+    "skor": 84,
+    "status": "Sangat sehat 🟢"
+   },
+   "dana_darurat": {
+    "dana_likuid_saat_ini": 45000000,
+    "cukup_untuk_bulan": 5.3,
+    "target_minimum": 76500000,
+    "target_ideal": 127500000,
+    "target_dipakai": 76500000,
+    "kekurangan": 31500000,
+    "perkiraan_waktu_terpenuhi": "1 tahun"
+   },
+   "alokasi_bulan_ini": {
+    "kapasitas_menabung": 5500000,
+    "untuk_dana_darurat": 2750000,
+    "untuk_target": 2750000,
+    "catatan": "Alokasi berubah otomatis: setelah dana darurat terpenuhi atau cicilan lunas, dananya dialihkan ke target."
+   },
+   "strategi_hutang": [],
+   "target": [
+    {
+     "nama": "Rumah",
+     "kategori": "rumah",
+     "prioritas": 1,
+     "harga_saat_ini": 600000000,
+     "sumber_harga": "diisi pengguna",
+     "kenaikan_harga_per_tahun_persen": 4,
+     "tenggat_bulan": 84,
+     "tenggat": "7 tahun",
+     "setoran_bulan_pertama": 2750000,
+     "opsi_a_menabung": {
+      "waktu_tercapai_bulan": 266,
+      "waktu_tercapai": "22 tahun 2 bulan",
+      "perkiraan_harga_saat_tercapai": 1431276711,
+      "jika_hanya_fokus_target_ini": "22 tahun 2 bulan",
+      "harga_saat_tenggat": 789559068,
+      "tercapai_sesuai_tenggat": false
+     },
+     "opsi_b_kredit": {
+      "dp_persen": 20,
+      "dp": 132362388,
+      "waktu_kumpulkan_dp_bulan": 30,
+      "waktu_kumpulkan_dp": "2 tahun 6 bulan",
+      "perkiraan_harga_saat_beli": 661811941,
+      "pinjaman": 529449553,
+      "bunga_tahunan_persen": 11,
+      "cicilan_lama_saat_itu": 0,
+      "pilihan_tenor": [
+       {
+        "tenor_tahun": 10,
+        "cicilan_bulanan": 7293168,
+        "total_bunga": 345730630,
+        "total_dibayar": 1007542570,
+        "rasio_cicilan_setelah_kredit_persen": 52.1,
+        "aman": false
+       },
+       {
+        "tenor_tahun": 15,
+        "cicilan_bulanan": 6017707,
+        "total_bunga": 553737777,
+        "total_dibayar": 1215549717,
+        "rasio_cicilan_setelah_kredit_persen": 43,
+        "aman": false
+       },
+       {
+        "tenor_tahun": 20,
+        "cicilan_bulanan": 5464917,
+        "total_bunga": 782130485,
+        "total_dibayar": 1443942426,
+        "rasio_cicilan_setelah_kredit_persen": 39,
+        "aman": false
+       }
+      ],
+      "tenor_aman_terpendek": null
+     },
+     "opsi_c_kombinasi": {
+      "dp_persen": 35,
+      "dp": 248090987,
+      "waktu_kumpulkan_dp_bulan": 51,
+      "waktu_kumpulkan_dp": "4 tahun 3 bulan",
+      "perkiraan_harga_saat_beli": 708831391,
+      "pinjaman": 460740404,
+      "bunga_tahunan_persen": 11,
+      "cicilan_lama_saat_itu": 0,
+      "pilihan_tenor": [
+       {
+        "tenor_tahun": 10,
+        "cicilan_bulanan": 6346700,
+        "total_bunga": 300863546,
+        "total_dibayar": 1009694938,
+        "rasio_cicilan_setelah_kredit_persen": 45.3,
+        "aman": false
+       },
+       {
+        "tenor_tahun": 15,
+        "cicilan_bulanan": 5236761,
+        "total_bunga": 481876632,
+        "total_dibayar": 1190708023,
+        "rasio_cicilan_setelah_kredit_persen": 37.4,
+        "aman": false
+       },
+       {
+        "tenor_tahun": 20,
+        "cicilan_bulanan": 4755709,
+        "total_bunga": 680629749,
+        "total_dibayar": 1389461140,
+        "rasio_cicilan_setelah_kredit_persen": 34,
+        "aman": false
+       }
+      ],
+      "tenor_aman_terpendek": null,
+      "keterangan": "Menabung lebih lama untuk DP 35% agar pinjaman dan total bunga lebih kecil."
+     },
+     "status": "perlu_penyesuaian",
+     "opsi_disarankan": "sesuaikan_rencana",
+     "alternatif": {
+      "tambahan_tabungan_per_bulan_agar_tepat_waktu": 4274514,
+      "harga_maksimal_terjangkau_sesuai_tenggat": 327000000,
+      "perpanjang_tenggat_menjadi": "22 tahun 2 bulan"
+     }
+    }
+   ],
+   "rekomendasi_utama": [
+    "Bangun dana darurat Rp76.500.000 (9x pengeluaran bulanan) lebih dulu. Dengan menyisihkan sebagian kapasitas menabung, perkiraan terpenuhi dalam 1 tahun.",
+    "Target 'Rumah' belum realistis dalam 7 tahun. Pilihan: perpanjang tenggat menjadi 22 tahun 2 bulan, atau turunkan budget ke ±Rp327.000.000, atau tambah tabungan/penghasilan ±Rp4.274.514/bulan.",
+    "Sebagian penghasilan tidak tetap. Di bulan sepi, pegang angka konservatif Rp14.000.000; kelebihan di bulan ramai langsung ditabung."
+   ],
+   "psikologi": null,
+   "asumsi": {
+    "inflasi_umum_persen": 3.2,
+    "kenaikan_harga_persen": {
+     "rumah": 4,
+     "rumah_subsidi": 3,
+     "mobil": 3,
+     "motor": 3,
+     "menikah": 4,
+     "pendidikan": 6,
+     "default": 3.2
+    },
+    "bunga_kredit_persen": {
+     "rumah": 11,
+     "rumah_subsidi": 5,
+     "mobil": 10,
+     "motor": 15
+    },
+    "dp_persen": {
+     "rumah": 20,
+     "rumah_subsidi": 1,
+     "mobil": 20,
+     "motor": 15
+    },
+    "tenor_tahun": {
+     "rumah": [
+      10,
+      15,
+      20
+     ],
+     "rumah_subsidi": [
+      10,
+      15,
+      20
+     ],
+     "mobil": [
+      3,
+      4,
+      5
+     ],
+     "motor": [
+      1,
+      2,
+      3
+     ]
+    },
+    "imbal_hasil_tabungan_persen": 0,
+    "kenaikan_penghasilan_persen": 0,
+    "pakai_penghasilan_konservatif": false,
+    "batas_aman_cicilan_persen": 30,
+    "porsi_dana_darurat_persen": 50
+   },
+   "sumber_asumsi": [
+    "Inflasi umum 3,2%: inflasi tahunan Indonesia Agustus 2026 tercatat 3,19% (BPS via Databoks); sasaran BI 2,5±1%.",
+    "Bunga KPR 11%: bunga floating KPR BCA 11% (Mandiri 13%, CIMB Niaga 13,5%), Kontan Agustus 2026.",
+    "KPR subsidi 5% tetap dan batas harga rumah subsidi Rp166-185 juta: Kompas.com 2026.",
+    "Kenaikan harga barang, bunga kredit kendaraan, DP, dan porsi alokasi adalah asumsi myCITA yang dapat diubah.",
+    "Penghasilan dan pengeluaran dianggap tetap (konservatif); ubah 'kenaikan_penghasilan_persen' untuk skenario kenaikan gaji."
+   ],
+   "disclaimer": "myCITA adalah alat edukasi dan perencanaan keuangan, bukan nasihat investasi atau rekomendasi produk keuangan tertentu. Semua angka adalah estimasi berdasarkan data yang kamu isi dan asumsi yang tercantum."
+  },
+  "simulasi": {
+   "bengkel_plus20": {
+    "sebelum": {
+     "sisa": 5500000,
+     "skor": 84,
+     "target": {
+      "Rumah": "22 tahun 2 bulan"
+     }
+    },
+    "sesudah": {
+     "sisa": 5500000,
+     "skor": 84,
+     "target": {
+      "Rumah": "16 tahun 7 bulan"
+     }
+    }
+   },
+   "kelontong_plus25": {
+    "sebelum": {
+     "sisa": 5500000,
+     "skor": 84,
+     "target": {
+      "Rumah": "22 tahun 2 bulan"
+     }
+    },
+    "sesudah": {
+     "sisa": 5500000,
+     "skor": 84,
+     "target": {
+      "Rumah": "19 tahun"
+     }
+    }
+   },
+   "gabungan": {
+    "sebelum": {
+     "sisa": 5500000,
+     "skor": 84,
+     "target": {
+      "Rumah": "22 tahun 2 bulan"
+     }
+    },
+    "sesudah": {
+     "sisa": 5500000,
+     "skor": 84,
+     "target": {
+      "Rumah": "15 tahun 4 bulan"
+     }
+    }
+   },
+   "gabungan_rumah_terjangkau": {
+    "sebelum": {
+     "sisa": 5500000,
+     "skor": 84,
+     "target": {
+      "Rumah": "22 tahun 2 bulan"
+     }
+    },
+    "sesudah": {
+     "sisa": 5500000,
+     "skor": 84,
+     "target": {
+      "Rumah": "15 tahun 4 bulan"
+     }
+    }
    }
-  ],
-  "tabungan_saat_ini": 10000000
+  }
  },
- "analisis": {
-  "status": "ok",
-  "user_id": "budi",
-  "mode": "analisis",
-  "pesan": "Analisis selesai dan tersimpan.",
-  "ringkasan": "Budi Santoso: pendapatan Rp9.000.000, pengeluaran Rp6.350.000, sisa Rp2.650.000. Skor kesehatan 70/100 (Cukup sehat 🟢), saving rate 29.4%. Target Toyota Avanza: dengan menabung tercapai dalam 7 tahun 8 bulan. Target Menikah (intimate): dengan menabung tercapai dalam 13 tahun.",
-  "dashboard": {
-   "nama": "Budi Santoso",
-   "pendapatan": 9000000,
-   "pengeluaran": 6350000,
-   "sisa": 2650000,
-   "skor_kesehatan": 70,
-   "status": "Cukup sehat 🟢",
-   "saving_rate_persen": 29.4
-  },
-  "kesehatan_keuangan": {
-   "penghasilan": 9000000,
-   "penghasilan_konservatif": 8000000,
-   "pengeluaran_rutin": 5050000,
-   "pengeluaran_keinginan": 650000,
-   "total_cicilan": 1300000,
-   "total_pengeluaran": 6350000,
-   "disposable_income": 2650000,
-   "kapasitas_menabung": 2650000,
-   "saving_rate_persen": 29.4,
-   "rasio_cicilan_persen": 14.4,
-   "rasio_keinginan_persen": 7.2,
-   "rincian_skor": {
-    "saving_rate (maks 30)": 30.0,
-    "rasio_cicilan (maks 25)": 22.8,
-    "dana_darurat (maks 25)": 4.4,
-    "pengeluaran_keinginan (maks 10)": 10.0,
-    "hutang_berbunga_tinggi (maks 10)": 3.0
+ "dini": {
+  "analisis": {
+   "status": "ok",
+   "user_id": "dini",
+   "mode": "analisis",
+   "pesan": "Analisis selesai dan tersimpan.",
+   "ringkasan": "Dini: pendapatan Rp1.500.000, pengeluaran Rp1.350.000, sisa Rp150.000. Skor kesehatan 59/100 (Perlu perhatian 🟡), saving rate 10.0%.",
+   "dashboard": {
+    "nama": "Dini",
+    "pendapatan": 1500000,
+    "pengeluaran": 1350000,
+    "sisa": 150000,
+    "skor_kesehatan": 59,
+    "status": "Perlu perhatian 🟡",
+    "saving_rate_persen": 10
    },
-   "skor": 70,
-   "status": "Cukup sehat 🟢"
-  },
-  "dana_darurat": {
-   "dana_likuid_saat_ini": 10000000,
-   "cukup_untuk_bulan": 1.6,
-   "target_minimum": 38100000,
-   "target_ideal": 57150000,
-   "target_dipakai": 38100000,
-   "kekurangan": 28100000,
-   "perkiraan_waktu_terpenuhi": "1 tahun 5 bulan"
-  },
-  "alokasi_bulan_ini": {
-   "kapasitas_menabung": 2650000,
-   "untuk_dana_darurat": 1325000,
-   "untuk_target": 1325000,
-   "catatan": "Alokasi berubah otomatis: setelah dana darurat terpenuhi atau cicilan lunas, dananya dialihkan ke target."
-  },
-  "strategi_hutang": [
-   {
-    "urutan": 1,
-    "nama": "Paylater",
-    "jenis": "paylater",
-    "bunga_tahunan_persen": 30.0,
-    "sisa_pokok": 1500000,
-    "cicilan_bulanan": 500000,
-    "perkiraan_lunas": "3 bulan",
-    "berbunga_tinggi": true
-   },
-   {
-    "urutan": 2,
-    "nama": "Cicilan motor",
-    "jenis": "kendaraan",
-    "bunga_tahunan_persen": 12.0,
-    "sisa_pokok": 8000000,
-    "cicilan_bulanan": 800000,
-    "perkiraan_lunas": "10 bulan",
-    "berbunga_tinggi": false
-   }
-  ],
-  "target": [
-   {
-    "nama": "Toyota Avanza",
-    "kategori": "mobil",
-    "prioritas": 1,
-    "harga_saat_ini": 259200000,
-    "sumber_harga": "referensi: oto.com (OTR Jakarta), 2026",
-    "kenaikan_harga_per_tahun_persen": 3.0,
-    "tenggat_bulan": 60,
-    "tenggat": "5 tahun",
-    "setoran_bulan_pertama": 1325000,
-    "opsi_a_menabung": {
-     "waktu_tercapai_bulan": 92,
-     "waktu_tercapai": "7 tahun 8 bulan",
-     "perkiraan_harga_saat_tercapai": 325127511,
-     "jika_hanya_fokus_target_ini": "7 tahun 8 bulan",
-     "harga_saat_tenggat": 300483840,
-     "tercapai_sesuai_tenggat": false
+   "kesehatan_keuangan": {
+    "penghasilan": 1500000,
+    "penghasilan_konservatif": 1500000,
+    "pengeluaran_rutin": 1350000,
+    "pengeluaran_keinginan": 700000,
+    "total_cicilan": 0,
+    "total_pengeluaran": 1350000,
+    "disposable_income": 150000,
+    "kapasitas_menabung": 150000,
+    "saving_rate_persen": 10,
+    "rasio_cicilan_persen": 0,
+    "rasio_keinginan_persen": 46.7,
+    "rincian_skor": {
+     "saving_rate (maks 30)": 15,
+     "rasio_cicilan (maks 25)": 25,
+     "dana_darurat (maks 25)": 7.7,
+     "pengeluaran_keinginan (maks 10)": 1.7,
+     "hutang_berbunga_tinggi (maks 10)": 10
     },
-    "opsi_b_kredit": {
-     "dp_persen": 20.0,
-     "dp": 54997056,
-     "waktu_kumpulkan_dp_bulan": 24,
-     "waktu_kumpulkan_dp": "2 tahun",
-     "perkiraan_harga_saat_beli": 274985280,
-     "pinjaman": 219988224,
-     "bunga_tahunan_persen": 10.0,
-     "cicilan_lama_saat_itu": 0,
-     "pilihan_tenor": [
+    "skor": 59,
+    "status": "Perlu perhatian 🟡"
+   },
+   "dana_darurat": {
+    "dana_likuid_saat_ini": 2500000,
+    "cukup_untuk_bulan": 1.9,
+    "target_minimum": 4050000,
+    "target_ideal": 8100000,
+    "target_dipakai": 4050000,
+    "kekurangan": 1550000,
+    "perkiraan_waktu_terpenuhi": "11 bulan"
+   },
+   "alokasi_bulan_ini": {
+    "kapasitas_menabung": 150000,
+    "untuk_dana_darurat": 150000,
+    "untuk_target": 0,
+    "catatan": "Alokasi berubah otomatis: setelah dana darurat terpenuhi atau cicilan lunas, dananya dialihkan ke target."
+   },
+   "strategi_hutang": [],
+   "target": [],
+   "rekomendasi_utama": [
+    "Bangun dana darurat Rp4.050.000 (3x pengeluaran bulanan) lebih dulu. Dengan menyisihkan sebagian kapasitas menabung, perkiraan terpenuhi dalam 11 bulan.",
+    "Saving rate 10%. Untuk mencapai 20%, perlu menambah tabungan ±Rp150.000/bulan.",
+    "Pengeluaran keinginan 47% dari penghasilan (ideal ≤30%); pos terbesar: makan_jajan Rp500.000."
+   ],
+   "psikologi": null,
+   "asumsi": {
+    "inflasi_umum_persen": 3.2,
+    "kenaikan_harga_persen": {
+     "rumah": 4,
+     "rumah_subsidi": 3,
+     "mobil": 3,
+     "motor": 3,
+     "menikah": 4,
+     "pendidikan": 6,
+     "default": 3.2
+    },
+    "bunga_kredit_persen": {
+     "rumah": 11,
+     "rumah_subsidi": 5,
+     "mobil": 10,
+     "motor": 15
+    },
+    "dp_persen": {
+     "rumah": 20,
+     "rumah_subsidi": 1,
+     "mobil": 20,
+     "motor": 15
+    },
+    "tenor_tahun": {
+     "rumah": [
+      10,
+      15,
+      20
+     ],
+     "rumah_subsidi": [
+      10,
+      15,
+      20
+     ],
+     "mobil": [
+      3,
+      4,
+      5
+     ],
+     "motor": [
+      1,
+      2,
+      3
+     ]
+    },
+    "imbal_hasil_tabungan_persen": 0,
+    "kenaikan_penghasilan_persen": 0,
+    "pakai_penghasilan_konservatif": false,
+    "batas_aman_cicilan_persen": 30,
+    "porsi_dana_darurat_persen": 50
+   },
+   "sumber_asumsi": [
+    "Inflasi umum 3,2%: inflasi tahunan Indonesia Agustus 2026 tercatat 3,19% (BPS via Databoks); sasaran BI 2,5±1%.",
+    "Bunga KPR 11%: bunga floating KPR BCA 11% (Mandiri 13%, CIMB Niaga 13,5%), Kontan Agustus 2026.",
+    "KPR subsidi 5% tetap dan batas harga rumah subsidi Rp166-185 juta: Kompas.com 2026.",
+    "Kenaikan harga barang, bunga kredit kendaraan, DP, dan porsi alokasi adalah asumsi myCITA yang dapat diubah.",
+    "Penghasilan dan pengeluaran dianggap tetap (konservatif); ubah 'kenaikan_penghasilan_persen' untuk skenario kenaikan gaji."
+   ],
+   "disclaimer": "myCITA adalah alat edukasi dan perencanaan keuangan, bukan nasihat investasi atau rekomendasi produk keuangan tertentu. Semua angka adalah estimasi berdasarkan data yang kamu isi dan asumsi yang tercantum."
+  },
+  "karier": {
+   "status": "ok",
+   "user_id": "dini",
+   "pesan": "Eksplorasi karier selesai: Data Analyst, Data Engineer, Software Engineer.",
+   "rekomendasi_jurusan": [
+    {
+     "id": "sistem_informasi",
+     "jurusan": "S1 Sistem Informasi",
+     "skor_kecocokan": 90,
+     "minat_cocok": [
+      "",
+      "a",
+      "desain",
+      "e",
+      "g",
+      "i",
+      "k",
+      "l",
+      "m",
+      "memecahkan masalah",
+      "n",
+      "o",
+      "t",
+      "teknologi"
+     ],
+     "skill_pendukung": [
+      "office",
+      "public speaking",
+      "python",
+      "website"
+     ],
+     "karier_terkait": [
+      "Data Analyst",
+      "Software Engineer",
+      "UI/UX Designer"
+     ],
+     "kampus": [
       {
-       "tenor_tahun": 3,
-       "cicilan_bulanan": 7098401,
-       "total_bunga": 35554219,
-       "total_dibayar": 310539499,
-       "rasio_cicilan_setelah_kredit_persen": 78.9,
-       "aman": false
+       "nama": "Universitas Indonesia (UI)",
+       "kota": "Depok",
+       "jenis": "PTN",
+       "qs_2026": "189",
+       "prodi": [
+        "S1 Ilmu Komputer",
+        "S1 Sistem Informasi"
+       ],
+       "biaya_min": 500000,
+       "biaya_max": 17500000,
+       "satuan": "UKT per semester",
+       "catatan": "Fakultas Ilmu Komputer",
+       "sumber": "Keputusan Rektor UI No. 297/SK/R/UI/2026 via Gebrak; QS WUR 2026 via Detik",
+       "periode": "2026",
+       "di_kota_pengguna": false
       },
       {
-       "tenor_tahun": 4,
-       "cicilan_bulanan": 5579470,
-       "total_bunga": 47826321,
-       "total_dibayar": 322811601,
-       "rasio_cicilan_setelah_kredit_persen": 62.0,
-       "aman": false
+       "nama": "Universitas Gadjah Mada (UGM)",
+       "kota": "Yogyakarta",
+       "jenis": "PTN",
+       "qs_2026": "224",
+       "prodi": [
+        "S1 Ilmu Komputer",
+        "S1 Teknologi Informasi"
+       ],
+       "biaya_min": 0,
+       "biaya_max": 13300000,
+       "satuan": "UKT per semester",
+       "catatan": "Kelompok bidang rekayasa (perangkat lunak, internet)",
+       "sumber": "Mamikos (UKT UGM SNBP/SNBT 2026)",
+       "periode": "2026",
+       "di_kota_pengguna": false
       },
       {
-       "tenor_tahun": 5,
-       "cicilan_bulanan": 4674100,
-       "total_bunga": 60457754,
-       "total_dibayar": 335443034,
-       "rasio_cicilan_setelah_kredit_persen": 51.9,
-       "aman": false
+       "nama": "Institut Teknologi Bandung (ITB)",
+       "kota": "Bandung",
+       "jenis": "PTN",
+       "qs_2026": "255",
+       "prodi": [
+        "S1 Teknik Informatika (STEI)",
+        "S1 Sistem dan Teknologi Informasi (STEI)"
+       ],
+       "biaya_min": 500000,
+       "biaya_max": 12500000,
+       "satuan": "UKT per semester",
+       "catatan": "STEI; persaingan masuk sangat ketat",
+       "sumber": "Mamikos (UKT SNBT ITB 2026)",
+       "periode": "2026",
+       "di_kota_pengguna": true
+      },
+      {
+       "nama": "Universitas Airlangga (Unair)",
+       "kota": "Surabaya",
+       "jenis": "PTN",
+       "qs_2026": "287",
+       "prodi": [
+        "S1 Sistem Informasi"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "UKT prodi belum tersedia di database; cek unair.ac.id",
+       "sumber": "QS WUR 2026 via Detik",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Institut Teknologi Sepuluh Nopember (ITS)",
+       "kota": "Surabaya",
+       "jenis": "PTN",
+       "qs_2026": "509",
+       "prodi": [
+        "S1 Teknik Informatika",
+        "S1 Sistem Informasi",
+        "S1 Sains Data"
+       ],
+       "biaya_min": 500000,
+       "biaya_max": 7500000,
+       "satuan": "UKT per semester",
+       "catatan": "Kisaran umum program sarjana; verifikasi di its.ac.id",
+       "sumber": "Sevima",
+       "periode": "kisaran umum",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Universitas Brawijaya (UB)",
+       "kota": "Malang",
+       "jenis": "PTN",
+       "qs_2026": "680",
+       "prodi": [
+        "S1 Teknik Informatika",
+        "S1 Sistem Informasi"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "UKT prodi belum tersedia di database; cek ub.ac.id",
+       "sumber": "QS WUR 2026 via Detik",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "BINUS University",
+       "kota": "Jakarta",
+       "jenis": "PTS",
+       "qs_2026": "851-900",
+       "prodi": [
+        "S1 Computer Science",
+        "S1 Information Systems",
+        "S1 Data Science"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "per semester",
+       "catatan": "Kampus swasta peringkat teratas; biaya belum tersedia di database",
+       "sumber": "QS WUR 2026 via Detik",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Telkom University",
+       "kota": "Bandung",
+       "jenis": "PTS",
+       "qs_2026": "1001-1200",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi",
+        "S1 Sains Data"
+       ],
+       "biaya_min": 12000000,
+       "biaya_max": 13500000,
+       "satuan": "BPP per semester",
+       "catatan": "Ditambah uang pangkal (UP3/SDP2) sekali bayar",
+       "sumber": "Telkom University (hive.telkomuniversity.ac.id); Tirto 2025",
+       "periode": "2025-2026",
+       "di_kota_pengguna": true
+      },
+      {
+       "nama": "Institut Teknologi Nasional (Itenas)",
+       "kota": "Bandung",
+       "jenis": "PTS",
+       "qs_2026": "1201-1400 (QS 2025)",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi",
+        "dan prodi teknik lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "Binus Bandung (QS WUR 2025)",
+       "periode": "2025",
+       "di_kota_pengguna": true
+      },
+      {
+       "nama": "Universitas Kristen Maranatha",
+       "kota": "Bandung",
+       "jenis": "PTS",
+       "qs_2026": "1401+",
+       "prodi": [
+        "S1 Teknik Informatika",
+        "S1 Sistem Informasi",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": true
+      },
+      {
+       "nama": "Universitas Andalas (Unand)",
+       "kota": "Padang",
+       "jenis": "PTN",
+       "qs_2026": "1401+",
+       "prodi": [
+        "S1 Sistem Informasi",
+        "S1 Teknik Komputer",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Universitas Sriwijaya (Unsri)",
+       "kota": "Palembang",
+       "jenis": "PTN",
+       "qs_2026": "1401+",
+       "prodi": [
+        "S1 Teknik Informatika",
+        "S1 Sistem Informasi",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Universitas Kristen Petra",
+       "kota": "Surabaya",
+       "jenis": "PTS",
+       "qs_2026": "1401+",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi Bisnis",
+        "S1 Sains Data",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Universitas Widyatama",
+       "kota": "Bandung",
+       "jenis": "PTS",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Teknik Informatika",
+        "S1 Sistem Informasi",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": true
+      },
+      {
+       "nama": "UPN Veteran Jakarta",
+       "kota": "Jakarta",
+       "jenis": "PTN",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "UPN Veteran Yogyakarta",
+       "kota": "Yogyakarta",
+       "jenis": "PTN",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "UPN Veteran Jawa Timur",
+       "kota": "Surabaya",
+       "jenis": "PTN",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi",
+        "S1 Sains Data",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Institut Teknologi Kalimantan (ITK)",
+       "kota": "Balikpapan",
+       "jenis": "PTN",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi",
+        "dan prodi teknik lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Universitas Tarumanagara (Untar)",
+       "kota": "Jakarta",
+       "jenis": "PTS",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Teknik Informatika",
+        "S1 Sistem Informasi",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Universitas Gunadarma",
+       "kota": "Depok",
+       "jenis": "PTS",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Universitas Pelita Harapan (UPH)",
+       "kota": "Tangerang",
+       "jenis": "PTS",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Universitas Multimedia Nusantara (UMN)",
+       "kota": "Tangerang",
+       "jenis": "PTS",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi",
+        "S1 DKV",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "President University",
+       "kota": "Bekasi",
+       "jenis": "PTS",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Universitas Terbuka (UT)",
+       "kota": "Daring (seluruh Indonesia)",
+       "jenis": "PTN",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Sistem Informasi",
+        "S1 Sains Data"
+       ],
+       "biaya_min": 1800000,
+       "biaya_max": 1900000,
+       "satuan": "per semester",
+       "catatan": "Alternatif hemat dan fleksibel, bisa sambil bekerja",
+       "sumber": "Kompas Edu",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      }
+     ]
+    },
+    {
+     "id": "informatika",
+     "jurusan": "S1 Teknik Informatika / Ilmu Komputer",
+     "skor_kecocokan": 89,
+     "minat_cocok": [
+      "",
+      "a",
+      "e",
+      "g",
+      "i",
+      "k",
+      "l",
+      "m",
+      "matematika",
+      "memecahkan masalah",
+      "n",
+      "o",
+      "t",
+      "teknologi"
+     ],
+     "skill_pendukung": [
+      "coding",
+      "python",
+      "website"
+     ],
+     "karier_terkait": [
+      "Data Engineer",
+      "Software Engineer",
+      "Data Scientist"
+     ],
+     "kampus": [
+      {
+       "nama": "Universitas Indonesia (UI)",
+       "kota": "Depok",
+       "jenis": "PTN",
+       "qs_2026": "189",
+       "prodi": [
+        "S1 Ilmu Komputer",
+        "S1 Sistem Informasi"
+       ],
+       "biaya_min": 500000,
+       "biaya_max": 17500000,
+       "satuan": "UKT per semester",
+       "catatan": "Fakultas Ilmu Komputer",
+       "sumber": "Keputusan Rektor UI No. 297/SK/R/UI/2026 via Gebrak; QS WUR 2026 via Detik",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Universitas Gadjah Mada (UGM)",
+       "kota": "Yogyakarta",
+       "jenis": "PTN",
+       "qs_2026": "224",
+       "prodi": [
+        "S1 Ilmu Komputer",
+        "S1 Teknologi Informasi"
+       ],
+       "biaya_min": 0,
+       "biaya_max": 13300000,
+       "satuan": "UKT per semester",
+       "catatan": "Kelompok bidang rekayasa (perangkat lunak, internet)",
+       "sumber": "Mamikos (UKT UGM SNBP/SNBT 2026)",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Institut Teknologi Bandung (ITB)",
+       "kota": "Bandung",
+       "jenis": "PTN",
+       "qs_2026": "255",
+       "prodi": [
+        "S1 Teknik Informatika (STEI)",
+        "S1 Sistem dan Teknologi Informasi (STEI)"
+       ],
+       "biaya_min": 500000,
+       "biaya_max": 12500000,
+       "satuan": "UKT per semester",
+       "catatan": "STEI; persaingan masuk sangat ketat",
+       "sumber": "Mamikos (UKT SNBT ITB 2026)",
+       "periode": "2026",
+       "di_kota_pengguna": true
+      },
+      {
+       "nama": "IPB University",
+       "kota": "Bogor",
+       "jenis": "PTN",
+       "qs_2026": "399",
+       "prodi": [
+        "S1 Ilmu Komputer",
+        "S1 Statistika dan Sains Data"
+       ],
+       "biaya_min": 2400000,
+       "biaya_max": 12000000,
+       "satuan": "UKT per semester",
+       "catatan": "Kisaran umum program sarjana",
+       "sumber": "Sevima; Mamikos (Januari 2026)",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Institut Teknologi Sepuluh Nopember (ITS)",
+       "kota": "Surabaya",
+       "jenis": "PTN",
+       "qs_2026": "509",
+       "prodi": [
+        "S1 Teknik Informatika",
+        "S1 Sistem Informasi",
+        "S1 Sains Data"
+       ],
+       "biaya_min": 500000,
+       "biaya_max": 7500000,
+       "satuan": "UKT per semester",
+       "catatan": "Kisaran umum program sarjana; verifikasi di its.ac.id",
+       "sumber": "Sevima",
+       "periode": "kisaran umum",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Universitas Padjadjaran (Unpad)",
+       "kota": "Bandung/Jatinangor",
+       "jenis": "PTN",
+       "qs_2026": "515",
+       "prodi": [
+        "S1 Teknik Informatika",
+        "S1 Statistika"
+       ],
+       "biaya_min": 500000,
+       "biaya_max": 15000000,
+       "satuan": "UKT per semester",
+       "catatan": "Teknik Informatika termasuk UKT tertinggi di Unpad",
+       "sumber": "Mamikos (Kep. Rektor Unpad No. 110/UN6.RKT/Kep/HK/2025)",
+       "periode": "2026",
+       "di_kota_pengguna": true
+      },
+      {
+       "nama": "Universitas Diponegoro (Undip)",
+       "kota": "Semarang",
+       "jenis": "PTN",
+       "qs_2026": "624",
+       "prodi": [
+        "S1 Informatika"
+       ],
+       "biaya_min": null,
+       "biaya_max": 9500000,
+       "satuan": "UKT per semester",
+       "catatan": "Batas atas umum universitas",
+       "sumber": "Mamikos (Januari 2026)",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Universitas Brawijaya (UB)",
+       "kota": "Malang",
+       "jenis": "PTN",
+       "qs_2026": "680",
+       "prodi": [
+        "S1 Teknik Informatika",
+        "S1 Sistem Informasi"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "UKT prodi belum tersedia di database; cek ub.ac.id",
+       "sumber": "QS WUR 2026 via Detik",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "BINUS University",
+       "kota": "Jakarta",
+       "jenis": "PTS",
+       "qs_2026": "851-900",
+       "prodi": [
+        "S1 Computer Science",
+        "S1 Information Systems",
+        "S1 Data Science"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "per semester",
+       "catatan": "Kampus swasta peringkat teratas; biaya belum tersedia di database",
+       "sumber": "QS WUR 2026 via Detik",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Telkom University",
+       "kota": "Bandung",
+       "jenis": "PTS",
+       "qs_2026": "1001-1200",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi",
+        "S1 Sains Data"
+       ],
+       "biaya_min": 12000000,
+       "biaya_max": 13500000,
+       "satuan": "BPP per semester",
+       "catatan": "Ditambah uang pangkal (UP3/SDP2) sekali bayar",
+       "sumber": "Telkom University (hive.telkomuniversity.ac.id); Tirto 2025",
+       "periode": "2025-2026",
+       "di_kota_pengguna": true
+      },
+      {
+       "nama": "Universitas Pendidikan Indonesia (UPI)",
+       "kota": "Bandung",
+       "jenis": "PTN",
+       "qs_2026": "1201-1400",
+       "prodi": [
+        "S1 Ilmu Komputer"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "UKT prodi belum tersedia di database; cek upi.edu",
+       "sumber": "QS WUR 2026 via Detik",
+       "periode": "2026",
+       "di_kota_pengguna": true
+      },
+      {
+       "nama": "Institut Teknologi Nasional (Itenas)",
+       "kota": "Bandung",
+       "jenis": "PTS",
+       "qs_2026": "1201-1400 (QS 2025)",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi",
+        "dan prodi teknik lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "Binus Bandung (QS WUR 2025)",
+       "periode": "2025",
+       "di_kota_pengguna": true
+      },
+      {
+       "nama": "Universitas Kristen Maranatha",
+       "kota": "Bandung",
+       "jenis": "PTS",
+       "qs_2026": "1401+",
+       "prodi": [
+        "S1 Teknik Informatika",
+        "S1 Sistem Informasi",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": true
+      },
+      {
+       "nama": "Universitas Negeri Malang (UM)",
+       "kota": "Malang",
+       "jenis": "PTN",
+       "qs_2026": "1401+",
+       "prodi": [
+        "S1 Teknik Informatika",
+        "S1 Pendidikan Teknik Informatika",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Universitas Sriwijaya (Unsri)",
+       "kota": "Palembang",
+       "jenis": "PTN",
+       "qs_2026": "1401+",
+       "prodi": [
+        "S1 Teknik Informatika",
+        "S1 Sistem Informasi",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Universitas Islam Indonesia (UII)",
+       "kota": "Yogyakarta",
+       "jenis": "PTS",
+       "qs_2026": "1401+",
+       "prodi": [
+        "S1 Informatika",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Universitas Kristen Petra",
+       "kota": "Surabaya",
+       "jenis": "PTS",
+       "qs_2026": "1401+",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi Bisnis",
+        "S1 Sains Data",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Politeknik Negeri Bandung (Polban)",
+       "kota": "Bandung",
+       "jenis": "PTN (vokasi)",
+       "qs_2026": "-",
+       "prodi": [
+        "D3/D4 Teknik Informatika",
+        "dan prodi vokasi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": true
+      },
+      {
+       "nama": "Universitas Pasundan (Unpas)",
+       "kota": "Bandung",
+       "jenis": "PTS",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Teknik Informatika",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": true
+      },
+      {
+       "nama": "Universitas Widyatama",
+       "kota": "Bandung",
+       "jenis": "PTS",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Teknik Informatika",
+        "S1 Sistem Informasi",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": true
+      },
+      {
+       "nama": "UPN Veteran Jakarta",
+       "kota": "Jakarta",
+       "jenis": "PTN",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "UPN Veteran Yogyakarta",
+       "kota": "Yogyakarta",
+       "jenis": "PTN",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "UPN Veteran Jawa Timur",
+       "kota": "Surabaya",
+       "jenis": "PTN",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi",
+        "S1 Sains Data",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Institut Teknologi Sumatera (ITERA)",
+       "kota": "Lampung Selatan",
+       "jenis": "PTN",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Teknik Informatika",
+        "S1 Sains Data",
+        "dan prodi teknik lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Institut Teknologi Kalimantan (ITK)",
+       "kota": "Balikpapan",
+       "jenis": "PTN",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi",
+        "dan prodi teknik lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Politeknik Negeri Jakarta (PNJ)",
+       "kota": "Depok",
+       "jenis": "PTN (vokasi)",
+       "qs_2026": "-",
+       "prodi": [
+        "D3/D4 Teknik Informatika & Komputer",
+        "dan prodi vokasi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Politeknik Elektronika Negeri Surabaya (PENS)",
+       "kota": "Surabaya",
+       "jenis": "PTN (vokasi)",
+       "qs_2026": "-",
+       "prodi": [
+        "D3/D4 Teknik Informatika",
+        "D4 Sains Data Terapan",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Universitas Tarumanagara (Untar)",
+       "kota": "Jakarta",
+       "jenis": "PTS",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Teknik Informatika",
+        "S1 Sistem Informasi",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Universitas Gunadarma",
+       "kota": "Depok",
+       "jenis": "PTS",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Universitas Pelita Harapan (UPH)",
+       "kota": "Tangerang",
+       "jenis": "PTS",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Universitas Multimedia Nusantara (UMN)",
+       "kota": "Tangerang",
+       "jenis": "PTS",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi",
+        "S1 DKV",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "President University",
+       "kota": "Bekasi",
+       "jenis": "PTS",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      }
+     ]
+    },
+    {
+     "id": "sains_data",
+     "jurusan": "S1 Sains Data / Statistika",
+     "skor_kecocokan": 79,
+     "minat_cocok": [
+      "",
+      "a",
+      "e",
+      "g",
+      "i",
+      "k",
+      "l",
+      "m",
+      "matematika",
+      "memecahkan masalah",
+      "n",
+      "t"
+     ],
+     "skill_pendukung": [
+      "python"
+     ],
+     "karier_terkait": [
+      "Data Analyst",
+      "Data Scientist"
+     ],
+     "kampus": [
+      {
+       "nama": "IPB University",
+       "kota": "Bogor",
+       "jenis": "PTN",
+       "qs_2026": "399",
+       "prodi": [
+        "S1 Ilmu Komputer",
+        "S1 Statistika dan Sains Data"
+       ],
+       "biaya_min": 2400000,
+       "biaya_max": 12000000,
+       "satuan": "UKT per semester",
+       "catatan": "Kisaran umum program sarjana",
+       "sumber": "Sevima; Mamikos (Januari 2026)",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Institut Teknologi Sepuluh Nopember (ITS)",
+       "kota": "Surabaya",
+       "jenis": "PTN",
+       "qs_2026": "509",
+       "prodi": [
+        "S1 Teknik Informatika",
+        "S1 Sistem Informasi",
+        "S1 Sains Data"
+       ],
+       "biaya_min": 500000,
+       "biaya_max": 7500000,
+       "satuan": "UKT per semester",
+       "catatan": "Kisaran umum program sarjana; verifikasi di its.ac.id",
+       "sumber": "Sevima",
+       "periode": "kisaran umum",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Universitas Padjadjaran (Unpad)",
+       "kota": "Bandung/Jatinangor",
+       "jenis": "PTN",
+       "qs_2026": "515",
+       "prodi": [
+        "S1 Teknik Informatika",
+        "S1 Statistika"
+       ],
+       "biaya_min": 500000,
+       "biaya_max": 15000000,
+       "satuan": "UKT per semester",
+       "catatan": "Teknik Informatika termasuk UKT tertinggi di Unpad",
+       "sumber": "Mamikos (Kep. Rektor Unpad No. 110/UN6.RKT/Kep/HK/2025)",
+       "periode": "2026",
+       "di_kota_pengguna": true
+      },
+      {
+       "nama": "BINUS University",
+       "kota": "Jakarta",
+       "jenis": "PTS",
+       "qs_2026": "851-900",
+       "prodi": [
+        "S1 Computer Science",
+        "S1 Information Systems",
+        "S1 Data Science"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "per semester",
+       "catatan": "Kampus swasta peringkat teratas; biaya belum tersedia di database",
+       "sumber": "QS WUR 2026 via Detik",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Telkom University",
+       "kota": "Bandung",
+       "jenis": "PTS",
+       "qs_2026": "1001-1200",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi",
+        "S1 Sains Data"
+       ],
+       "biaya_min": 12000000,
+       "biaya_max": 13500000,
+       "satuan": "BPP per semester",
+       "catatan": "Ditambah uang pangkal (UP3/SDP2) sekali bayar",
+       "sumber": "Telkom University (hive.telkomuniversity.ac.id); Tirto 2025",
+       "periode": "2025-2026",
+       "di_kota_pengguna": true
+      },
+      {
+       "nama": "Universitas Kristen Petra",
+       "kota": "Surabaya",
+       "jenis": "PTS",
+       "qs_2026": "1401+",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi Bisnis",
+        "S1 Sains Data",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "UPN Veteran Jawa Timur",
+       "kota": "Surabaya",
+       "jenis": "PTN",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Informatika",
+        "S1 Sistem Informasi",
+        "S1 Sains Data",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Institut Teknologi Sumatera (ITERA)",
+       "kota": "Lampung Selatan",
+       "jenis": "PTN",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Teknik Informatika",
+        "S1 Sains Data",
+        "dan prodi teknik lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Politeknik Elektronika Negeri Surabaya (PENS)",
+       "kota": "Surabaya",
+       "jenis": "PTN (vokasi)",
+       "qs_2026": "-",
+       "prodi": [
+        "D3/D4 Teknik Informatika",
+        "D4 Sains Data Terapan",
+        "dan prodi lain"
+       ],
+       "biaya_min": null,
+       "biaya_max": null,
+       "satuan": "UKT per semester",
+       "catatan": "",
+       "sumber": "QS WUR 2026 via Detik/Gebrak",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      },
+      {
+       "nama": "Universitas Terbuka (UT)",
+       "kota": "Daring (seluruh Indonesia)",
+       "jenis": "PTN",
+       "qs_2026": "-",
+       "prodi": [
+        "S1 Sistem Informasi",
+        "S1 Sains Data"
+       ],
+       "biaya_min": 1800000,
+       "biaya_max": 1900000,
+       "satuan": "per semester",
+       "catatan": "Alternatif hemat dan fleksibel, bisa sambil bekerja",
+       "sumber": "Kompas Edu",
+       "periode": "2026",
+       "di_kota_pengguna": false
+      }
+     ]
+    },
+    {
+     "id": "dkv",
+     "jurusan": "S1 Desain Komunikasi Visual",
+     "skor_kecocokan": 77,
+     "minat_cocok": [
+      "",
+      "a",
+      "desain",
+      "e",
+      "g",
+      "i",
+      "k",
+      "m",
+      "n",
+      "t"
+     ],
+     "skill_pendukung": [
+      "canva"
+     ],
+     "karier_terkait": [
+      "UI/UX Designer",
+      "Digital Marketing"
+     ],
+     "kampus": []
+    }
+   ],
+   "mode_pelajar": true,
+   "rekomendasi": [
+    {
+     "id": "data_analyst",
+     "profesi": "Data Analyst",
+     "bidang": "Teknologi & Data",
+     "skor_kecocokan": 75,
+     "target_pengguna": false,
+     "alasan": [
+      "Cocok dengan minatmu: , a, e, g, i, k, l, m, matematika, memecahkan masalah, n, o, t, teknologi.",
+      "Kamu sudah punya 1 dari 4 skill wajib.",
+      "Sebagian pengalaman kerjamu bisa dipakai sebagai nilai tambah."
+     ],
+     "deskripsi": "Mengolah data menjadi laporan dan dashboard untuk membantu keputusan bisnis.",
+     "jenjang_karier": [
+      "Junior Data Analyst",
+      "Data Analyst",
+      "Senior Data Analyst",
+      "Analytics Lead",
+      "Head of Data/Analytics"
+     ],
+     "pendidikan_umum": "S1 berbagai jurusan (Statistik, Matematika, Informatika, Sistem Informasi, Teknik Industri); banyak career switcher masuk lewat bootcamp + portofolio",
+     "skill_sudah_dimiliki": [
+      "Excel/Google Sheets",
+      "Python (pandas)"
+     ],
+     "skill_perlu_diperdalam": [],
+     "skill_gap_wajib": [
+      "SQL",
+      "visualisasi data (Power BI/Tableau/Looker Studio)",
+      "statistik dasar"
+     ],
+     "skill_gap_pendukung": [
+      "storytelling data",
+      "pemahaman bisnis"
+     ],
+     "jalur_pendapatan": {
+      "tahapan": [
+       {
+        "tahap": "entry",
+        "rentang_min": 5000000,
+        "rentang_max": 9000000,
+        "nilai_tengah": 7000000,
+        "perkiraan_tahun_ke": "0-2",
+        "sumber": [
+         "HRBS Global - Average Salary in Indonesia 2026 (2026)"
+        ]
+       },
+       {
+        "tahap": "mid",
+        "rentang_min": 7635417,
+        "rentang_max": 14000000,
+        "nilai_tengah": 10000000,
+        "perkiraan_tahun_ke": "2-5",
+        "sumber": [
+         "Glassdoor - Data Analyst Jakarta (Oktober 2026)"
+        ]
+       },
+       {
+        "tahap": "senior",
+        "rentang_min": 15000000,
+        "rentang_max": 28000000,
+        "nilai_tengah": 21500000,
+        "perkiraan_tahun_ke": "5-seterusnya",
+        "sumber": [
+         "HRBS Global - Average Salary in Indonesia 2026 (2026)"
+        ]
+       }
+      ]
+     },
+     "jalur_belajar": {
+      "jalur_utama": [
+       {
+        "program": "Bootcamp Data Analyst (umum)",
+        "jenis": "Bootcamp",
+        "biaya_min": 2000000,
+        "biaya_max": 40000000,
+        "satuan": "per program",
+        "durasi": "1-6 bulan",
+        "sumber": "tempatbelajar.id (2026)"
+       },
+       {
+        "program": "Sertifikasi BNSP Data Analyst",
+        "jenis": "Sertifikasi kompetensi",
+        "biaya_min": 800000,
+        "biaya_max": 2500000,
+        "satuan": "per sertifikasi",
+        "durasi": "pembekalan ±5-7 hari",
+        "sumber": "LSP Ditekindo; dilatih.co (2026)"
+       }
+      ],
+      "opsional_jangka_panjang": [
+       {
+        "program": "Universitas Terbuka - S1 Sains Data",
+        "jenis": "Kuliah jarak jauh",
+        "biaya_min": 1900000,
+        "biaya_max": 1900000,
+        "satuan": "per semester",
+        "durasi": "±8 semester",
+        "sumber": "Kompas.com Edu (2026)"
+       }
+      ],
+      "estimasi_biaya_jalur_utama": {
+       "min": 2800000,
+       "max": 42500000
+      },
+      "catatan": []
+     },
+     "perkiraan_persiapan_bulan": 54,
+     "rekomendasi_pendidikan": [
+      {
+       "jurusan": "S1 Sistem Informasi",
+       "skill_dibangun": [
+        "basis data/SQL",
+        "analisis sistem",
+        "pemrograman",
+        "manajemen proyek TI"
+       ],
+       "biaya_referensi": [
+        {
+         "program": "Universitas Terbuka - S1 Sistem Informasi",
+         "biaya_min": 1800000,
+         "biaya_max": 1800000,
+         "satuan": "per semester",
+         "sumber": "Kompas.com Edu (2026)"
+        },
+        {
+         "program": "UKT Universitas Indonesia - S1",
+         "biaya_min": 500000,
+         "biaya_max": 16900000,
+         "satuan": "per semester",
+         "sumber": "Kontan (rilis UKT UI 2026) (2026)"
+        }
+       ]
+      },
+      {
+       "jurusan": "S1 Sains Data / Statistika",
+       "skill_dibangun": [
+        "statistik",
+        "Python",
+        "SQL",
+        "visualisasi data",
+        "machine learning dasar"
+       ],
+       "biaya_referensi": [
+        {
+         "program": "Universitas Terbuka - S1 Sains Data",
+         "biaya_min": 1900000,
+         "biaya_max": 1900000,
+         "satuan": "per semester",
+         "sumber": "Kompas.com Edu (2026)"
+        },
+        {
+         "program": "UKT Universitas Indonesia - S1",
+         "biaya_min": 500000,
+         "biaya_max": 16900000,
+         "satuan": "per semester",
+         "sumber": "Kontan (rilis UKT UI 2026) (2026)"
+        }
+       ]
+      },
+      {
+       "jurusan": "S1 Informatika / Ilmu Komputer",
+       "skill_dibangun": [
+        "pemrograman",
+        "struktur data & algoritma",
+        "basis data",
+        "rekayasa perangkat lunak"
+       ],
+       "biaya_referensi": [
+        {
+         "program": "UKT Universitas Indonesia - S1",
+         "biaya_min": 500000,
+         "biaya_max": 16900000,
+         "satuan": "per semester",
+         "sumber": "Kontan (rilis UKT UI 2026) (2026)"
+        },
+        {
+         "program": "Universitas Terbuka - S1 (umum)",
+         "biaya_min": 1300000,
+         "biaya_max": 1300000,
+         "satuan": "per semester",
+         "sumber": "Kompas.com Edu; laman admisi UT (2026)"
+        }
+       ]
+      },
+      {
+       "jurusan": "S1 Matematika / Statistika",
+       "skill_dibangun": [
+        "statistik & probabilitas",
+        "pemodelan matematika",
+        "analisis data"
+       ],
+       "biaya_referensi": [
+        {
+         "program": "UKT Universitas Indonesia - S1",
+         "biaya_min": 500000,
+         "biaya_max": 16900000,
+         "satuan": "per semester",
+         "sumber": "Kontan (rilis UKT UI 2026) (2026)"
+        },
+        {
+         "program": "Universitas Terbuka - S1 (umum)",
+         "biaya_min": 1300000,
+         "biaya_max": 1300000,
+         "satuan": "per semester",
+         "sumber": "Kompas.com Edu; laman admisi UT (2026)"
+        }
+       ]
+      },
+      {
+       "jurusan": "Jalur non-gelar: bootcamp + sertifikasi",
+       "skill_dibangun": [
+        "skill praktis sesuai program",
+        "portofolio proyek"
+       ],
+       "biaya_referensi": [
+        {
+         "program": "Bootcamp Data Analyst (umum)",
+         "biaya_min": 2000000,
+         "biaya_max": 40000000,
+         "satuan": "per program",
+         "sumber": "tempatbelajar.id (2026)"
+        },
+        {
+         "program": "Sertifikasi BNSP (skema umum)",
+         "biaya_min": 800000,
+         "biaya_max": 1500000,
+         "satuan": "per sertifikasi",
+         "sumber": "LSP Ditekindo (2026)"
+        }
+       ]
       }
      ],
-     "tenor_aman_terpendek": null
-    },
-    "opsi_c_kombinasi": {
-     "dp_persen": 35.0,
-     "dp": 98888308,
-     "waktu_kumpulkan_dp_bulan": 35,
-     "waktu_kumpulkan_dp": "2 tahun 11 bulan",
-     "perkiraan_harga_saat_beli": 282538023,
-     "pinjaman": 183649715,
-     "bunga_tahunan_persen": 10.0,
-     "cicilan_lama_saat_itu": 0,
-     "pilihan_tenor": [
+     "portofolio_disarankan": [
+      "Dashboard penjualan interaktif (Power BI/Looker Studio)",
+      "Analisis data publik (mis. BPS/Kaggle) dengan SQL + Python",
+      "Laporan insight bisnis 1 halaman dari dataset nyata"
+     ],
+     "roadmap_karier": [
       {
-       "tenor_tahun": 3,
-       "cicilan_bulanan": 5925860,
-       "total_bunga": 29681235,
-       "total_dibayar": 312219259,
-       "rasio_cicilan_setelah_kredit_persen": 65.8,
-       "aman": false
+       "fase": "Pilih jurusan & persiapan masuk",
+       "mulai_bulan": 0,
+       "selesai_bulan": 6,
+       "fokus": [
+        "Pertimbangkan jurusan: S1 Sistem Informasi, S1 Sains Data / Statistika",
+        "Bandingkan biaya kuliah dan beasiswa",
+        "Mulai portofolio kecil: Dashboard penjualan interaktif (Power BI/Looker Studio)"
+       ]
       },
       {
-       "tenor_tahun": 4,
-       "cicilan_bulanan": 4657831,
-       "total_bunga": 39926184,
-       "total_dibayar": 322464207,
-       "rasio_cicilan_setelah_kredit_persen": 51.8,
-       "aman": false
+       "fase": "Kuliah tahun 1-2",
+       "mulai_bulan": 6,
+       "selesai_bulan": 30,
+       "fokus": [
+        "Kuasai dasar: SQL, visualisasi data (Power BI/Tableau/Looker Studio)",
+        "Ikut komunitas/lomba sesuai bidang",
+        "Selesaikan portofolio pertama"
+       ]
       },
       {
-       "tenor_tahun": 5,
-       "cicilan_bulanan": 3902014,
-       "total_bunga": 50471107,
-       "total_dibayar": 333009131,
-       "rasio_cicilan_setelah_kredit_persen": 43.4,
-       "aman": false
+       "fase": "Kuliah tahun 3-4 + magang",
+       "mulai_bulan": 30,
+       "selesai_bulan": 54,
+       "fokus": [
+        "Magang di bidang Teknologi & Data",
+        "Portofolio lanjutan: Analisis data publik (mis. BPS/Kaggle) dengan SQL + Python; Laporan insight bisnis 1 halaman dari dataset nyata",
+        "Siapkan CV dan profil LinkedIn/GitHub"
+       ]
+      },
+      {
+       "fase": "Junior Data Analyst",
+       "mulai_bulan": 54,
+       "selesai_bulan": 78,
+       "fokus": [
+        "Perkiraan gaji Rp5.000.000 - Rp9.000.000/bulan"
+       ],
+       "pendapatan": {
+        "min": 5000000,
+        "max": 9000000
+       }
+      },
+      {
+       "fase": "Data Analyst",
+       "mulai_bulan": 78,
+       "selesai_bulan": 114,
+       "fokus": [
+        "Perkiraan gaji Rp7.635.417 - Rp14.000.000/bulan"
+       ],
+       "pendapatan": {
+        "min": 7635417,
+        "max": 14000000
+       }
+      },
+      {
+       "fase": "Senior Data Analyst",
+       "mulai_bulan": 114,
+       "selesai_bulan": null,
+       "fokus": [
+        "Perkiraan gaji Rp15.000.000 - Rp28.000.000/bulan"
+       ],
+       "pendapatan": {
+        "min": 15000000,
+        "max": 28000000
+       }
       }
      ],
-     "tenor_aman_terpendek": null,
-     "keterangan": "Menabung lebih lama untuk DP 35% agar pinjaman dan total bunga lebih kecil."
-    },
-    "status": "perlu_penyesuaian",
-    "opsi_disarankan": "sesuaikan_rencana",
-    "alternatif": {
-     "tambahan_tabungan_per_bulan_agar_tepat_waktu": 1684731,
-     "harga_maksimal_terjangkau_sesuai_tenggat": 172004192,
-     "perpanjang_tenggat_menjadi": "7 tahun 8 bulan"
-    }
-   },
-   {
-    "nama": "Menikah (intimate)",
-    "kategori": "menikah",
-    "prioritas": 2,
-    "harga_saat_ini": 150000000,
-    "sumber_harga": "diisi pengguna",
-    "kenaikan_harga_per_tahun_persen": 4.0,
-    "tenggat_bulan": 48,
-    "tenggat": "4 tahun",
-    "setoran_bulan_pertama": 0,
-    "opsi_a_menabung": {
-     "waktu_tercapai_bulan": 156,
-     "waktu_tercapai": "13 tahun",
-     "perkiraan_harga_saat_tercapai": 249761026,
-     "jika_hanya_fokus_target_ini": "4 tahun 7 bulan",
-     "harga_saat_tenggat": 175478784,
-     "tercapai_sesuai_tenggat": false
-    },
-    "catatan_kredit": "Kredit/pinjaman tidak disarankan untuk tujuan konsumtif ini; prioritaskan menabung.",
-    "status": "perlu_penyesuaian",
-    "opsi_disarankan": "sesuaikan_rencana",
-    "alternatif": {
-     "tambahan_tabungan_per_bulan_agar_tepat_waktu": 5474404,
-     "harga_maksimal_terjangkau_sesuai_tenggat": null,
-     "perpanjang_tenggat_menjadi": "13 tahun",
-     "catatan": "Menurunkan budget saja tidak cukup karena dana sedang terpakai untuk target prioritas lebih tinggi."
-    }
-   }
-  ],
-  "rekomendasi_utama": [
-   "Lunasi 'Paylater' (paylater, bunga ±30%/tahun) secepatnya, dan hindari menambah paylater/pinjol baru.",
-   "Bangun dana darurat Rp38.100.000 (6x pengeluaran bulanan) lebih dulu. Dengan menyisihkan sebagian kapasitas menabung, perkiraan terpenuhi dalam 1 tahun 5 bulan.",
-   "'Paylater' diperkirakan lunas dalam 3 bulan. Alihkan cicilan Rp500.000/bulan itu langsung ke tabungan target agar tidak terpakai untuk konsumsi.",
-   "Target 'Toyota Avanza' belum realistis dalam 5 tahun. Pilihan: perpanjang tenggat menjadi 7 tahun 8 bulan, atau turunkan budget ke ±Rp172.004.192, atau tambah tabungan/penghasilan ±Rp1.684.731/bulan.",
-   "Target 'Menikah (intimate)' belum realistis dalam 4 tahun. Pilihan: perpanjang tenggat menjadi 13 tahun, atau tambah tabungan/penghasilan ±Rp5.474.404/bulan.",
-   "Sebagian penghasilan tidak tetap. Di bulan sepi, pegang angka konservatif Rp8.000.000; kelebihan di bulan ramai langsung ditabung.",
-   "Profil kebiasaan: Si Spontan. Terapkan aturan tunggu 48 jam sebelum membeli barang non-kebutuhan, dan pisahkan rekening tabungan dari rekening belanja."
-  ],
-  "psikologi": {
-   "skor": {
-    "impulsif": 4,
-    "fomo": 3,
-    "menghindar": 2,
-    "emosional": 3,
-    "terlalu_hemat": 1,
-    "disiplin": 2
-   },
-   "tipe": "impulsif",
-   "nama_tipe": "Si Spontan",
-   "saran_kebiasaan": "Terapkan aturan tunggu 48 jam sebelum membeli barang non-kebutuhan, dan pisahkan rekening tabungan dari rekening belanja.",
-   "disiplin_anggaran": false,
-   "skala": "1 = sangat tidak setuju, 5 = sangat setuju"
-  },
-  "asumsi": {
-   "inflasi_umum_persen": 3.2,
-   "kenaikan_harga_persen": {
-    "rumah": 4.0,
-    "rumah_subsidi": 3.0,
-    "mobil": 3.0,
-    "motor": 3.0,
-    "menikah": 4.0,
-    "pendidikan": 6.0,
-    "default": 3.2
-   },
-   "bunga_kredit_persen": {
-    "rumah": 11.0,
-    "rumah_subsidi": 5.0,
-    "mobil": 10.0,
-    "motor": 15.0
-   },
-   "dp_persen": {
-    "rumah": 20.0,
-    "rumah_subsidi": 1.0,
-    "mobil": 20.0,
-    "motor": 15.0
-   },
-   "tenor_tahun": {
-    "rumah": [
-     10,
-     15,
-     20
-    ],
-    "rumah_subsidi": [
-     10,
-     15,
-     20
-    ],
-    "mobil": [
-     3,
-     4,
-     5
-    ],
-    "motor": [
-     1,
-     2,
-     3
-    ]
-   },
-   "imbal_hasil_tabungan_persen": 0.0,
-   "kenaikan_penghasilan_persen": 0.0,
-   "pakai_penghasilan_konservatif": false,
-   "batas_aman_cicilan_persen": 30.0,
-   "porsi_dana_darurat_persen": 50.0
-  },
-  "sumber_asumsi": [
-   "Inflasi umum 3,2%: inflasi tahunan Indonesia Agustus 2026 tercatat 3,19% (BPS via Databoks); sasaran BI 2,5±1%.",
-   "Bunga KPR 11%: bunga floating KPR BCA 11% (Mandiri 13%, CIMB Niaga 13,5%), Kontan Agustus 2026.",
-   "KPR subsidi 5% tetap dan batas harga rumah subsidi Rp166-185 juta: Kompas.com 2026.",
-   "Kenaikan harga barang, bunga kredit kendaraan, DP, dan porsi alokasi adalah asumsi CITA yang dapat diubah.",
-   "Penghasilan dan pengeluaran dianggap tetap (konservatif); ubah 'kenaikan_penghasilan_persen' untuk skenario kenaikan gaji."
-  ],
-  "disclaimer": "CITA adalah alat edukasi dan perencanaan keuangan, bukan nasihat investasi atau rekomendasi produk keuangan tertentu. Semua angka adalah estimasi berdasarkan data yang kamu isi dan asumsi yang tercantum."
- },
- "simulasi_gaji": {
-  "status": "ok",
-  "user_id": "budi",
-  "mode": "simulasi_what_if",
-  "pesan": "Simulasi what-if selesai (tidak mengubah data tersimpan).",
-  "ringkasan": "Budi Santoso: pendapatan Rp11.000.000, pengeluaran Rp6.050.000, sisa Rp4.950.000. Skor kesehatan 72/100 (Cukup sehat 🟢), saving rate 45.0%. Target Toyota Avanza: dengan menabung tercapai dalam 4 tahun 11 bulan. Target Menikah (intimate): dengan menabung tercapai dalam 7 tahun 3 bulan.",
-  "dashboard": {
-   "nama": "Budi Santoso",
-   "pendapatan": 11000000,
-   "pengeluaran": 6050000,
-   "sisa": 4950000,
-   "skor_kesehatan": 72,
-   "status": "Cukup sehat 🟢",
-   "saving_rate_persen": 45.0
-  },
-  "kesehatan_keuangan": {
-   "penghasilan": 11000000,
-   "penghasilan_konservatif": 10000000,
-   "pengeluaran_rutin": 4750000,
-   "pengeluaran_keinginan": 350000,
-   "total_cicilan": 1300000,
-   "total_pengeluaran": 6050000,
-   "disposable_income": 4950000,
-   "kapasitas_menabung": 4950000,
-   "saving_rate_persen": 45.0,
-   "rasio_cicilan_persen": 11.8,
-   "rasio_keinginan_persen": 3.2,
-   "rincian_skor": {
-    "saving_rate (maks 30)": 30.0,
-    "rasio_cicilan (maks 25)": 24.1,
-    "dana_darurat (maks 25)": 4.6,
-    "pengeluaran_keinginan (maks 10)": 10.0,
-    "hutang_berbunga_tinggi (maks 10)": 3.0
-   },
-   "skor": 72,
-   "status": "Cukup sehat 🟢"
-  },
-  "dana_darurat": {
-   "dana_likuid_saat_ini": 10000000,
-   "cukup_untuk_bulan": 1.7,
-   "target_minimum": 36300000,
-   "target_ideal": 54450000,
-   "target_dipakai": 36300000,
-   "kekurangan": 26300000,
-   "perkiraan_waktu_terpenuhi": "10 bulan"
-  },
-  "alokasi_bulan_ini": {
-   "kapasitas_menabung": 4950000,
-   "untuk_dana_darurat": 2475000,
-   "untuk_target": 2475000,
-   "catatan": "Alokasi berubah otomatis: setelah dana darurat terpenuhi atau cicilan lunas, dananya dialihkan ke target."
-  },
-  "strategi_hutang": [
-   {
-    "urutan": 1,
-    "nama": "Paylater",
-    "jenis": "paylater",
-    "bunga_tahunan_persen": 30.0,
-    "sisa_pokok": 1500000,
-    "cicilan_bulanan": 500000,
-    "perkiraan_lunas": "3 bulan",
-    "berbunga_tinggi": true
-   },
-   {
-    "urutan": 2,
-    "nama": "Cicilan motor",
-    "jenis": "kendaraan",
-    "bunga_tahunan_persen": 12.0,
-    "sisa_pokok": 8000000,
-    "cicilan_bulanan": 800000,
-    "perkiraan_lunas": "10 bulan",
-    "berbunga_tinggi": false
-   }
-  ],
-  "target": [
-   {
-    "nama": "Toyota Avanza",
-    "kategori": "mobil",
-    "prioritas": 1,
-    "harga_saat_ini": 259200000,
-    "sumber_harga": "referensi: oto.com (OTR Jakarta), 2026",
-    "kenaikan_harga_per_tahun_persen": 3.0,
-    "tenggat_bulan": 60,
-    "tenggat": "5 tahun",
-    "setoran_bulan_pertama": 2475000,
-    "opsi_a_menabung": {
-     "waktu_tercapai_bulan": 59,
-     "waktu_tercapai": "4 tahun 11 bulan",
-     "perkiraan_harga_saat_tercapai": 299744589,
-     "jika_hanya_fokus_target_ini": "4 tahun 5 bulan",
-     "harga_saat_tenggat": 300483840,
-     "tercapai_sesuai_tenggat": true
-    },
-    "opsi_b_kredit": {
-     "dp_persen": 20.0,
-     "dp": 53791236,
-     "waktu_kumpulkan_dp_bulan": 15,
-     "waktu_kumpulkan_dp": "1 tahun 3 bulan",
-     "perkiraan_harga_saat_beli": 268956180,
-     "pinjaman": 215164944,
-     "bunga_tahunan_persen": 10.0,
-     "cicilan_lama_saat_itu": 0,
-     "pilihan_tenor": [
+     "jadwal_pendapatan_untuk_simulasi": [
       {
-       "tenor_tahun": 3,
-       "cicilan_bulanan": 6942768,
-       "total_bunga": 34774687,
-       "total_dibayar": 303730867,
-       "rasio_cicilan_setelah_kredit_persen": 63.1,
-       "aman": false
+       "mulai_bulan": 54,
+       "penghasilan": 7000000,
+       "keterangan": "perkiraan tahap entry (nilai tengah rentang)"
       },
       {
-       "tenor_tahun": 4,
-       "cicilan_bulanan": 5457139,
-       "total_bunga": 46777721,
-       "total_dibayar": 315733901,
-       "rasio_cicilan_setelah_kredit_persen": 49.6,
-       "aman": false
+       "mulai_bulan": 78,
+       "penghasilan": 10000000,
+       "keterangan": "perkiraan tahap mid (nilai tengah rentang)"
       },
       {
-       "tenor_tahun": 5,
-       "cicilan_bulanan": 4571619,
-       "total_bunga": 59132207,
-       "total_dibayar": 328088387,
-       "rasio_cicilan_setelah_kredit_persen": 41.6,
-       "aman": false
+       "mulai_bulan": 114,
+       "penghasilan": 21500000,
+       "keterangan": "perkiraan tahap senior (nilai tengah rentang)"
       }
      ],
-     "tenor_aman_terpendek": null
+     "simulasi_siap_pakai": {
+      "jadwal_pendapatan": [
+       {
+        "mulai_bulan": 54,
+        "penghasilan": 7000000,
+        "keterangan": "perkiraan tahap entry (nilai tengah rentang)"
+       },
+       {
+        "mulai_bulan": 78,
+        "penghasilan": 10000000,
+        "keterangan": "perkiraan tahap mid (nilai tengah rentang)"
+       },
+       {
+        "mulai_bulan": 114,
+        "penghasilan": 21500000,
+        "keterangan": "perkiraan tahap senior (nilai tengah rentang)"
+       }
+      ]
+     }
     },
-    "opsi_c_kombinasi": {
-     "dp_persen": 35.0,
-     "dp": 96008066,
-     "waktu_kumpulkan_dp_bulan": 23,
-     "waktu_kumpulkan_dp": "1 tahun 11 bulan",
-     "perkiraan_harga_saat_beli": 274308761,
-     "pinjaman": 178300694,
-     "bunga_tahunan_persen": 10.0,
-     "cicilan_lama_saat_itu": 0,
-     "pilihan_tenor": [
+    {
+     "id": "data_engineer",
+     "profesi": "Data Engineer",
+     "bidang": "Teknologi & Data",
+     "skor_kecocokan": 73,
+     "target_pengguna": false,
+     "alasan": [
+      "Cocok dengan minatmu: , a, e, g, i, k, l, m, n, o, t, teknologi.",
+      "Perlu diperdalam (masih level dasar): Python.",
+      "Pengalaman kerjamu sangat relevan, jadi bisa masuk tanpa mulai dari nol."
+     ],
+     "deskripsi": "Membangun dan merawat pipeline serta infrastruktur data agar data siap dipakai analis dan sistem AI.",
+     "jenjang_karier": [
+      "Junior Data Engineer",
+      "Data Engineer",
+      "Senior Data Engineer",
+      "Lead/Staff Engineer",
+      "Data Architect"
+     ],
+     "pendidikan_umum": "S1 Informatika/Sistem Informasi/Teknik Komputer atau setara; jalur umum: dari Data Analyst atau Software Engineer",
+     "skill_sudah_dimiliki": [],
+     "skill_perlu_diperdalam": [
+      "Python"
+     ],
+     "skill_gap_wajib": [
+      "SQL lanjutan",
+      "ETL/ELT pipeline",
+      "konsep data warehouse"
+     ],
+     "skill_gap_pendukung": [
+      "cloud (GCP/AWS/Azure)",
+      "Airflow/orchestration",
+      "Spark"
+     ],
+     "jalur_pendapatan": {
+      "tahapan": [
+       {
+        "tahap": "mid",
+        "rentang_min": 8833333,
+        "rentang_max": 17812500,
+        "nilai_tengah": 11108333,
+        "perkiraan_tahun_ke": "2-5",
+        "sumber": [
+         "Glassdoor - Data Engineer Jakarta (Oktober 2026)"
+        ]
+       }
+      ]
+     },
+     "jalur_belajar": {
+      "jalur_utama": [
+       {
+        "program": "Bootcamp Data Analyst (umum)",
+        "jenis": "Bootcamp",
+        "biaya_min": 2000000,
+        "biaya_max": 40000000,
+        "satuan": "per program",
+        "durasi": "1-6 bulan",
+        "sumber": "tempatbelajar.id (2026)"
+       }
+      ],
+      "opsional_jangka_panjang": [
+       {
+        "program": "Universitas Terbuka - S1 Sistem Informasi",
+        "jenis": "Kuliah jarak jauh",
+        "biaya_min": 1800000,
+        "biaya_max": 1800000,
+        "satuan": "per semester",
+        "durasi": "±8 semester",
+        "sumber": "Kompas.com Edu (2026)"
+       }
+      ],
+      "estimasi_biaya_jalur_utama": {
+       "min": 2000000,
+       "max": 40000000
+      },
+      "catatan": []
+     },
+     "perkiraan_persiapan_bulan": 54,
+     "rekomendasi_pendidikan": [
       {
-       "tenor_tahun": 3,
-       "cicilan_bulanan": 5753262,
-       "total_bunga": 28816733,
-       "total_dibayar": 303125494,
-       "rasio_cicilan_setelah_kredit_persen": 52.3,
-       "aman": false
+       "jurusan": "S1 Sistem Informasi",
+       "skill_dibangun": [
+        "basis data/SQL",
+        "analisis sistem",
+        "pemrograman",
+        "manajemen proyek TI"
+       ],
+       "biaya_referensi": [
+        {
+         "program": "Universitas Terbuka - S1 Sistem Informasi",
+         "biaya_min": 1800000,
+         "biaya_max": 1800000,
+         "satuan": "per semester",
+         "sumber": "Kompas.com Edu (2026)"
+        },
+        {
+         "program": "UKT Universitas Indonesia - S1",
+         "biaya_min": 500000,
+         "biaya_max": 16900000,
+         "satuan": "per semester",
+         "sumber": "Kontan (rilis UKT UI 2026) (2026)"
+        }
+       ]
       },
       {
-       "tenor_tahun": 4,
-       "cicilan_bulanan": 4522166,
-       "total_bunga": 38763285,
-       "total_dibayar": 313072046,
-       "rasio_cicilan_setelah_kredit_persen": 41.1,
-       "aman": false
+       "jurusan": "S1 Sains Data / Statistika",
+       "skill_dibangun": [
+        "statistik",
+        "Python",
+        "SQL",
+        "visualisasi data",
+        "machine learning dasar"
+       ],
+       "biaya_referensi": [
+        {
+         "program": "Universitas Terbuka - S1 Sains Data",
+         "biaya_min": 1900000,
+         "biaya_max": 1900000,
+         "satuan": "per semester",
+         "sumber": "Kompas.com Edu (2026)"
+        },
+        {
+         "program": "UKT Universitas Indonesia - S1",
+         "biaya_min": 500000,
+         "biaya_max": 16900000,
+         "satuan": "per semester",
+         "sumber": "Kontan (rilis UKT UI 2026) (2026)"
+        }
+       ]
       },
       {
-       "tenor_tahun": 5,
-       "cicilan_bulanan": 3788363,
-       "total_bunga": 49001075,
-       "total_dibayar": 323309836,
-       "rasio_cicilan_setelah_kredit_persen": 34.4,
-       "aman": false
+       "jurusan": "S1 Informatika / Ilmu Komputer",
+       "skill_dibangun": [
+        "pemrograman",
+        "struktur data & algoritma",
+        "basis data",
+        "rekayasa perangkat lunak"
+       ],
+       "biaya_referensi": [
+        {
+         "program": "UKT Universitas Indonesia - S1",
+         "biaya_min": 500000,
+         "biaya_max": 16900000,
+         "satuan": "per semester",
+         "sumber": "Kontan (rilis UKT UI 2026) (2026)"
+        },
+        {
+         "program": "Universitas Terbuka - S1 (umum)",
+         "biaya_min": 1300000,
+         "biaya_max": 1300000,
+         "satuan": "per semester",
+         "sumber": "Kompas.com Edu; laman admisi UT (2026)"
+        }
+       ]
       }
      ],
-     "tenor_aman_terpendek": null,
-     "keterangan": "Menabung lebih lama untuk DP 35% agar pinjaman dan total bunga lebih kecil."
+     "portofolio_disarankan": [
+      "Pipeline ETL harian dari API ke database",
+      "Data warehouse kecil dengan model bintang (star schema)",
+      "Penjadwalan pipeline dengan Airflow atau cron"
+     ],
+     "roadmap_karier": [
+      {
+       "fase": "Pilih jurusan & persiapan masuk",
+       "mulai_bulan": 0,
+       "selesai_bulan": 6,
+       "fokus": [
+        "Pertimbangkan jurusan: S1 Sistem Informasi, S1 Sains Data / Statistika",
+        "Bandingkan biaya kuliah dan beasiswa",
+        "Mulai portofolio kecil: Pipeline ETL harian dari API ke database"
+       ]
+      },
+      {
+       "fase": "Kuliah tahun 1-2",
+       "mulai_bulan": 6,
+       "selesai_bulan": 30,
+       "fokus": [
+        "Kuasai dasar: SQL lanjutan, ETL/ELT pipeline",
+        "Ikut komunitas/lomba sesuai bidang",
+        "Selesaikan portofolio pertama"
+       ]
+      },
+      {
+       "fase": "Kuliah tahun 3-4 + magang",
+       "mulai_bulan": 30,
+       "selesai_bulan": 54,
+       "fokus": [
+        "Magang di bidang Teknologi & Data",
+        "Portofolio lanjutan: Data warehouse kecil dengan model bintang (star schema); Penjadwalan pipeline dengan Airflow atau cron",
+        "Siapkan CV dan profil LinkedIn/GitHub"
+       ]
+      },
+      {
+       "fase": "Data Engineer",
+       "mulai_bulan": 54,
+       "selesai_bulan": null,
+       "fokus": [
+        "Perkiraan gaji Rp8.833.333 - Rp17.812.500/bulan"
+       ],
+       "pendapatan": {
+        "min": 8833333,
+        "max": 17812500
+       }
+      }
+     ],
+     "jadwal_pendapatan_untuk_simulasi": [
+      {
+       "mulai_bulan": 54,
+       "penghasilan": 11108333,
+       "keterangan": "perkiraan tahap mid (nilai tengah rentang)"
+      }
+     ],
+     "simulasi_siap_pakai": {
+      "jadwal_pendapatan": [
+       {
+        "mulai_bulan": 54,
+        "penghasilan": 11108333,
+        "keterangan": "perkiraan tahap mid (nilai tengah rentang)"
+       }
+      ]
+     }
     },
-    "status": "realistis",
-    "opsi_disarankan": "menabung"
-   },
-   {
-    "nama": "Menikah (intimate)",
-    "kategori": "menikah",
-    "prioritas": 2,
-    "harga_saat_ini": 150000000,
-    "sumber_harga": "diisi pengguna",
-    "kenaikan_harga_per_tahun_persen": 4.0,
-    "tenggat_bulan": 48,
-    "tenggat": "4 tahun",
-    "setoran_bulan_pertama": 0,
-    "opsi_a_menabung": {
-     "waktu_tercapai_bulan": 87,
-     "waktu_tercapai": "7 tahun 3 bulan",
-     "perkiraan_harga_saat_tercapai": 199334729,
-     "jika_hanya_fokus_target_ini": "2 tahun 9 bulan",
-     "harga_saat_tenggat": 175478784,
-     "tercapai_sesuai_tenggat": false
+    {
+     "id": "software_engineer",
+     "profesi": "Software Engineer",
+     "bidang": "Teknologi",
+     "skor_kecocokan": 73,
+     "target_pengguna": false,
+     "alasan": [
+      "Cocok dengan minatmu: , a, e, g, i, k, l, m, matematika, memecahkan masalah, n, o, t, teknologi.",
+      "Perlu diperdalam (masih level dasar): satu bahasa pemrograman (JavaScript/Python/Java/Go).",
+      "Pengalaman kerjamu sangat relevan, jadi bisa masuk tanpa mulai dari nol."
+     ],
+     "deskripsi": "Merancang, membangun, dan memelihara aplikasi web, mobile, atau sistem backend.",
+     "jenjang_karier": [
+      "Junior",
+      "Mid",
+      "Senior",
+      "Lead/Staff",
+      "Engineering Manager/Architect"
+     ],
+     "pendidikan_umum": "S1 Informatika/Ilmu Komputer atau setara; bootcamp + portofolio juga diterima banyak perusahaan",
+     "skill_sudah_dimiliki": [],
+     "skill_perlu_diperdalam": [
+      "satu bahasa pemrograman (JavaScript/Python/Java/Go)"
+     ],
+     "skill_gap_wajib": [
+      "Git",
+      "basis data",
+      "dasar web/API"
+     ],
+     "skill_gap_pendukung": [
+      "framework (React, Node.js, dsb.)",
+      "testing",
+      "cloud & deployment"
+     ],
+     "jalur_pendapatan": {
+      "tahapan": [
+       {
+        "tahap": "entry",
+        "rentang_min": 6000000,
+        "rentang_max": 10000000,
+        "nilai_tengah": 9000000,
+        "perkiraan_tahun_ke": "0-2",
+        "sumber": [
+         "HRBS Global 2026; NodeFlair via whatisthesalary.com (2026)"
+        ]
+       },
+       {
+        "tahap": "senior",
+        "rentang_min": 18000000,
+        "rentang_max": 35000000,
+        "nilai_tengah": 26500000,
+        "perkiraan_tahun_ke": "5-seterusnya",
+        "sumber": [
+         "HRBS Global - Average Salary in Indonesia 2026 (2026)"
+        ]
+       }
+      ]
+     },
+     "jalur_belajar": {
+      "jalur_utama": [],
+      "opsional_jangka_panjang": [
+       {
+        "program": "Universitas Terbuka - S1 Sistem Informasi",
+        "jenis": "Kuliah jarak jauh",
+        "biaya_min": 1800000,
+        "biaya_max": 1800000,
+        "satuan": "per semester",
+        "durasi": "±8 semester",
+        "sumber": "Kompas.com Edu (2026)"
+       }
+      ],
+      "estimasi_biaya_jalur_utama": {
+       "min": 0,
+       "max": 0
+      },
+      "catatan": [
+       "Jalur utama lewat portofolio dan belajar mandiri; biaya bootcamp spesifik belum ada di database."
+      ]
+     },
+     "perkiraan_persiapan_bulan": 54,
+     "rekomendasi_pendidikan": [
+      {
+       "jurusan": "S1 Sistem Informasi",
+       "skill_dibangun": [
+        "basis data/SQL",
+        "analisis sistem",
+        "pemrograman",
+        "manajemen proyek TI"
+       ],
+       "biaya_referensi": [
+        {
+         "program": "Universitas Terbuka - S1 Sistem Informasi",
+         "biaya_min": 1800000,
+         "biaya_max": 1800000,
+         "satuan": "per semester",
+         "sumber": "Kompas.com Edu (2026)"
+        },
+        {
+         "program": "UKT Universitas Indonesia - S1",
+         "biaya_min": 500000,
+         "biaya_max": 16900000,
+         "satuan": "per semester",
+         "sumber": "Kontan (rilis UKT UI 2026) (2026)"
+        }
+       ]
+      },
+      {
+       "jurusan": "S1 Informatika / Ilmu Komputer",
+       "skill_dibangun": [
+        "pemrograman",
+        "struktur data & algoritma",
+        "basis data",
+        "rekayasa perangkat lunak"
+       ],
+       "biaya_referensi": [
+        {
+         "program": "UKT Universitas Indonesia - S1",
+         "biaya_min": 500000,
+         "biaya_max": 16900000,
+         "satuan": "per semester",
+         "sumber": "Kontan (rilis UKT UI 2026) (2026)"
+        },
+        {
+         "program": "Universitas Terbuka - S1 (umum)",
+         "biaya_min": 1300000,
+         "biaya_max": 1300000,
+         "satuan": "per semester",
+         "sumber": "Kompas.com Edu; laman admisi UT (2026)"
+        }
+       ]
+      },
+      {
+       "jurusan": "Jalur non-gelar: bootcamp + sertifikasi",
+       "skill_dibangun": [
+        "skill praktis sesuai program",
+        "portofolio proyek"
+       ],
+       "biaya_referensi": [
+        {
+         "program": "Bootcamp Data Analyst (umum)",
+         "biaya_min": 2000000,
+         "biaya_max": 40000000,
+         "satuan": "per program",
+         "sumber": "tempatbelajar.id (2026)"
+        },
+        {
+         "program": "Sertifikasi BNSP (skema umum)",
+         "biaya_min": 800000,
+         "biaya_max": 1500000,
+         "satuan": "per sertifikasi",
+         "sumber": "LSP Ditekindo (2026)"
+        }
+       ]
+      }
+     ],
+     "portofolio_disarankan": [
+      "Aplikasi web lengkap (frontend + backend + database) di GitHub",
+      "REST API dengan autentikasi dan testing",
+      "Kontribusi ke proyek open-source"
+     ],
+     "roadmap_karier": [
+      {
+       "fase": "Pilih jurusan & persiapan masuk",
+       "mulai_bulan": 0,
+       "selesai_bulan": 6,
+       "fokus": [
+        "Pertimbangkan jurusan: S1 Sistem Informasi, S1 Informatika / Ilmu Komputer",
+        "Bandingkan biaya kuliah dan beasiswa",
+        "Mulai portofolio kecil: Aplikasi web lengkap (frontend + backend + database) di GitHub"
+       ]
+      },
+      {
+       "fase": "Kuliah tahun 1-2",
+       "mulai_bulan": 6,
+       "selesai_bulan": 30,
+       "fokus": [
+        "Kuasai dasar: Git, basis data",
+        "Ikut komunitas/lomba sesuai bidang",
+        "Selesaikan portofolio pertama"
+       ]
+      },
+      {
+       "fase": "Kuliah tahun 3-4 + magang",
+       "mulai_bulan": 30,
+       "selesai_bulan": 54,
+       "fokus": [
+        "Magang di bidang Teknologi",
+        "Portofolio lanjutan: REST API dengan autentikasi dan testing; Kontribusi ke proyek open-source",
+        "Siapkan CV dan profil LinkedIn/GitHub"
+       ]
+      },
+      {
+       "fase": "Junior",
+       "mulai_bulan": 54,
+       "selesai_bulan": 114,
+       "fokus": [
+        "Perkiraan gaji Rp6.000.000 - Rp10.000.000/bulan"
+       ],
+       "pendapatan": {
+        "min": 6000000,
+        "max": 10000000
+       }
+      },
+      {
+       "fase": "Senior",
+       "mulai_bulan": 114,
+       "selesai_bulan": null,
+       "fokus": [
+        "Perkiraan gaji Rp18.000.000 - Rp35.000.000/bulan"
+       ],
+       "pendapatan": {
+        "min": 18000000,
+        "max": 35000000
+       }
+      }
+     ],
+     "jadwal_pendapatan_untuk_simulasi": [
+      {
+       "mulai_bulan": 54,
+       "penghasilan": 9000000,
+       "keterangan": "perkiraan tahap entry (nilai tengah rentang)"
+      },
+      {
+       "mulai_bulan": 114,
+       "penghasilan": 26500000,
+       "keterangan": "perkiraan tahap senior (nilai tengah rentang)"
+      }
+     ],
+     "simulasi_siap_pakai": {
+      "jadwal_pendapatan": [
+       {
+        "mulai_bulan": 54,
+        "penghasilan": 9000000,
+        "keterangan": "perkiraan tahap entry (nilai tengah rentang)"
+       },
+       {
+        "mulai_bulan": 114,
+        "penghasilan": 26500000,
+        "keterangan": "perkiraan tahap senior (nilai tengah rentang)"
+       }
+      ]
+     }
+    }
+   ],
+   "profesi_lain": [
+    {
+     "profesi": "UI/UX Designer",
+     "skor_kecocokan": 73
     },
-    "catatan_kredit": "Kredit/pinjaman tidak disarankan untuk tujuan konsumtif ini; prioritaskan menabung.",
-    "status": "perlu_penyesuaian",
-    "opsi_disarankan": "sesuaikan_rencana",
-    "alternatif": {
-     "tambahan_tabungan_per_bulan_agar_tepat_waktu": 3136376,
-     "harga_maksimal_terjangkau_sesuai_tenggat": 25151999,
-     "perpanjang_tenggat_menjadi": "7 tahun 3 bulan"
+    {
+     "profesi": "Data Scientist",
+     "skor_kecocokan": 70
+    },
+    {
+     "profesi": "Supply Chain Analyst",
+     "skor_kecocokan": 69
+    },
+    {
+     "profesi": "Supervisor Gudang",
+     "skor_kecocokan": 66
+    },
+    {
+     "profesi": "Staff PPIC",
+     "skor_kecocokan": 66
+    },
+    {
+     "profesi": "Akuntan",
+     "skor_kecocokan": 66
+    },
+    {
+     "profesi": "Insinyur Teknik Industri",
+     "skor_kecocokan": 66
+    },
+    {
+     "profesi": "Perawat",
+     "skor_kecocokan": 62
+    },
+    {
+     "profesi": "Digital Marketing",
+     "skor_kecocokan": 60
+    },
+    {
+     "profesi": "Teknisi Listrik",
+     "skor_kecocokan": 60
+    },
+    {
+     "profesi": "Teknisi Mekanik / Mekanik",
+     "skor_kecocokan": 60
+    },
+    {
+     "profesi": "Dokter Umum",
+     "skor_kecocokan": 60
+    },
+    {
+     "profesi": "Dokter Spesialis",
+     "skor_kecocokan": 60
+    },
+    {
+     "profesi": "Dokter Hewan",
+     "skor_kecocokan": 60
+    },
+    {
+     "profesi": "Apoteker",
+     "skor_kecocokan": 60
+    },
+    {
+     "profesi": "Psikolog",
+     "skor_kecocokan": 60
+    },
+    {
+     "profesi": "IT Support",
+     "skor_kecocokan": 60
+    },
+    {
+     "profesi": "Guru",
+     "skor_kecocokan": 60
+    },
+    {
+     "profesi": "TNI (Tentara)",
+     "skor_kecocokan": 60
+    },
+    {
+     "profesi": "Polisi",
+     "skor_kecocokan": 60
     }
-   }
-  ],
-  "rekomendasi_utama": [
-   "Lunasi 'Paylater' (paylater, bunga ±30%/tahun) secepatnya, dan hindari menambah paylater/pinjol baru.",
-   "Bangun dana darurat Rp36.300.000 (6x pengeluaran bulanan) lebih dulu. Dengan menyisihkan sebagian kapasitas menabung, perkiraan terpenuhi dalam 10 bulan.",
-   "'Paylater' diperkirakan lunas dalam 3 bulan. Alihkan cicilan Rp500.000/bulan itu langsung ke tabungan target agar tidak terpakai untuk konsumsi.",
-   "Target 'Menikah (intimate)' belum realistis dalam 4 tahun. Pilihan: perpanjang tenggat menjadi 7 tahun 3 bulan, atau turunkan budget ke ±Rp25.151.999, atau tambah tabungan/penghasilan ±Rp3.136.376/bulan.",
-   "'Menikah (intimate)' sebenarnya bisa tercapai dalam 2 tahun 9 bulan jika didahulukan. Target ini bentrok dengan target prioritas lebih tinggi, jadi pertimbangkan mengubah urutan prioritas.",
-   "Sebagian penghasilan tidak tetap. Di bulan sepi, pegang angka konservatif Rp10.000.000; kelebihan di bulan ramai langsung ditabung.",
-   "Profil kebiasaan: Si Spontan. Terapkan aturan tunggu 48 jam sebelum membeli barang non-kebutuhan, dan pisahkan rekening tabungan dari rekening belanja."
-  ],
-  "psikologi": {
-   "skor": {
-    "impulsif": 4,
-    "fomo": 3,
-    "menghindar": 2,
-    "emosional": 3,
-    "terlalu_hemat": 1,
-    "disiplin": 2
+   ],
+   "konteks_wilayah": {
+    "jenis": "UMK 2026",
+    "wilayah": "Kota Bandung",
+    "nilai": 4737678
    },
-   "tipe": "impulsif",
-   "nama_tipe": "Si Spontan",
-   "saran_kebiasaan": "Terapkan aturan tunggu 48 jam sebelum membeli barang non-kebutuhan, dan pisahkan rekening tabungan dari rekening belanja.",
-   "disiplin_anggaran": false,
-   "skala": "1 = sangat tidak setuju, 5 = sangat setuju"
-  },
-  "perubahan_yang_disimulasikan": {
-   "perubahan_penghasilan": 2000000,
-   "perubahan_keinginan": -300000
-  },
-  "perbandingan": {
-   "sebelum": {
-    "sisa": 2650000,
-    "skor": 70,
-    "target": {
-     "Toyota Avanza": "7 tahun 8 bulan",
-     "Menikah (intimate)": "13 tahun"
-    }
-   },
-   "sesudah": {
-    "sisa": 4950000,
-    "skor": 72,
-    "target": {
-     "Toyota Avanza": "4 tahun 11 bulan",
-     "Menikah (intimate)": "7 tahun 3 bulan"
-    }
-   }
-  },
-  "asumsi": {
-   "inflasi_umum_persen": 3.2,
-   "kenaikan_harga_persen": {
-    "rumah": 4.0,
-    "rumah_subsidi": 3.0,
-    "mobil": 3.0,
-    "motor": 3.0,
-    "menikah": 4.0,
-    "pendidikan": 6.0,
-    "default": 3.2
-   },
-   "bunga_kredit_persen": {
-    "rumah": 11.0,
-    "rumah_subsidi": 5.0,
-    "mobil": 10.0,
-    "motor": 15.0
-   },
-   "dp_persen": {
-    "rumah": 20.0,
-    "rumah_subsidi": 1.0,
-    "mobil": 20.0,
-    "motor": 15.0
-   },
-   "tenor_tahun": {
-    "rumah": [
-     10,
-     15,
-     20
-    ],
-    "rumah_subsidi": [
-     10,
-     15,
-     20
-    ],
-    "mobil": [
-     3,
-     4,
-     5
-    ],
-    "motor": [
-     1,
-     2,
-     3
-    ]
-   },
-   "imbal_hasil_tabungan_persen": 0.0,
-   "kenaikan_penghasilan_persen": 0.0,
-   "pakai_penghasilan_konservatif": false,
-   "batas_aman_cicilan_persen": 30.0,
-   "porsi_dana_darurat_persen": 50.0
-  },
-  "sumber_asumsi": [
-   "Inflasi umum 3,2%: inflasi tahunan Indonesia Agustus 2026 tercatat 3,19% (BPS via Databoks); sasaran BI 2,5±1%.",
-   "Bunga KPR 11%: bunga floating KPR BCA 11% (Mandiri 13%, CIMB Niaga 13,5%), Kontan Agustus 2026.",
-   "KPR subsidi 5% tetap dan batas harga rumah subsidi Rp166-185 juta: Kompas.com 2026.",
-   "Kenaikan harga barang, bunga kredit kendaraan, DP, dan porsi alokasi adalah asumsi CITA yang dapat diubah.",
-   "Penghasilan dan pengeluaran dianggap tetap (konservatif); ubah 'kenaikan_penghasilan_persen' untuk skenario kenaikan gaji."
-  ],
-  "disclaimer": "CITA adalah alat edukasi dan perencanaan keuangan, bukan nasihat investasi atau rekomendasi produk keuangan tertentu. Semua angka adalah estimasi berdasarkan data yang kamu isi dan asumsi yang tercantum."
+   "catatan_target": null,
+   "total_pengalaman_tahun": 1,
+   "catatan_metode": [
+    "Mode pelajar: skor kecocokan 0-100 = minat (50), skill dan potensi (25), aktivitas relevan (15), kesiapan pendidikan (10).",
+    "Jadwal pendapatan menggantikan penghasilan pekerjaan utama saja; pendapatan sampingan dan pasangan tetap dihitung terpisah. Rentang gaji dari database eksternal myCITA beserta sumbernya; jadwal pendapatan memakai nilai tengah rentang dan asumsi umum lama jenjang (entry 0-2 th, mid 2-5 th, senior 5+ th).",
+    "Rekomendasi tidak memakai jenis kelamin, usia, agama, atau asal daerah sebagai faktor."
+   ],
+   "sumber_data": "Database Eksternal myCITA v1.0 (Oktober 2026)",
+   "memakai_data_tersimpan": [
+    "minat",
+    "skill",
+    "pengalaman",
+    "pendidikan_terakhir",
+    "kota"
+   ],
+   "disclaimer": "Rekomendasi adalah gambaran awal berdasarkan data yang kamu isi dan data referensi pasar. Keputusan tetap di tanganmu."
+  }
  },
  "harga": {
   "avanza": {
@@ -879,1313 +5005,9 @@ export const DEMO = {
    ],
    "catatan": "Harga referensi adalah estimasi per Oktober 2026 dan dapat berbeda per kota dan dealer."
   }
- },
- "karier_input": {
-  "user_id": "budi",
-  "minat": [
-   "angka",
-   "komputer"
-  ],
-  "skill": [
-   "Excel",
-   "Python dasar",
-   "SQL"
-  ],
-  "pengalaman": [
-   {
-    "bidang": "IT software",
-    "tahun": 2
-   }
-  ],
-  "pendidikan_terakhir": "S1",
-  "kota": "Kota Bogor"
- },
- "karier": {
-  "status": "ok",
-  "user_id": "budi",
-  "pesan": "Eksplorasi karier selesai: Data Analyst, Supply Chain Analyst, Data Engineer.",
-  "rekomendasi": [
-   {
-    "id": "data_analyst",
-    "profesi": "Data Analyst",
-    "bidang": "Teknologi & Data",
-    "skor_kecocokan": 70,
-    "target_pengguna": false,
-    "alasan": [
-     "Cocok dengan minatmu: angka, komputer.",
-     "Kamu sudah punya 2 dari 4 skill wajib.",
-     "Sebagian pengalaman kerjamu bisa dipakai sebagai nilai tambah."
-    ],
-    "deskripsi": "Mengolah data menjadi laporan dan dashboard untuk membantu keputusan bisnis.",
-    "jenjang_karier": [
-     "Junior Data Analyst",
-     "Data Analyst",
-     "Senior Data Analyst",
-     "Analytics Lead",
-     "Head of Data/Analytics"
-    ],
-    "pendidikan_umum": "S1 berbagai jurusan (Statistik, Matematika, Informatika, Sistem Informasi, Teknik Industri); banyak career switcher masuk lewat bootcamp + portofolio",
-    "skill_sudah_dimiliki": [
-     "Excel/Google Sheets",
-     "SQL",
-     "Python (pandas)"
-    ],
-    "skill_gap_wajib": [
-     "visualisasi data (Power BI/Tableau/Looker Studio)",
-     "statistik dasar"
-    ],
-    "skill_gap_pendukung": [
-     "storytelling data",
-     "pemahaman bisnis"
-    ],
-    "jalur_pendapatan": {
-     "tahapan": [
-      {
-       "tahap": "entry",
-       "rentang_min": 5000000,
-       "rentang_max": 9000000,
-       "nilai_tengah": 7000000,
-       "perkiraan_tahun_ke": "0-2",
-       "sumber": [
-        "HRBS Global - Average Salary in Indonesia 2026 (2026)"
-       ]
-      },
-      {
-       "tahap": "mid",
-       "rentang_min": 7635417,
-       "rentang_max": 14000000,
-       "nilai_tengah": 10000000,
-       "perkiraan_tahun_ke": "2-5",
-       "sumber": [
-        "Glassdoor - Data Analyst Jakarta (Oktober 2026)"
-       ]
-      },
-      {
-       "tahap": "senior",
-       "rentang_min": 15000000,
-       "rentang_max": 28000000,
-       "nilai_tengah": 21500000,
-       "perkiraan_tahun_ke": "5-seterusnya",
-       "sumber": [
-        "HRBS Global - Average Salary in Indonesia 2026 (2026)"
-       ]
-      }
-     ]
-    },
-    "jalur_belajar": {
-     "jalur_utama": [
-      {
-       "program": "Bootcamp Data Analyst (umum)",
-       "jenis": "Bootcamp",
-       "biaya_min": 2000000,
-       "biaya_max": 40000000,
-       "satuan": "per program",
-       "durasi": "1-6 bulan",
-       "sumber": "tempatbelajar.id (2026)"
-      },
-      {
-       "program": "Sertifikasi BNSP Data Analyst",
-       "jenis": "Sertifikasi kompetensi",
-       "biaya_min": 800000,
-       "biaya_max": 2500000,
-       "satuan": "per sertifikasi",
-       "durasi": "pembekalan ±5-7 hari",
-       "sumber": "LSP Ditekindo; dilatih.co (2026)"
-      }
-     ],
-     "opsional_jangka_panjang": [
-      {
-       "program": "Universitas Terbuka - S1 Sains Data",
-       "jenis": "Kuliah jarak jauh",
-       "biaya_min": 1900000,
-       "biaya_max": 1900000,
-       "satuan": "per semester",
-       "durasi": "±8 semester",
-       "sumber": "Kompas.com Edu (2026)"
-      }
-     ],
-     "estimasi_biaya_jalur_utama": {
-      "min": 2800000,
-      "max": 42500000
-     },
-     "catatan": []
-    },
-    "perkiraan_persiapan_bulan": 6,
-    "jadwal_pendapatan_untuk_simulasi": [
-     {
-      "mulai_bulan": 0,
-      "penghasilan": 7000000,
-      "keterangan": "penghasilan pekerjaan utama saat ini"
-     },
-     {
-      "mulai_bulan": 6,
-      "penghasilan": 7000000,
-      "keterangan": "perkiraan tahap entry (nilai tengah rentang)"
-     },
-     {
-      "mulai_bulan": 30,
-      "penghasilan": 10000000,
-      "keterangan": "perkiraan tahap mid (nilai tengah rentang)"
-     },
-     {
-      "mulai_bulan": 66,
-      "penghasilan": 21500000,
-      "keterangan": "perkiraan tahap senior (nilai tengah rentang)"
-     }
-    ],
-    "simulasi_siap_pakai": {
-     "jadwal_pendapatan": [
-      {
-       "mulai_bulan": 0,
-       "penghasilan": 7000000,
-       "keterangan": "penghasilan pekerjaan utama saat ini"
-      },
-      {
-       "mulai_bulan": 6,
-       "penghasilan": 7000000,
-       "keterangan": "perkiraan tahap entry (nilai tengah rentang)"
-      },
-      {
-       "mulai_bulan": 30,
-       "penghasilan": 10000000,
-       "keterangan": "perkiraan tahap mid (nilai tengah rentang)"
-      },
-      {
-       "mulai_bulan": 66,
-       "penghasilan": 21500000,
-       "keterangan": "perkiraan tahap senior (nilai tengah rentang)"
-      }
-     ]
-    },
-    "selisih_tahap_awal_vs_sekarang": 0
-   },
-   {
-    "id": "supply_chain_analyst",
-    "profesi": "Supply Chain Analyst",
-    "bidang": "Rantai Pasok",
-    "skor_kecocokan": 62,
-    "target_pengguna": false,
-    "alasan": [
-     "Cocok dengan minatmu: angka, komputer.",
-     "Kamu sudah punya 2 dari 4 skill wajib."
-    ],
-    "deskripsi": "Menganalisis data persediaan, pemasok, dan distribusi untuk menekan biaya dan mencegah kehabisan stok.",
-    "jenjang_karier": [
-     "Supply Chain Staff",
-     "Supply Chain Analyst",
-     "Senior Analyst",
-     "Supply Chain Supervisor/Lead",
-     "Supply Chain Manager"
-    ],
-    "pendidikan_umum": "S1 Teknik Industri, Manajemen, Statistik, atau Logistik; sertifikasi analisis data membantu",
-    "skill_sudah_dimiliki": [
-     "Excel lanjutan (pivot, lookup)",
-     "SQL dasar",
-     "Python dasar"
-    ],
-    "skill_gap_wajib": [
-     "analisis persediaan",
-     "dashboard (Power BI/Looker Studio)"
-    ],
-    "skill_gap_pendukung": [
-     "forecasting",
-     "pengetahuan pengadaan & distribusi"
-    ],
-    "jalur_pendapatan": {
-     "tahapan": [
-      {
-       "tahap": "entry",
-       "rentang_min": 4000000,
-       "rentang_max": 10000000,
-       "nilai_tengah": 7250000,
-       "perkiraan_tahun_ke": "0-2",
-       "sumber": [
-        "HRBS Global - Average Salary in Indonesia 2026 (2026)",
-        "KantorKu - Gaji Supply Chain Staff 2026 (2026)"
-       ]
-      },
-      {
-       "tahap": "senior",
-       "rentang_min": 12000000,
-       "rentang_max": 20000000,
-       "nilai_tengah": 16000000,
-       "perkiraan_tahun_ke": "5-seterusnya",
-       "sumber": [
-        "HRBS Global - Average Salary in Indonesia 2026 (2026)"
-       ]
-      }
-     ]
-    },
-    "jalur_belajar": {
-     "jalur_utama": [
-      {
-       "program": "Google Data Analytics Professional Certificate (Coursera)",
-       "jenis": "Kursus online bersertifikat",
-       "biaya_min": null,
-       "biaya_max": null,
-       "satuan": "±USD 49 per bulan",
-       "durasi": "beberapa bulan, mandiri",
-       "sumber": "tempatbelajar.id (rangkuman bootcamp 2026) (2026)"
-      },
-      {
-       "program": "Sertifikasi BNSP Data Analyst",
-       "jenis": "Sertifikasi kompetensi",
-       "biaya_min": 800000,
-       "biaya_max": 2500000,
-       "satuan": "per sertifikasi",
-       "durasi": "pembekalan ±5-7 hari",
-       "sumber": "LSP Ditekindo; dilatih.co (2026)"
-      }
-     ],
-     "opsional_jangka_panjang": [
-      {
-       "program": "Universitas Terbuka - S1 (umum)",
-       "jenis": "Kuliah jarak jauh (cocok sambil bekerja)",
-       "biaya_min": 1300000,
-       "biaya_max": 1300000,
-       "satuan": "per semester",
-       "durasi": "±8 semester",
-       "sumber": "Kompas.com Edu; laman admisi UT (2026)"
-      }
-     ],
-     "estimasi_biaya_jalur_utama": {
-      "min": 800000,
-      "max": 2500000
-     },
-     "catatan": [
-      "Sebagian program berbiaya langganan (lihat satuan), belum termasuk di total."
-     ]
-    },
-    "perkiraan_persiapan_bulan": 6,
-    "jadwal_pendapatan_untuk_simulasi": [
-     {
-      "mulai_bulan": 0,
-      "penghasilan": 7000000,
-      "keterangan": "penghasilan pekerjaan utama saat ini"
-     },
-     {
-      "mulai_bulan": 6,
-      "penghasilan": 7250000,
-      "keterangan": "perkiraan tahap entry (nilai tengah rentang)"
-     },
-     {
-      "mulai_bulan": 66,
-      "penghasilan": 16000000,
-      "keterangan": "perkiraan tahap senior (nilai tengah rentang)"
-     }
-    ],
-    "simulasi_siap_pakai": {
-     "jadwal_pendapatan": [
-      {
-       "mulai_bulan": 0,
-       "penghasilan": 7000000,
-       "keterangan": "penghasilan pekerjaan utama saat ini"
-      },
-      {
-       "mulai_bulan": 6,
-       "penghasilan": 7250000,
-       "keterangan": "perkiraan tahap entry (nilai tengah rentang)"
-      },
-      {
-       "mulai_bulan": 66,
-       "penghasilan": 16000000,
-       "keterangan": "perkiraan tahap senior (nilai tengah rentang)"
-      }
-     ]
-    },
-    "selisih_tahap_awal_vs_sekarang": 250000
-   },
-   {
-    "id": "data_engineer",
-    "profesi": "Data Engineer",
-    "bidang": "Teknologi & Data",
-    "skor_kecocokan": 58,
-    "target_pengguna": false,
-    "alasan": [
-     "Cocok dengan minatmu: komputer.",
-     "Kamu sudah punya 2 dari 4 skill wajib.",
-     "Pengalaman kerjamu sangat relevan, jadi bisa masuk tanpa mulai dari nol."
-    ],
-    "deskripsi": "Membangun dan merawat pipeline serta infrastruktur data agar data siap dipakai analis dan sistem AI.",
-    "jenjang_karier": [
-     "Junior Data Engineer",
-     "Data Engineer",
-     "Senior Data Engineer",
-     "Lead/Staff Engineer",
-     "Data Architect"
-    ],
-    "pendidikan_umum": "S1 Informatika/Sistem Informasi/Teknik Komputer atau setara; jalur umum: dari Data Analyst atau Software Engineer",
-    "skill_sudah_dimiliki": [
-     "SQL lanjutan",
-     "Python"
-    ],
-    "skill_gap_wajib": [
-     "ETL/ELT pipeline",
-     "konsep data warehouse"
-    ],
-    "skill_gap_pendukung": [
-     "cloud (GCP/AWS/Azure)",
-     "Airflow/orchestration",
-     "Spark"
-    ],
-    "jalur_pendapatan": {
-     "tahapan": [
-      {
-       "tahap": "mid",
-       "rentang_min": 8833333,
-       "rentang_max": 17812500,
-       "nilai_tengah": 11108333,
-       "perkiraan_tahun_ke": "2-5",
-       "sumber": [
-        "Glassdoor - Data Engineer Jakarta (Oktober 2026)"
-       ]
-      }
-     ]
-    },
-    "jalur_belajar": {
-     "jalur_utama": [
-      {
-       "program": "Bootcamp Data Analyst (umum)",
-       "jenis": "Bootcamp",
-       "biaya_min": 2000000,
-       "biaya_max": 40000000,
-       "satuan": "per program",
-       "durasi": "1-6 bulan",
-       "sumber": "tempatbelajar.id (2026)"
-      }
-     ],
-     "opsional_jangka_panjang": [
-      {
-       "program": "Universitas Terbuka - S1 Sistem Informasi",
-       "jenis": "Kuliah jarak jauh",
-       "biaya_min": 1800000,
-       "biaya_max": 1800000,
-       "satuan": "per semester",
-       "durasi": "±8 semester",
-       "sumber": "Kompas.com Edu (2026)"
-      }
-     ],
-     "estimasi_biaya_jalur_utama": {
-      "min": 2000000,
-      "max": 40000000
-     },
-     "catatan": []
-    },
-    "perkiraan_persiapan_bulan": 12,
-    "jadwal_pendapatan_untuk_simulasi": [
-     {
-      "mulai_bulan": 0,
-      "penghasilan": 7000000,
-      "keterangan": "penghasilan pekerjaan utama saat ini"
-     },
-     {
-      "mulai_bulan": 12,
-      "penghasilan": 11108333,
-      "keterangan": "perkiraan tahap mid (nilai tengah rentang)"
-     }
-    ],
-    "simulasi_siap_pakai": {
-     "jadwal_pendapatan": [
-      {
-       "mulai_bulan": 0,
-       "penghasilan": 7000000,
-       "keterangan": "penghasilan pekerjaan utama saat ini"
-      },
-      {
-       "mulai_bulan": 12,
-       "penghasilan": 11108333,
-       "keterangan": "perkiraan tahap mid (nilai tengah rentang)"
-      }
-     ]
-    },
-    "selisih_tahap_awal_vs_sekarang": 4108333
-   }
-  ],
-  "profesi_lain": [
-   {
-    "profesi": "Software Engineer",
-    "skor_kecocokan": 58
-   },
-   {
-    "profesi": "Staff PPIC",
-    "skor_kecocokan": 36
-   },
-   {
-    "profesi": "Supervisor Gudang",
-    "skor_kecocokan": 19
-   },
-   {
-    "profesi": "UI/UX Designer",
-    "skor_kecocokan": 15
-   },
-   {
-    "profesi": "Digital Marketing",
-    "skor_kecocokan": 10
-   },
-   {
-    "profesi": "Teknisi Listrik",
-    "skor_kecocokan": 10
-   },
-   {
-    "profesi": "Teknisi Mekanik / Mekanik",
-    "skor_kecocokan": 10
-   }
-  ],
-  "konteks_wilayah": {
-   "jenis": "UMK 2026",
-   "wilayah": "Kota Bogor",
-   "nilai": 5437203
-  },
-  "catatan_target": null,
-  "total_pengalaman_tahun": 2.0,
-  "catatan_metode": [
-   "Skor kecocokan 0-100: minat (35), skill wajib yang sudah dimiliki (35), relevansi pengalaman (20), kesesuaian pendidikan (10).",
-   "Jadwal pendapatan menggantikan penghasilan pekerjaan utama saja; pendapatan sampingan dan pasangan tetap dihitung terpisah. Rentang gaji dari database eksternal myCITA beserta sumbernya; jadwal pendapatan memakai nilai tengah rentang dan asumsi umum lama jenjang (entry 0-2 th, mid 2-5 th, senior 5+ th).",
-   "Rekomendasi tidak memakai jenis kelamin, usia, agama, atau asal daerah sebagai faktor."
-  ],
-  "sumber_data": "Database Eksternal myCITA v1.0 (Oktober 2026)",
-  "disclaimer": "Rekomendasi adalah gambaran awal berdasarkan data yang kamu isi dan data referensi pasar. Keputusan tetap di tanganmu."
- },
- "karier_simulasi": {
-  "data_scientist": {
-   "sebelum": {
-    "sisa": 2650000,
-    "skor": 70,
-    "target": {
-     "Toyota Avanza": "7 tahun 8 bulan",
-     "Menikah (intimate)": "13 tahun"
-    }
-   },
-   "sesudah": {
-    "sisa": 2650000,
-    "skor": 70,
-    "target": {
-     "Toyota Avanza": "5 tahun 6 bulan",
-     "Menikah (intimate)": "4 tahun 1 bulan"
-    }
-   }
-  },
-  "data_scientist_kopi_pesimis": {
-   "sebelum": {
-    "sisa": 2650000,
-    "skor": 70,
-    "target": {
-     "Toyota Avanza": "7 tahun 8 bulan",
-     "Menikah (intimate)": "13 tahun"
-    }
-   },
-   "sesudah": {
-    "sisa": 2650000,
-    "skor": 70,
-    "target": {
-     "Toyota Avanza": "4 tahun 1 bulan",
-     "Menikah (intimate)": "2 tahun 8 bulan"
-    }
-   }
-  },
-  "data_scientist_kopi_moderat": {
-   "sebelum": {
-    "sisa": 2650000,
-    "skor": 70,
-    "target": {
-     "Toyota Avanza": "7 tahun 8 bulan",
-     "Menikah (intimate)": "13 tahun"
-    }
-   },
-   "sesudah": {
-    "sisa": 2650000,
-    "skor": 70,
-    "target": {
-     "Toyota Avanza": "3 tahun 4 bulan",
-     "Menikah (intimate)": "2 tahun 1 bulan"
-    }
-   }
-  },
-  "kopi_pesimis": {
-   "sebelum": {
-    "sisa": 2650000,
-    "skor": 70,
-    "target": {
-     "Toyota Avanza": "7 tahun 8 bulan",
-     "Menikah (intimate)": "13 tahun"
-    }
-   },
-   "sesudah": {
-    "sisa": 2650000,
-    "skor": 70,
-    "target": {
-     "Toyota Avanza": "6 tahun 11 bulan",
-     "Menikah (intimate)": "7 tahun 5 bulan"
-    }
-   }
-  },
-  "data_analyst": {
-   "sebelum": {
-    "sisa": 2650000,
-    "skor": 70,
-    "target": {
-     "Toyota Avanza": "7 tahun 8 bulan",
-     "Menikah (intimate)": "13 tahun"
-    }
-   },
-   "sesudah": {
-    "sisa": 2650000,
-    "skor": 70,
-    "target": {
-     "Toyota Avanza": "5 tahun 2 bulan",
-     "Menikah (intimate)": "6 tahun 3 bulan"
-    }
-   }
-  },
-  "supply_chain_analyst": {
-   "sebelum": {
-    "sisa": 2650000,
-    "skor": 70,
-    "target": {
-     "Toyota Avanza": "7 tahun 8 bulan",
-     "Menikah (intimate)": "13 tahun"
-    }
-   },
-   "sesudah": {
-    "sisa": 2650000,
-    "skor": 70,
-    "target": {
-     "Toyota Avanza": "6 tahun",
-     "Menikah (intimate)": "7 tahun 4 bulan"
-    }
-   }
-  },
-  "data_engineer": {
-   "sebelum": {
-    "sisa": 2650000,
-    "skor": 70,
-    "target": {
-     "Toyota Avanza": "7 tahun 8 bulan",
-     "Menikah (intimate)": "13 tahun"
-    }
-   },
-   "sesudah": {
-    "sisa": 2650000,
-    "skor": 70,
-    "target": {
-     "Toyota Avanza": "4 tahun 9 bulan",
-     "Menikah (intimate)": "6 tahun"
-    }
-   }
-  }
- },
- "usaha_input": {
-  "user_id": "budi",
-  "minat": [
-   "otomotif",
-   "motor"
-  ],
-  "skill": [
-   "servis motor",
-   "pelayanan pelanggan"
-  ],
-  "pengalaman": [
-   {
-    "bidang": "bengkel otomotif",
-    "tahun": 2
-   }
-  ],
-  "modal_tersedia": 10000000,
-  "waktu": "sampingan"
- },
- "usaha": {
-  "status": "ok",
-  "user_id": "budi",
-  "pesan": "Eksplorasi usaha selesai: Bengkel motor rumahan, Bengkel motor kecil-menengah (ruko), Laundry kiloan rumahan.",
-  "rekomendasi": [
-   {
-    "id": "bengkel_rumahan",
-    "usaha": "Bengkel motor rumahan",
-    "bidang": "Otomotif",
-    "skor_kecocokan": 100,
-    "pilihan_pengguna": false,
-    "alasan": [
-     "Modalmu Rp10.000.000 sudah masuk kisaran modal awal Rp5.000.000-Rp15.000.000.",
-     "Sesuai minatmu: motor, otomotif.",
-     "Pengalaman kerjamu relevan dengan usaha ini."
-    ],
-    "modal_awal": {
-     "min": 5000000,
-     "max": 15000000,
-     "dipakai_simulasi": 10000000,
-     "kekurangan": 0
-    },
-    "biaya_operasional_bulanan": "Kecil (tanpa sewa); stok oli/sparepart fast moving",
-    "model_pendapatan": "Jasa servis ringan (±Rp50-150 rb/motor) + penjualan sparepart",
-    "skenario": {
-     "pesimis": {
-      "omzet_bulanan_stabil": 3900000,
-      "margin_persen": 25,
-      "laba_bulanan_stabil": 975000,
-      "laba_tahun_pertama": 9652500,
-      "balik_modal_bulan": 13,
-      "balik_modal": "13 bulan"
-     },
-     "moderat": {
-      "omzet_bulanan_stabil": 7150000,
-      "margin_persen": 32,
-      "laba_bulanan_stabil": 2323750,
-      "laba_tahun_pertama": 23005125,
-      "balik_modal_bulan": 7,
-      "balik_modal": "7 bulan"
-     },
-     "optimis": {
-      "omzet_bulanan_stabil": 10400000,
-      "margin_persen": 40,
-      "laba_bulanan_stabil": 4160000,
-      "laba_tahun_pertama": 41184000,
-      "balik_modal_bulan": 5,
-      "balik_modal": "5 bulan"
-     }
-    },
-    "balik_modal_menurut_sumber": "8-12 bulan",
-    "modal_belum_cukup": false,
-    "skill_sudah_dimiliki": [
-     "keterampilan mekanik",
-     "pelayanan pelanggan"
-    ],
-    "skill_gap": [
-     "diagnosis kerusakan"
-    ],
-    "risiko": [
-     "lokasi kurang strategis",
-     "persaingan bengkel sekitar",
-     "modal stok sparepart"
-    ],
-    "dasar_angka": "ASUMSI myCITA: 3-4 motor/hari × Rp50-100 rb (tarif servis ringan dari sumber) × 26 hari; margin 25-40% asumsi karena belum ada data terverifikasi",
-    "sumber": "setupbengkel.com; Liputan6 (2025); OJC Auto Course (2025-2026)",
-    "roadmap_usaha": [
-     {
-      "fase": "Bulan 0-1: Persiapan",
-      "langkah": [
-       "Riset lokasi, calon pelanggan, dan pesaing sekitar",
-       "Urus NIB lewat OSS untuk usaha mikro",
-       "Siapkan alat dan pisahkan rekening usaha dari rekening pribadi"
-      ]
-     },
-     {
-      "fase": "Bulan 1-3: Uji pasar",
-      "langkah": [
-       "Mulai promosi lokal (WhatsApp, Google Maps, media sosial)",
-       "Catat setiap pemasukan dan pengeluaran harian",
-       "Kumpulkan masukan pelanggan pertama"
-      ]
-     },
-     {
-      "fase": "Bulan 4-6: Stabilkan",
-      "langkah": [
-       "Evaluasi harga, biaya, dan jam operasional",
-       "Bangun pelanggan tetap (program langganan/loyalitas)",
-       "Sisihkan dana cadangan usaha"
-      ]
-     },
-     {
-      "fase": "Bulan 7-12: Evaluasi & kembangkan",
-      "langkah": [
-       "Bandingkan laba nyata dengan skenario myCITA",
-       "Jika laba stabil, pertimbangkan tambah kapasitas atau layanan",
-       "Jika di bawah skenario pesimis, tinjau ulang lokasi atau model usaha"
-      ]
-     }
-    ],
-    "mode": "sampingan",
-    "simulasi_siap_pakai": {
-     "pendapatan_tambahan_jadwal": [
-      {
-       "mulai_bulan": 0,
-       "nilai": 697125
-      },
-      {
-       "mulai_bulan": 1,
-       "nilai": 1022450
-      },
-      {
-       "mulai_bulan": 2,
-       "nilai": 1347775
-      },
-      {
-       "mulai_bulan": 3,
-       "nilai": 1673100
-      },
-      {
-       "mulai_bulan": 4,
-       "nilai": 1998425
-      },
-      {
-       "mulai_bulan": 5,
-       "nilai": 2323750
-      }
-     ],
-     "biaya_awal": 10000000
-    }
-   },
-   {
-    "id": "bengkel_kecil_ruko",
-    "usaha": "Bengkel motor kecil-menengah (ruko)",
-    "bidang": "Otomotif",
-    "skor_kecocokan": 64,
-    "pilihan_pengguna": false,
-    "alasan": [
-     "Modalmu masih kurang Rp15.000.000 dari modal minimal Rp25.000.000. Simulasi mengasumsikan kekurangan ini sudah tertutup (misalnya dari tabungan tambahan), jadi siapkan dulu sebelum memulai.",
-     "Sesuai minatmu: motor, otomotif.",
-     "Pengalaman kerjamu relevan dengan usaha ini."
-    ],
-    "modal_awal": {
-     "min": 25000000,
-     "max": 70000000,
-     "dipakai_simulasi": 25000000,
-     "kekurangan": 15000000
-    },
-    "biaya_operasional_bulanan": "Sewa Rp10-30 jt/tahun, gaji mekanik ±Rp2-5 jt/orang, listrik Rp0,5-1,5 jt",
-    "model_pendapatan": "10-15 motor/hari; omzet dilaporkan bervariasi ±Rp9-30 jt/bulan tergantung lokasi & layanan",
-    "skenario": {
-     "pesimis": {
-      "omzet_bulanan_stabil": 9000000,
-      "margin_persen": 20,
-      "laba_bulanan_stabil": 1800000,
-      "laba_tahun_pertama": 17820000,
-      "balik_modal_bulan": 16,
-      "balik_modal": "16 bulan"
-     },
-     "moderat": {
-      "omzet_bulanan_stabil": 19500000,
-      "margin_persen": 28,
-      "laba_bulanan_stabil": 5362500,
-      "laba_tahun_pertama": 53088750,
-      "balik_modal_bulan": 7,
-      "balik_modal": "7 bulan"
-     },
-     "optimis": {
-      "omzet_bulanan_stabil": 30000000,
-      "margin_persen": 35,
-      "laba_bulanan_stabil": 10500000,
-      "laba_tahun_pertama": 103950000,
-      "balik_modal_bulan": 5,
-      "balik_modal": "5 bulan"
-     }
-    },
-    "balik_modal_menurut_sumber": "6-12 bulan",
-    "modal_belum_cukup": true,
-    "skill_sudah_dimiliki": [
-     "keterampilan mekanik"
-    ],
-    "skill_gap": [
-     "manajemen stok sparepart",
-     "manajemen karyawan",
-     "pemasaran"
-    ],
-    "risiko": [
-     "sewa dan izin",
-     "modal stok",
-     "ketergantungan pada mekanik terampil"
-    ],
-    "dasar_angka": "Omzet dari rentang yang dilaporkan sumber; margin 20-35% ASUMSI myCITA",
-    "sumber": "foliopos.com (2026); setupbengkel.com; bikincabang.id; liputan6.com (2025-2026)",
-    "roadmap_usaha": [
-     {
-      "fase": "Bulan 0-1: Persiapan",
-      "langkah": [
-       "Riset lokasi, calon pelanggan, dan pesaing sekitar",
-       "Urus NIB lewat OSS untuk usaha mikro",
-       "Siapkan alat dan pisahkan rekening usaha dari rekening pribadi"
-      ]
-     },
-     {
-      "fase": "Bulan 1-3: Uji pasar",
-      "langkah": [
-       "Mulai promosi lokal (WhatsApp, Google Maps, media sosial)",
-       "Catat setiap pemasukan dan pengeluaran harian",
-       "Kumpulkan masukan pelanggan pertama"
-      ]
-     },
-     {
-      "fase": "Bulan 4-6: Stabilkan",
-      "langkah": [
-       "Evaluasi harga, biaya, dan jam operasional",
-       "Bangun pelanggan tetap (program langganan/loyalitas)",
-       "Sisihkan dana cadangan usaha"
-      ]
-     },
-     {
-      "fase": "Bulan 7-12: Evaluasi & kembangkan",
-      "langkah": [
-       "Bandingkan laba nyata dengan skenario myCITA",
-       "Jika laba stabil, pertimbangkan tambah kapasitas atau layanan",
-       "Jika di bawah skenario pesimis, tinjau ulang lokasi atau model usaha"
-      ]
-     }
-    ],
-    "mode": "sampingan",
-    "simulasi_siap_pakai": {
-     "pendapatan_tambahan_jadwal": [
-      {
-       "mulai_bulan": 0,
-       "nilai": 1608750
-      },
-      {
-       "mulai_bulan": 1,
-       "nilai": 2359500
-      },
-      {
-       "mulai_bulan": 2,
-       "nilai": 3110250
-      },
-      {
-       "mulai_bulan": 3,
-       "nilai": 3861000
-      },
-      {
-       "mulai_bulan": 4,
-       "nilai": 4611750
-      },
-      {
-       "mulai_bulan": 5,
-       "nilai": 5362500
-      }
-     ],
-     "biaya_awal": 25000000
-    }
-   },
-   {
-    "id": "laundry_rumahan",
-    "usaha": "Laundry kiloan rumahan",
-    "bidang": "Jasa",
-    "skor_kecocokan": 50,
-    "pilihan_pengguna": false,
-    "alasan": [
-     "Modalmu Rp10.000.000 sudah masuk kisaran modal awal Rp7.000.000-Rp18.000.000."
-    ],
-    "modal_awal": {
-     "min": 7000000,
-     "max": 18000000,
-     "dipakai_simulasi": 10000000,
-     "kekurangan": 0
-    },
-    "biaya_operasional_bulanan": "Rp3-4,5 jt (tanpa sewa tempat)",
-    "model_pendapatan": "Tarif per kg (umumnya Rp6-15 rb/kg tergantung lokasi)",
-    "skenario": {
-     "pesimis": {
-      "omzet_bulanan_stabil": 6000000,
-      "margin_persen": 30,
-      "laba_bulanan_stabil": 1800000,
-      "laba_tahun_pertama": 17820000,
-      "balik_modal_bulan": 8,
-      "balik_modal": "8 bulan"
-     },
-     "moderat": {
-      "omzet_bulanan_stabil": 9750000,
-      "margin_persen": 40,
-      "laba_bulanan_stabil": 3900000,
-      "laba_tahun_pertama": 38610000,
-      "balik_modal_bulan": 5,
-      "balik_modal": "5 bulan"
-     },
-     "optimis": {
-      "omzet_bulanan_stabil": 13500000,
-      "margin_persen": 50,
-      "laba_bulanan_stabil": 6750000,
-      "laba_tahun_pertama": 66825000,
-      "balik_modal_bulan": 4,
-      "balik_modal": "4 bulan"
-     }
-    },
-    "balik_modal_menurut_sumber": "6-14 bulan",
-    "modal_belum_cukup": false,
-    "skill_sudah_dimiliki": [
-     "pelayanan pelanggan"
-    ],
-    "skill_gap": [
-     "manajemen operasional",
-     "pembukuan sederhana"
-    ],
-    "risiko": [
-     "persaingan lokal",
-     "kerusakan mesin",
-     "ketergantungan cuaca jika tanpa pengering"
-    ],
-    "dasar_angka": "Omzet dihitung dari asumsi sumber: Rp10-15 rb/kg × 20-30 kg/hari × 30 hari; margin 30-50% dari cuciqu.com",
-    "sumber": "VIVA Tangerang; cuciqu.com (2026); ottodigital.id (2025-2026)",
-    "roadmap_usaha": [
-     {
-      "fase": "Bulan 0-1: Persiapan",
-      "langkah": [
-       "Riset lokasi, calon pelanggan, dan pesaing sekitar",
-       "Urus NIB lewat OSS untuk usaha mikro",
-       "Siapkan alat dan pisahkan rekening usaha dari rekening pribadi"
-      ]
-     },
-     {
-      "fase": "Bulan 1-3: Uji pasar",
-      "langkah": [
-       "Mulai promosi lokal (WhatsApp, Google Maps, media sosial)",
-       "Catat setiap pemasukan dan pengeluaran harian",
-       "Kumpulkan masukan pelanggan pertama"
-      ]
-     },
-     {
-      "fase": "Bulan 4-6: Stabilkan",
-      "langkah": [
-       "Evaluasi harga, biaya, dan jam operasional",
-       "Bangun pelanggan tetap (program langganan/loyalitas)",
-       "Sisihkan dana cadangan usaha"
-      ]
-     },
-     {
-      "fase": "Bulan 7-12: Evaluasi & kembangkan",
-      "langkah": [
-       "Bandingkan laba nyata dengan skenario myCITA",
-       "Jika laba stabil, pertimbangkan tambah kapasitas atau layanan",
-       "Jika di bawah skenario pesimis, tinjau ulang lokasi atau model usaha"
-      ]
-     }
-    ],
-    "mode": "sampingan",
-    "simulasi_siap_pakai": {
-     "pendapatan_tambahan_jadwal": [
-      {
-       "mulai_bulan": 0,
-       "nilai": 1170000
-      },
-      {
-       "mulai_bulan": 1,
-       "nilai": 1716000
-      },
-      {
-       "mulai_bulan": 2,
-       "nilai": 2262000
-      },
-      {
-       "mulai_bulan": 3,
-       "nilai": 2808000
-      },
-      {
-       "mulai_bulan": 4,
-       "nilai": 3354000
-      },
-      {
-       "mulai_bulan": 5,
-       "nilai": 3900000
-      }
-     ],
-     "biaya_awal": 10000000
-    }
-   }
-  ],
-  "usaha_lain": [
-   {
-    "usaha": "Laundry kiloan skala kecil profesional",
-    "skor_kecocokan": 20
-   }
-  ],
-  "mode": "sampingan",
-  "catatan_metode": [
-   "Skor kecocokan 0-100: kecukupan modal (40), minat (30), skill & pengalaman (30).",
-   "Skenario: pesimis = omzet & margin terendah, moderat = nilai tengah, optimis = tertinggi dari database. Masa rintisan: bulan 1 baru 30% dari kondisi stabil, stabil di bulan ke-6.",
-   "simulasi_siap_pakai bisa langsung dikirim ke analisis_keuangan_mycita untuk melihat dampak ke tujuan finansial (memakai skenario moderat)."
-  ],
-  "catatan_database": "Template usaha masih terbatas (laundry dan bengkel motor). Angka yang ditandai ASUMSI myCITA belum memiliki sumber terverifikasi.",
-  "sumber_data": "Database Eksternal myCITA v1.0 (Oktober 2026)",
-  "disclaimer": "Simulasi usaha adalah skenario berdasarkan data referensi, bukan jaminan keuntungan. Hasil nyata sangat bergantung pada lokasi dan pengelolaan."
- },
- "usaha_kopi": {
-  "status": "ok",
-  "user_id": "budi",
-  "pesan": "Eksplorasi usaha selesai: Kopi keliling, Es teh jumbo, Warkop.",
-  "rekomendasi": [
-   {
-    "id": "kopi_keliling",
-    "usaha": "Kopi keliling",
-    "bidang": "Minuman & Kuliner",
-    "skor_kecocokan": 80,
-    "pilihan_pengguna": false,
-    "alasan": [
-     "Modalmu Rp3 jt melebihi kebutuhan Rp1–2,5 jt; sisanya jadi dana cadangan usaha.",
-     "Sesuai minatmu: kopi, minuman, kuliner.",
-     "Cocok dijalankan sampingan akhir pekan."
-    ],
-    "modal_awal": {
-     "min": 1000000,
-     "max": 2500000,
-     "dipakai_simulasi": 2500000,
-     "kekurangan": 0
-    },
-    "biaya_operasional_bulanan": "Bahan baku harian, bensin",
-    "model_pendapatan": "Kopi Rp5–15 rb per gelas",
-    "skenario": {
-     "pesimis": {
-      "omzet_bulanan_stabil": 8000000,
-      "margin_persen": 30,
-      "laba_bulanan_stabil": 2400000,
-      "laba_tahun_pertama": 23760000,
-      "balik_modal_bulan": 3,
-      "balik_modal": "3 bulan"
-     },
-     "moderat": {
-      "omzet_bulanan_stabil": 14250000,
-      "margin_persen": 30,
-      "laba_bulanan_stabil": 4275000,
-      "laba_tahun_pertama": 42322500,
-      "balik_modal_bulan": 2,
-      "balik_modal": "2 bulan"
-     },
-     "optimis": {
-      "omzet_bulanan_stabil": 22000000,
-      "margin_persen": 30,
-      "laba_bulanan_stabil": 6600000,
-      "laba_tahun_pertama": 65340000,
-      "balik_modal_bulan": 2,
-      "balik_modal": "2 bulan"
-     }
-    },
-    "balik_modal_menurut_sumber": "2-4 bulan",
-    "modal_belum_cukup": false,
-    "skill_sudah_dimiliki": ["pelayanan pelanggan", "komunikasi"],
-    "skill_gap": ["racik kopi", "manajemen stok minuman"],
-    "risiko": ["cuaca (berjualan di luar ruangan)", "izin berjualan di lokasi", "persaingan penjual kopi"],
-    "dasar_angka": "Omzet dihitung dari asumsi 20-50 gelas/hari × Rp5-15 rb × 26 hari (akhir pekan saja lebih kecil). Margin 30% asumsi myCITA. Sumber: Medcom 2026 (data usaha penuh waktu); pakai skenario pesimis sebagai acuan usaha sampingan.",
-    "sumber": "Medcom 2026",
-    "roadmap_usaha": [
-     {
-      "fase": "Bulan 0-1: Persiapan",
-      "langkah": ["Riset lokasi, urus NIB lewat OSS, siapkan alat"]
-     },
-     {
-      "fase": "Bulan 1-3: Uji pasar",
-      "langkah": ["Jualan akhir pekan, catat transaksi harian"]
-     },
-     {
-      "fase": "Bulan 3-6: Stabilkan",
-      "langkah": ["Evaluasi harga & lokasi, bangun pelanggan tetap"]
-     },
-     {
-      "fase": "Bulan 6-12: Kembangkan",
-      "langkah": ["Tambah hari jualan atau titip jual jika laba stabil"]
-     }
-    ],
-    "mode": "sampingan",
-    "simulasi_siap_pakai": {
-     "pendapatan_tambahan_jadwal": [
-      { "mulai_bulan": 0, "nilai": 720000 },
-      { "mulai_bulan": 1, "nilai": 1056000 },
-      { "mulai_bulan": 2, "nilai": 1392000 },
-      { "mulai_bulan": 3, "nilai": 1728000 },
-      { "mulai_bulan": 4, "nilai": 2064000 },
-      { "mulai_bulan": 5, "nilai": 2400000 }
-     ],
-     "biaya_awal": 2500000
-    }
-   },
-   {
-    "id": "es_teh_jumbo",
-    "usaha": "Es teh jumbo",
-    "bidang": "Minuman",
-    "skor_kecocokan": 80,
-    "pilihan_pengguna": false,
-    "alasan": [
-     "Modal Rp3 jt masuk kisaran Rp1–20 jt.",
-     "Sesuai minatmu: minuman, kuliner."
-    ],
-    "modal_awal": { "min": 1000000, "max": 20000000, "dipakai_simulasi": 3000000, "kekurangan": 0 },
-    "biaya_operasional_bulanan": "Bahan baku harian",
-    "model_pendapatan": "Es teh Rp3–8 rb per botol",
-    "skenario": {
-     "pesimis": { "omzet_bulanan_stabil": 6000000, "margin_persen": 35, "laba_bulanan_stabil": 2100000, "laba_tahun_pertama": 20790000, "balik_modal_bulan": 2, "balik_modal": "2 bulan" },
-     "moderat": { "omzet_bulanan_stabil": 10000000, "margin_persen": 35, "laba_bulanan_stabil": 3500000, "laba_tahun_pertama": 34650000, "balik_modal_bulan": 1, "balik_modal": "1 bulan" },
-     "optimis": { "omzet_bulanan_stabil": 15000000, "margin_persen": 35, "laba_bulanan_stabil": 5250000, "laba_tahun_pertama": 51975000, "balik_modal_bulan": 1, "balik_modal": "1 bulan" }
-    },
-    "balik_modal_menurut_sumber": "1-3 bulan",
-    "modal_belum_cukup": false,
-    "skill_sudah_dimiliki": ["pelayanan pelanggan"],
-    "skill_gap": ["racikan minuman", "manajemen stok"],
-    "risiko": ["persaingan tinggi", "cuaca", "ketergantungan lokasi"],
-    "dasar_angka": "Angka asumsi myCITA berdasarkan tren usaha es teh 2026.",
-    "sumber": "myCITA internal estimate 2026",
-    "roadmap_usaha": [
-     { "fase": "Bulan 0-1: Persiapan", "langkah": ["Pilih resep, coba 10-20 porsi di lingkungan sekitar"] },
-     { "fase": "Bulan 1-3: Uji pasar", "langkah": ["Cari titik jual strategis, catat omzet harian"] },
-     { "fase": "Bulan 3-6: Stabilkan", "langkah": ["Buat paket hemat, bangun pelanggan tetap"] },
-     { "fase": "Bulan 6-12: Kembangkan", "langkah": ["Tambah titik jual atau jenis minuman"] }
-    ],
-    "mode": "sampingan",
-    "simulasi_siap_pakai": {
-     "pendapatan_tambahan_jadwal": [
-      { "mulai_bulan": 0, "nilai": 630000 }, { "mulai_bulan": 1, "nilai": 924000 },
-      { "mulai_bulan": 2, "nilai": 1218000 }, { "mulai_bulan": 3, "nilai": 1512000 },
-      { "mulai_bulan": 4, "nilai": 1806000 }, { "mulai_bulan": 5, "nilai": 2100000 }
-     ],
-     "biaya_awal": 3000000
-    }
-   },
-   {
-    "id": "warkop",
-    "usaha": "Warkop",
-    "bidang": "Minuman & Kuliner",
-    "skor_kecocokan": 74,
-    "pilihan_pengguna": false,
-    "alasan": [
-     "Modalmu Rp3 jt kurang dari modal minimal Rp5 jt.",
-     "Sesuai minatmu: kopi, minuman."
-    ],
-    "modal_awal": { "min": 5000000, "max": 10000000, "dipakai_simulasi": 5000000, "kekurangan": 2000000 },
-    "biaya_operasional_bulanan": "Sewa tempat atau gerobak, bahan baku",
-    "model_pendapatan": "Kopi & minuman Rp5–20 rb per gelas + makanan ringan",
-    "skenario": {
-     "pesimis": { "omzet_bulanan_stabil": 6000000, "margin_persen": 25, "laba_bulanan_stabil": 1500000, "laba_tahun_pertama": 14850000, "balik_modal_bulan": 4, "balik_modal": "4 bulan" },
-     "moderat": { "omzet_bulanan_stabil": 10000000, "margin_persen": 30, "laba_bulanan_stabil": 3000000, "laba_tahun_pertama": 29700000, "balik_modal_bulan": 2, "balik_modal": "2 bulan" },
-     "optimis": { "omzet_bulanan_stabil": 15000000, "margin_persen": 35, "laba_bulanan_stabil": 5250000, "laba_tahun_pertama": 51975000, "balik_modal_bulan": 2, "balik_modal": "2 bulan" }
-    },
-    "balik_modal_menurut_sumber": "2-6 bulan",
-    "modal_belum_cukup": true,
-    "skill_sudah_dimiliki": ["pelayanan pelanggan"],
-    "skill_gap": ["racik kopi, manajemen karyawan"],
-    "risiko": ["modal kurang", "butuh tempat tetap", "persaingan"],
-    "dasar_angka": "Angka asumsi myCITA.",
-    "sumber": "myCITA internal estimate 2026",
-    "roadmap_usaha": [
-     { "fase": "Bulan 0-2: Persiapan", "langkah": ["Kumpulkan sisa modal, cari lokasi"] },
-     { "fase": "Bulan 2-4: Buka", "langkah": ["Buka operasional, promosi lokal"] },
-     { "fase": "Bulan 4-6: Stabilkan", "langkah": ["Evaluasi menu dan jam operasional"] },
-     { "fase": "Bulan 6-12: Kembangkan", "langkah": ["Tambah menu makanan ringan"] }
-    ],
-    "mode": "sampingan",
-    "simulasi_siap_pakai": {
-     "pendapatan_tambahan_jadwal": [
-      { "mulai_bulan": 0, "nilai": 450000 }, { "mulai_bulan": 1, "nilai": 660000 },
-      { "mulai_bulan": 2, "nilai": 870000 }, { "mulai_bulan": 3, "nilai": 1080000 },
-      { "mulai_bulan": 4, "nilai": 1290000 }, { "mulai_bulan": 5, "nilai": 1500000 }
-     ],
-     "biaya_awal": 5000000
-    }
-   }
-  ],
-  "mode": "sampingan",
-  "catatan_metode": ["Kecocokan = modal (40) + minat (30) + skill & pengalaman (30). Warkop butuh modal lebih besar; simpan dulu.", "simulasi_siap_pakai bisa langsung dikirim ke analisis_keuangan_mycita."],
-  "catatan_database": "Angka kopi/minuman dari data referensi 2026.",
-  "disclaimer": "Simulasi usaha adalah skenario berdasarkan data referensi, bukan jaminan keuntungan."
- },
- "usaha_simulasi": {
- "agus_bengkel_plus20": {
-   "sebelum": {
-    "sisa": 5500000,
-    "skor": 84,
-    "target": {
-     "Rumah Bekasi": "22 tahun 2 bulan"
-    }
-   },
-   "sesudah": {
-    "sisa": 7700000,
-    "skor": 88,
-    "target": {
-     "Rumah Bekasi": "10 tahun"
-    }
-   }
-  },
-  "agus_kelontong_plus25": {
-   "sebelum": {
-    "sisa": 5500000,
-    "skor": 84,
-    "target": {
-     "Rumah Bekasi": "22 tahun 2 bulan"
-    }
-   },
-   "sesudah": {
-    "sisa": 6250000,
-    "skor": 86,
-    "target": {
-     "Rumah Bekasi": "14 tahun 8 bulan"
-    }
-   }
-  },
-  "agus_bengkel_kelontong": {
-   "sebelum": {
-    "sisa": 5500000,
-    "skor": 84,
-    "target": {
-     "Rumah Bekasi": "22 tahun 2 bulan"
-    }
-   },
-   "sesudah": {
-    "sisa": 8450000,
-    "skor": 90,
-    "target": {
-     "Rumah Bekasi": "8 tahun 8 bulan"
-    }
-   }
-  },
-  "agus_bengkel_kelontong_515jt": {
-   "sebelum": {
-    "sisa": 5500000,
-    "skor": 84,
-    "target": {
-     "Rumah Bekasi": "22 tahun 2 bulan"
-    }
-   },
-   "sesudah": {
-    "sisa": 8450000,
-    "skor": 90,
-    "target": {
-     "Rumah Bekasi": "7 tahun"
-    }
-   }
-  },
-  "bengkel_rumahan": {
-   "sebelum": {
-    "sisa": 2650000,
-    "skor": 70,
-    "target": {
-     "Toyota Avanza": "7 tahun 8 bulan",
-     "Menikah (intimate)": "13 tahun"
-    }
-   },
-   "sesudah": {
-    "sisa": 2650000,
-    "skor": 70,
-    "target": {
-     "Toyota Avanza": "4 tahun 11 bulan",
-     "Menikah (intimate)": "7 tahun 5 bulan"
-    }
-   }
-  },
-  "bengkel_kecil_ruko": {
-   "sebelum": {
-    "sisa": 2650000,
-    "skor": 70,
-    "target": {
-     "Toyota Avanza": "7 tahun 8 bulan",
-     "Menikah (intimate)": "13 tahun"
-    }
-   },
-   "sesudah": {
-    "sisa": 2650000,
-    "skor": 70,
-    "target": {
-     "Toyota Avanza": "4 tahun 7 bulan",
-     "Menikah (intimate)": "4 tahun 11 bulan"
-    }
-   }
-  },
-  "laundry_rumahan": {
-   "sebelum": {
-    "sisa": 2650000,
-    "skor": 70,
-    "target": {
-     "Toyota Avanza": "7 tahun 8 bulan",
-     "Menikah (intimate)": "13 tahun"
-    }
-   },
-   "sesudah": {
-    "sisa": 2650000,
-    "skor": 70,
-    "target": {
-     "Toyota Avanza": "4 tahun 8 bulan",
-     "Menikah (intimate)": "5 tahun 9 bulan"
-    }
-   }
-  }
  }
 };
+
+// Akses per persona: DEMO.budi.analisis, DEMO.agus.analisis, DEMO.dini.analisis
+// Karier simulasi Budi: DEMO.budi.karier_simulasi.<id>  (perbandingan sebelum/sesudah)
+// Usaha simulasi Agus : DEMO.agus.simulasi.<key>        (perbandingan sebelum/sesudah)

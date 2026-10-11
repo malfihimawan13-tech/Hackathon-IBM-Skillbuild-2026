@@ -1,4 +1,3 @@
-import { DEMO } from '../api/demoData.js';
 import { toIsoDate } from '../utils/format.js';
 
 // Fungsi murni (tanpa React Native) untuk menyusun JSON yang dikirim ke flow Langflow.
@@ -24,39 +23,37 @@ export const EMPTY_PROFIL = {
 };
 export const EMPTY_KEUANGAN = { pengeluaran: EXPENSE_TEMPLATE, hutang: [], tabungan: '' };
 
-// Draft contoh persona Budi (sama dengan contoh_input di backend)
+// Draft contoh persona Budi — dipakai oleh scripts/test-langflow.mjs
+// Data tetap (tidak bergantung pada struktur demoData.js)
 export function sampleDrafts() {
-  const p = DEMO.profil_input;
-  const k = DEMO.keuangan_input;
   const peng = EXPENSE_TEMPLATE.map((e) => ({ ...e }));
   const set = (key, v) => { const it = peng.find((x) => x.key === key); if (it) it.nominal = String(v); };
-  set('kebutuhan_pokok', k.pengeluaran.kebutuhan_pokok);
-  set('kos_sewa', k.pengeluaran.kos);
-  set('listrik_air', k.pengeluaran.listrik);
-  set('internet_pulsa', k.pengeluaran.internet);
-  set('transportasi', k.pengeluaran.transportasi);
-  set('hiburan', k.pengeluaran.hiburan);
-  set('langganan', k.pengeluaran.langganan_streaming);
-  set('lainnya', k.pengeluaran.lainnya);
+  set('kebutuhan_pokok', 2000000);
+  set('kos_sewa', 1000000);
+  set('listrik_air', 300000);
+  set('internet_pulsa', 300000);
+  set('transportasi', 500000);
+  set('hiburan', 500000);
+  set('langganan', 150000);
+  set('lainnya', 300000);
   return {
-    userId: p.user_id,
+    userId: 'budi',
     profil: {
       ...EMPTY_PROFIL,
-      nama: 'Budi', tanggalLahir: '12/05/1998', kota: p.kota, pendidikan: p.pendidikan_terakhir, status: 'single',
-      pekerjaan: p.pekerjaan.map((j) => ({
-        nama: j.nama, jenis: j.jenis, penghasilan: String(j.penghasilan),
-        penghasilanMin: j.penghasilan_min ? String(j.penghasilan_min) : '', lamaBulan: String(j.lama_kerja_bulan || ''),
-      })),
+      nama: 'Budi', tanggalLahir: '12/05/1998', kota: 'Tangerang', pendidikan: 'S1', status: 'single',
+      pekerjaan: [
+        { nama: 'Operator Produksi', jenis: 'full_time', penghasilan: '9000000', penghasilanMin: '', lamaBulan: '36' },
+      ],
     },
     keuangan: {
       pengeluaran: peng,
-      hutang: k.hutang.map((h) => ({
-        nama: h.nama, jenis: h.jenis, cicilan: String(h.cicilan_bulanan), sisaPokok: String(h.sisa_pokok),
-        bunga: h.bunga_tahunan != null ? String(h.bunga_tahunan) : '', tenor: String(h.sisa_tenor_bulan || ''),
-      })),
-      tabungan: String(k.tabungan_saat_ini),
+      hutang: [
+        { nama: 'Cicilan motor', jenis: 'kendaraan', cicilan: '800000', sisaPokok: '8000000', bunga: '12', tenor: '10' },
+        { nama: 'Paylater', jenis: 'paylater', cicilan: '500000', sisaPokok: '1500000', bunga: '', tenor: '3' },
+      ],
+      tabungan: '10000000',
     },
-    psikologi: { ...p.psikologi },
+    psikologi: { impulsif: 4, fomo: 3, menghindar: 2, emosional: 3, terlalu_hemat: 1, disiplin: 2 },
   };
 }
 
