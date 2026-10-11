@@ -1,14 +1,14 @@
 {
   "expo": {
     "name": "myCITA",
-    "slug": "cita-mobile",
+    "slug": "mycita",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.cita.app"
+      "bundleIdentifier": "id.mycita.app"
     },
     "android": {
       "adaptiveIcon": {
@@ -17,16 +17,31 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "package": "com.cita.app"
+      "package": "id.mycita.app",
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "description": "CITA - Capai Impian, Tentukan Arah. AI financial life-planning companion.",
-    "splash": {
-      "image": "./assets/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#0F4C47"
-    }
+    "description": "myCITA - My Career, Income, Target & Achievement. Capai Impian, Tentukan Arah.",
+    "plugins": [
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#0F4C47",
+          "imageWidth": 200
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesCleartextTraffic": true
+          }
+        }
+      ]
+    ]
   }
 }
