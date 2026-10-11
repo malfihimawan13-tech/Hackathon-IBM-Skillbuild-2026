@@ -53,8 +53,10 @@ export function AppProvider({ children }) {
   // chat per pengguna: dict { userId: messages[] }. chat (array) adalah slice untuk pengguna aktif.
   const [chat, setChat] = useState([]);
   const [chatByUser, setChatByUser] = useState({});
-  const [karier, setKarier] = useState(null);
-  const [usaha, setUsaha] = useState(null);
+  // karier & usaha per pengguna: { userId: {input, hasil, at} }
+  // karier/usaha (derived) reflect the active user's entry
+  const [karierByUser, setKarierByUser] = useState({});
+  const [usahaByUser, setUsahaByUser] = useState({});
   const [skenario, setSkenario] = useState({});
   const loaded = useRef(false);
 
@@ -85,8 +87,17 @@ export function AppProvider({ children }) {
               setChat(s.chat.slice(-40));
             }
           }
-          if (s.karier) setKarier(s.karier);
-          if (s.usaha) setUsaha(s.usaha);
+          if (s.karierByUser) setKarierByUser(s.karierByUser);
+          else if (s.karier) {
+            // Migrasi format lama (single object) ke per-user
+            const uid = (s.activeUserId || '').trim().toLowerCase().replace(/\s+/g, '_');
+            if (uid && s.karier) setKarierByUser({ [uid]: s.karier });
+          }
+          if (s.usahaByUser) setUsahaByUser(s.usahaByUser);
+          else if (s.usaha) {
+            const uid = (s.activeUserId || '').trim().toLowerCase().replace(/\s+/g, '_');
+            if (uid && s.usaha) setUsahaByUser({ [uid]: s.usaha });
+          }
           if (s.skenario) setSkenario(s.skenario);
         }
       } catch (_) { /* penyimpanan kosong atau rusak: mulai baru */ }
@@ -98,13 +109,25 @@ export function AppProvider({ children }) {
   useEffect(() => {
     if (!loaded.current) return;
     AsyncStorage.setItem(STORE_KEY, JSON.stringify({
-      activeUserId, settings, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chatByUser, karier, usaha, skenario,
+      activeUserId, settings, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chatByUser, karierByUser, usahaByUser, skenario,
     })).catch(() => {});
-  }, [activeUserId, settings, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chatByUser, karier, usaha, skenario]);
+  }, [activeUserId, settings, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chatByUser, karierByUser, usahaByUser, skenario]);
 
   const live = !settings.demo;
   // Pengguna aktif: hanya dari activeUserId (layar Masuk). settings.userId lama diabaikan.
   const userId = (activeUserId || '').trim().toLowerCase().replace(/\s+/g, '_');
+
+  // Derived: data karier/usaha untuk pengguna aktif saja
+  const karier = karierByUser[userId] || null;
+  const usaha = usahaByUser[userId] || null;
+
+  // Helper: simpan hasil karier/usaha untuk user tertentu
+  const setKarierForUser = useCallback((uid, v) => {
+    setKarierByUser((prev) => ({ ...prev, [uid]: v }));
+  }, []);
+  const setUsahaForUser = useCallback((uid, v) => {
+    setUsahaByUser((prev) => ({ ...prev, [uid]: v }));
+  }, []);
 
   // Perbarui chat pengguna aktif di kedua state (in-memory + dict per pengguna)
   const setChatForUser = useCallback((updater, uid) => {
@@ -189,9 +212,9 @@ export function AppProvider({ children }) {
       r = await callTool(settings, 'karier', { ...input, user_id: userId || undefined });
     }
     const v = { input, hasil: r, at: new Date().toISOString() };
-    setKarier(v);
+    setKarierForUser(userId, v);
     return v;
-  }, [live, settings, userId, activeUserId]);
+  }, [live, settings, userId, activeUserId, setKarierForUser]);
 
   const exploreUsaha = useCallback(async (input) => {
     let r;
@@ -202,9 +225,9 @@ export function AppProvider({ children }) {
       r = await callTool(settings, 'usaha', { ...input, user_id: userId || undefined });
     }
     const v = { input, hasil: r, at: new Date().toISOString() };
-    setUsaha(v);
+    setUsahaForUser(userId, v);
     return v;
-  }, [live, settings, userId, activeUserId]);
+  }, [live, settings, userId, activeUserId, setUsahaForUser]);
 
   // Untuk Budi: panggil flow 6 dengan input kopi, simpan di usaha state (dipakai Usaha screen).
   const exploreUsahaKopi = useCallback(async () => {
@@ -220,9 +243,9 @@ export function AppProvider({ children }) {
       r = await callTool(settings, 'usaha', { ...input, user_id: userId });
     }
     const v = { input, hasil: r, at: new Date().toISOString() };
-    setUsaha(v);
+    setUsahaForUser(userId, v);
     return v;
-  }, [live, settings, userId, activeUserId, usaha]);
+  }, [live, settings, userId, activeUserId, usaha, setUsahaForUser]);
 
   // Dampak jalur karier/usaha ke tujuan finansial. demoKey: ['karier'|'usaha', id]
   const simulateRoadmap = useCallback(async (simulasi, demoKey) => {
@@ -477,10 +500,14 @@ export function AppProvider({ children }) {
 
   const deleteAllData = useCallback(async () => {
     if (live && userId) await callTool(settings, 'hapus', { user_id: userId, konfirmasi: true });
-    setAnalysis(null); setUpdatedAt(null); setKarier(null); setUsaha(null); setSkenario({});
+    setAnalysis(null); setUpdatedAt(null); setSkenario({});
     setProfilDraft(EMPTY_PROFIL); setKeuanganDraft(EMPTY_KEUANGAN); setPsikologi({});
-    // Hapus riwayat chat untuk user aktif dari dict
-    if (userId) setChatByUser((prev) => { const next = { ...prev }; delete next[userId]; return next; });
+    // Hapus data karier/usaha untuk user aktif
+    if (userId) {
+      setKarierByUser((prev) => { const next = { ...prev }; delete next[userId]; return next; });
+      setUsahaByUser((prev) => { const next = { ...prev }; delete next[userId]; return next; });
+      setChatByUser((prev) => { const next = { ...prev }; delete next[userId]; return next; });
+    }
     setChat([]);
   }, [live, settings, userId]);
 

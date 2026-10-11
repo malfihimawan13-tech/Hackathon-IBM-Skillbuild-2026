@@ -3,7 +3,7 @@ import { Platform, Pressable, ScrollView, View } from 'react-native';
 import Svg, { Circle, Line, Path, Polygon, Polyline, Rect, Text as SvgText } from 'react-native-svg';
 import { useApp } from '../state/AppContext';
 import { DEMO } from '../api/demoData';
-import { T } from '../components/ui';
+import { Button, T } from '../components/ui';
 import Icon from '../components/Icon';
 import { C, R } from '../theme';
 import { rpShort } from '../utils/format';
@@ -643,13 +643,13 @@ export default function Roadmap({ go }) {
           <Icon name="back" size={20} color={C.ink} />
         </Pressable>
         <T size={20} w={800} style={{ flex: 1, letterSpacing: -0.2 }}>Roadmap</T>
-        <Pressable
+        <Button
+          label="Tujuan Saya"
+          icon="flag"
+          variant="secondary"
           onPress={() => go('tujuan')}
-          accessibilityRole="button"
-          accessibilityLabel="Atur tujuanmu"
-          style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name="flag" size={20} color={C.teal} />
-        </Pressable>
+          style={{ minHeight: 44, paddingHorizontal: 14 }}
+        />
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 8, paddingBottom: 100, gap: 14 }} showsVerticalScrollIndicator={false}>
