@@ -7,7 +7,7 @@ Aplikasi ini adalah **antarmuka mobile**. Semua logika dan perhitungan ada di **
 
 ```
 IBM Bob ── MCP ──┐
-                 ├──► Langflow (6 flow CITA) ──► SQLite (per user_id)
+                 ├──► Langflow (9 flow CITA) ──► SQLite (per user_id)
 Aplikasi ─ HTTP ─┘    POST /api/v1/run/<endpoint_name>?stream=false
 ```
 
@@ -23,6 +23,7 @@ Flow yang tersedia (Endpoint Name = nama flow, juga tersedia sebagai tool MCP di
 | `karier` | `5_eksplorasi_karier_mycita` | `user_id`, `minat[]`, `skill[]`, `pengalaman[]`, `pendidikan_terakhir`, `kota` | `rekomendasi[]` (skor, skill gap, `jalur_pendapatan`, `jalur_belajar`, `simulasi_siap_pakai`) |
 | `usaha` | `6_eksplorasi_usaha_mycita` | `user_id`, `minat[]`, `skill[]`, `modal_tersedia`, `waktu` | `rekomendasi[]` (`skenario`, `modal_awal`, `roadmap_usaha`, `simulasi_siap_pakai`) |
 | `hapus` | `8_hapus_data_mycita` | `user_id`, `konfirmasi: true` | `pesan` |
+| _(referensi)_ | `9_pustaka_database_mycita` | pertanyaan teks singkat (kata kunci) | kutipan teks PDF + sumber + halaman |
 
 Sebelum mengubah layar yang membaca data, panggil tool MCP yang sesuai (misalnya `4_analisis_keuangan_mycita` dengan `{"user_id": "budi"}`) untuk melihat bentuk data asli, lalu sesuaikan kode.
 
@@ -30,7 +31,7 @@ Sebelum mengubah layar yang membaca data, panggil tool MCP yang sesuai (misalnya
 
 - `App.js` — font, provider, navigasi sederhana berbasis state (tab bawah), tombol back Android. **Proyek ini sengaja tidak memakai Expo Router**; jangan memindahkan ke `src/app/` kecuali diminta.
 - `src/api/langflow.js` — klien REST Langflow (`runFlow`, `callTool`, `checkHealth`). Satu-satunya tempat yang memanggil jaringan.
-- `src/api/demoData.js` — data contoh persona Budi, dihasilkan dari backend asli. Dipakai saat Mode Demo.
+- `src/api/demoData.js` — data contoh 3 persona (Budi, Agus, Dini) dalam struktur `{ budi, agus, dini }`, dihasilkan dari backend asli oleh `scripts/ambil-data-demo.mjs`. Dipakai saat Mode Demo.
 - `src/state/AppContext.js` — state global, pengaturan (alamat Langflow, API key, user_id, mode demo), aksi (analisis, simpan, cari harga, what-if, chat, hapus). Disimpan dengan AsyncStorage.
 - `src/state/payloads.js` — fungsi murni penyusun JSON untuk flow (bisa diuji dengan Node).
 - `src/components/ui.js`, `forms.js`, `Icon.js` — komponen UI, widget form (MultiPills, ChipInput, ExperienceList, ImpactCard), ikon SVG.
@@ -38,6 +39,7 @@ Sebelum mengubah layar yang membaca data, panggil tool MCP yang sesuai (misalnya
 - `src/screens/` — `Home` (Roadmap-mu), `Karier`, `Usaha`, `Keuangan` (Kondisi/Atur), `Tujuan` (opsi A/B/C + what-if), `Cari`, `Chat`, `Profil` (pengaturan & privasi), `Onboarding` (3 langkah).
 - `src/theme.js` — token desain: teal `#0F4C47`, marigold `#F2A93B`, ground `#F4F6F5`, ink `#14211F`, font Plus Jakarta Sans. Teks memakai komponen `T` dengan prop `w` (400–800), bukan `fontWeight`.
 - `scripts/test-langflow.mjs` — uji integrasi ke Langflow: `npm run test:langflow -- http://localhost:7860 <API_KEY>`.
+- `scripts/cek-persona.mjs` — verifikasi angka per persona (flow 4/5/6, baca saja, tanpa flow 1/2/3/8): `npm run cek:persona -- http://localhost:7860 <API_KEY>`.
 
 ## Aturan
 

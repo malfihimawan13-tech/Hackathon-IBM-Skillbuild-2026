@@ -223,16 +223,18 @@ export function KV({ k, v, strong }) {
   );
 }
 
-// Teks dengan dukungan sederhana **tebal**, _miring_, dan butir "- ".
+// Teks dengan dukungan sederhana **tebal**, *miring*, _miring_, dan butir "- ".
 export function RichText({ text, color = C.ink, size = 14 }) {
   const lines = String(text || '').split('\n');
   const renderInline = (line, key) => {
-    const parts = line.split(/(\*\*[^*]+\*\*|_[^_]+_)/g).filter(Boolean);
+    // Urutan penting: **tebal** dicocokkan sebelum *miring* agar ** tidak tertangkap sebagai *.
+    const parts = line.split(/(\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_)/g).filter(Boolean);
     return (
       <T key={key} size={size} color={color} style={{ lineHeight: Math.round(size * 1.55) }}>
         {parts.map((p, i) => {
           if (p.startsWith('**') && p.endsWith('**')) return <T key={i} w={800} size={size} color={color}>{p.slice(2, -2)}</T>;
-          if (p.startsWith('_') && p.endsWith('_') && p.length > 2) return <T key={i} size={12} color={C.muted} style={{ fontStyle: 'italic' }}>{p.slice(1, -1)}</T>;
+          if (p.startsWith('*') && p.endsWith('*') && p.length > 2) return <T key={i} size={size} color={color} style={{ fontStyle: 'italic' }}>{p.slice(1, -1)}</T>;
+          if (p.startsWith('_') && p.endsWith('_') && p.length > 2) return <T key={i} size={size} color={C.muted} style={{ fontStyle: 'italic' }}>{p.slice(1, -1)}</T>;
           return p;
         })}
       </T>

@@ -59,6 +59,7 @@ export function AppProvider({ children }) {
   const [usahaByUser, setUsahaByUser] = useState({});
   const [skenario, setSkenario] = useState({});
   const loaded = useRef(false);
+  const prevDemo = useRef(DEFAULT_SETTINGS.demo);
 
   useEffect(() => {
     (async () => {
@@ -112,6 +113,18 @@ export function AppProvider({ children }) {
       activeUserId, settings, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chatByUser, karierByUser, usahaByUser, skenario,
     })).catch(() => {});
   }, [activeUserId, settings, profilDraft, keuanganDraft, psikologi, analysis, updatedAt, chatByUser, karierByUser, usahaByUser, skenario]);
+
+  // Saat Mode demo dinyalakan atau dimatikan, kosongkan riwayat chat pengguna aktif
+  // agar pesan "Mode demo hanya menjawab..." tidak bercampur dengan jawaban live.
+  useEffect(() => {
+    if (!loaded.current) return;
+    if (settings.demo === prevDemo.current) return;
+    prevDemo.current = settings.demo;
+    if (!activeUserId) return;
+    const uid = activeUserId.trim().toLowerCase().replace(/\s+/g, '_');
+    setChat([]);
+    setChatByUser((prev) => ({ ...prev, [uid]: [] }));
+  }, [settings.demo, activeUserId]);
 
   const live = !settings.demo;
   // Pengguna aktif: hanya dari activeUserId (layar Masuk). settings.userId lama diabaikan.
@@ -268,16 +281,16 @@ export function AppProvider({ children }) {
     try {
       let reply;
       if (!live) {
-        // Mode demo: cari jawaban rekaman untuk pertanyaan contoh persona
+        // Mode demo aktif: cari jawaban rekaman; jika tidak ada tampilkan pesan pembatas.
         const recorded = demoChatReply(activeUserId, question);
         if (recorded != null) {
           await new Promise((r) => setTimeout(r, 900));
           reply = recorded + '\n\n_Jawaban rekaman dari Langflow._';
         } else {
-          // Pertanyaan bebas — tidak dijawab di Mode demo
           reply = 'Mode demo hanya menjawab pertanyaan contoh. Matikan Mode demo untuk bertanya bebas ke myCITA.';
         }
       } else {
+        // Mode demo MATI: semua pertanyaan (termasuk pertanyaan contoh) dikirim ke flow 7.
         requireUser();
         reply = await runFlow(settings, 'coach', `user_id: ${userId}\npertanyaan: ${question}`, {
           timeout: 120000, sessionId: `cita-${userId}`,

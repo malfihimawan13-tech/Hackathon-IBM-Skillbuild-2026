@@ -21,7 +21,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "test:langflow": "node scripts/test-langflow.mjs"
+    "test:langflow": "node scripts/test-langflow.mjs",
+    "cek:persona": "node scripts/cek-persona.mjs"
   },
   "private": true
 }
