@@ -1,6 +1,9 @@
 # myCITA — My Career, Income, Target & Achievement
 **Capai Impian, Tentukan Arah**
 
+🎬 **Video demo:** [Tonton di YouTube](https://youtu.be/2OXrG8_b9z8)
+🎬 **Video pitch:** [Tonton di YouTube](https://youtu.be/X5DbX1ujh3s)
+
 Pendamping AI untuk karier, usaha, dan finansial anak muda Indonesia. myCITA menghubungkan arah karier atau usaha dengan potensi pendapatan, lalu menghitung kapan tujuan hidup (rumah, kendaraan, menikah, kuliah) bisa tercapai.
 
 ## Isi paket
