@@ -193,9 +193,9 @@ function AgusUsaha({ go }) {
         <T size={11} color={C.muted} style={{ lineHeight: 16 }}>
           {`Tambahan laba bersih dari kenaikan omzet 20% dengan margin tetap ${Math.round((bengkelBersih / bengkel.omzet) * 100)}%.`}
         </T>
-        <Row label="C · Omzet kelontong +25%" value={kelontongTambahan != null ? `+${rpShort(kelontongTambahan)}/bulan` : '–'} teal />
+        <Row label="C · Omzet kelontong +20%" value={kelontongTambahan != null ? `+${rpShort(kelontongTambahan)}/bulan` : '–'} teal />
         <T size={11} color={C.muted} style={{ lineHeight: 16 }}>
-          {`Tambahan laba bersih dari kenaikan omzet 25% dengan margin tetap ${Math.round((kelontongBersih / kelontong.omzet) * 100)}%.`}
+          {`Tambahan laba bersih dari kenaikan omzet 20% dengan margin tetap ${Math.round((kelontongBersih / kelontong.omzet) * 100)}%.`}
         </T>
         <Row label="B + C · Gabungan" value={gabunganTambahan != null ? `+${rpShort(gabunganTambahan)}/bulan` : '–'} teal />
         <T size={11} color={C.muted} style={{ lineHeight: 16 }}>

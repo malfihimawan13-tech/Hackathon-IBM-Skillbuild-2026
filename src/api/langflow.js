@@ -6,7 +6,7 @@ export const FLOWS = {
   keuangan: '2_simpan_keuangan_mycita',
   target: '3_simpan_target_mycita',
   analisis: '4_analisis_keuangan_mycita',
-  coach: '7_konsultasi_coach_mycita',
+  coach: '7_konsultasi_coach_mycita-1',
   karier: '5_eksplorasi_karier_mycita',
   usaha: '6_eksplorasi_usaha_mycita',
   hapus: '8_hapus_data_mycita',

@@ -36,7 +36,7 @@ export function ChipInput({ label, values, onChange, placeholder }) {
     <View style={{ gap: 8 }}>
       {label ? <T w={700} size={13}>{label}</T> : null}
       <View style={{ flexDirection: 'row', gap: 8 }}>
-        <TextInput accessibilityLabel={label || placeholder} value={text} onChangeText={setText} onSubmitEditing={add} placeholder={placeholder}
+        <TextInput accessibilityLabel={label || placeholder} value={text} onChangeText={setText} onSubmitEditing={add} onBlur={add} placeholder={placeholder}
           placeholderTextColor="#8A9693" returnKeyType="done"
           style={{ flex: 1, minHeight: 48, borderRadius: R.md, borderWidth: 1, borderColor: C.line, backgroundColor: C.card, paddingHorizontal: 14, fontFamily: F.semibold, fontSize: 15, color: C.ink }} />
         <IconButton icon="plus" label={`Tambah ${label || ''}`} filled onPress={add} />

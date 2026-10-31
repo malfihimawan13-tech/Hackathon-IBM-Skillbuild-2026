@@ -1,4 +1,6 @@
 // Token desain CITA — sama dengan mockup di kanvas desain.
+import React from 'react';
+
 export const C = {
   teal: '#0F4C47',
   teal2: '#1F6F66',
@@ -15,6 +17,12 @@ export const C = {
   warnSoft: '#FBEBDD',
   white: '#FFFFFF',
 };
+
+const LIGHT = { ...C };
+const DARK = { ...C, soft: '#1E3A36', goldSoft: '#3A2E17', goldLine: '#5A4620', ground: '#0E1514', card: '#18221F', ink: '#E8EEEC', muted: '#9DB0AC', line: '#2B3836', warn: '#E8A06A', warnSoft: '#3A2418', teal2: '#2C8A7E' };
+// Ganti tema: ubah nilai warna bersama, lalu pohon tampilan dipasang ulang (key di App).
+export function setTema(mode) { Object.assign(C, mode === 'gelap' ? DARK : LIGHT); }
+export const TemaCtx = React.createContext({ tema: 'terang', ganti: () => {} });
 
 export const F = {
   regular: 'PlusJakartaSans_400Regular',

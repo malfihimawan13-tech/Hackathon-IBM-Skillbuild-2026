@@ -436,11 +436,11 @@ export function AppProvider({ children }) {
     const bengkelLaba = bengkelData ? (bengkelData.omzet - bengkelData.biaya) : 11000000;
     const kelontongLaba = kelontongData ? (kelontongData.omzet - kelontongData.biaya) : 3000000;
     const simBengkel = { pengembangan_usaha: [{ nama: bengkelData?.nama || 'Bengkel Agus', laba_bersih: bengkelLaba, kenaikan_persen: 20 }] };
-    const simKelontong = { pengembangan_usaha: [{ nama: kelontongData?.nama || 'Kelontong istri', laba_bersih: kelontongLaba, kenaikan_persen: 25 }] };
+    const simKelontong = { pengembangan_usaha: [{ nama: kelontongData?.nama || 'Kelontong istri', laba_bersih: kelontongLaba, kenaikan_persen: 20 }] };
     const simGabungan = {
       pengembangan_usaha: [
         { nama: bengkelData?.nama || 'Bengkel Agus', laba_bersih: bengkelLaba, kenaikan_persen: 20 },
-        { nama: kelontongData?.nama || 'Kelontong istri', laba_bersih: kelontongLaba, kenaikan_persen: 25 },
+        { nama: kelontongData?.nama || 'Kelontong istri', laba_bersih: kelontongLaba, kenaikan_persen: 20 },
       ],
     };
 

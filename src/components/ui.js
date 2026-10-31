@@ -1,5 +1,5 @@
-import React from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import React, { createContext, useContext, useEffect, useRef } from 'react';
+import { ActivityIndicator, Animated, Easing, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from './Icon';
@@ -13,6 +13,40 @@ export function T({ w = 400, size = 15, color = C.ink, style, children, ...rest 
     <Text style={[{ fontFamily: WEIGHT[w], fontSize: size, color, lineHeight: Math.round(size * 1.42) }, style]} {...rest}>
       {children}
     </Text>
+  );
+}
+
+
+// Muncul perlahan sambil naik sedikit. Dipakai agar kartu dan balon chat terasa "hidup".
+export function FadeIn({ children, delay = 0, distance = 10, duration = 320, style }) {
+  const v = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.timing(v, { toValue: 1, duration, delay, easing: Easing.out(Easing.cubic), useNativeDriver: Platform.OS !== 'web' }).start();
+  }, [v, delay, duration]);
+  return (
+    <Animated.View style={[{ opacity: v, transform: [{ translateY: v.interpolate({ inputRange: [0, 1], outputRange: [distance, 0] }) }] }, style]}>
+      {children}
+    </Animated.View>
+  );
+}
+
+// Tiga titik berdenyut, penanda "sedang mengetik".
+export function TypingDots({ color = C.teal }) {
+  const vals = useRef([0, 1, 2].map(() => new Animated.Value(0.3))).current;
+  useEffect(() => {
+    const loops = vals.map((v, i) => Animated.loop(Animated.sequence([
+      Animated.delay(i * 160),
+      Animated.timing(v, { toValue: 1, duration: 380, useNativeDriver: Platform.OS !== 'web' }),
+      Animated.timing(v, { toValue: 0.3, duration: 380, useNativeDriver: Platform.OS !== 'web' }),
+      Animated.delay((2 - i) * 160),
+    ])));
+    loops.forEach((l) => l.start());
+    return () => loops.forEach((l) => l.stop());
+  }, [vals]);
+  return (
+    <View style={{ flexDirection: 'row', gap: 5, alignItems: 'center', height: 14 }}>
+      {vals.map((v, i) => <Animated.View key={i} style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: color, opacity: v }} />)}
+    </View>
   );
 }
 
@@ -169,13 +203,30 @@ export function Bar({ ratio = 0, color = C.teal, height = 8 }) {
   );
 }
 
-export function Screen({ children, scroll = true, refreshControl, contentStyle, bottomPad = 110 }) {
+// Kolom kanan tetap (kartu profil + menu "My ...") yang dipasang Root; tampil di semua halaman pada layar lebar.
+export const ShellCtx = createContext(null);
+
+export function Screen({ children, scroll = true, refreshControl, contentStyle, bottomPad = 170, maxWidth = 1150 }) {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const shell = useContext(ShellCtx);
+  const kolom = shell;
+  const kiri = shell && shell.kiri !== undefined ? shell.kiri : null;
+  const kanan = shell && shell.kiri !== undefined ? shell.kanan : shell;
+  const lebar = width >= 900;
+  if (lebar) bottomPad = 40;
   if (!scroll) return <View style={{ flex: 1, paddingTop: insets.top, backgroundColor: C.ground }}>{children}</View>;
+  const web = Platform.OS === 'web';
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: C.ground }} refreshControl={refreshControl} keyboardShouldPersistTaps="handled"
-      contentContainerStyle={[{ paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: bottomPad + insets.bottom, gap: 14 }, contentStyle]}>
-      {children}
+    <ScrollView style={{ flex: 1, backgroundColor: C.ground }} dataSet={web ? { cita: 'scroll' } : undefined} refreshControl={refreshControl} keyboardShouldPersistTaps="handled"
+      contentContainerStyle={[{ width: '100%', maxWidth: maxWidth + (kolom && lebar ? (kiri ? 340 : 20) : 0), alignSelf: 'center', paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: bottomPad + insets.bottom, gap: 14 }, contentStyle]}>
+      {kolom && lebar ? (
+        <View style={{ flexDirection: 'row', gap: 20, alignItems: 'flex-start' }}>
+          {kiri ? <View dataSet={web ? { cita: 'sisi' } : undefined} style={[{ width: 300 }, web ? { position: 'sticky', top: 12, maxHeight: 'calc(100vh - 88px)', overflowY: 'auto' } : null]}>{kiri}</View> : null}
+          <View style={{ flex: 1, minWidth: 0, gap: 14 }}>{children}</View>
+          <View dataSet={web ? { cita: 'sisi' } : undefined} style={[{ width: 320 }, web ? { position: 'sticky', top: 12, maxHeight: 'calc(100vh - 88px)', overflowY: 'auto' } : null]}>{kanan}</View>
+        </View>
+      ) : children}
     </ScrollView>
   );
 }
@@ -223,14 +274,14 @@ export function KV({ k, v, strong }) {
   );
 }
 
-// Teks dengan dukungan sederhana **tebal**, *miring*, _miring_, dan butir "- ".
+// Teks dengan dukungan sederhana **tebal**, *miring*, _miring_, butir "- ", tabel Markdown, dan garis "---".
 export function RichText({ text, color = C.ink, size = 14 }) {
   const lines = String(text || '').split('\n');
-  const renderInline = (line, key) => {
+  const renderInline = (line, key, base = {}) => {
     // Urutan penting: **tebal** dicocokkan sebelum *miring* agar ** tidak tertangkap sebagai *.
     const parts = line.split(/(\*\*[^*]+\*\*|\*[^*]+\*|_[^_]+_)/g).filter(Boolean);
     return (
-      <T key={key} size={size} color={color} style={{ lineHeight: Math.round(size * 1.55) }}>
+      <T key={key} size={size} color={color} style={[{ lineHeight: Math.round(size * 1.55) }, base]}>
         {parts.map((p, i) => {
           if (p.startsWith('**') && p.endsWith('**')) return <T key={i} w={800} size={size} color={color}>{p.slice(2, -2)}</T>;
           if (p.startsWith('*') && p.endsWith('*') && p.length > 2) return <T key={i} size={size} color={color} style={{ fontStyle: 'italic' }}>{p.slice(1, -1)}</T>;
@@ -240,27 +291,55 @@ export function RichText({ text, color = C.ink, size = 14 }) {
       </T>
     );
   };
-  return (
-    <View style={{ gap: 4 }}>
-      {lines.map((ln, i) => {
-        const clean = ln.replace(/^#+\s*/, '');
-        if (!clean.trim()) return <View key={i} style={{ height: 4 }} />;
-        const bullet = clean.match(/^\s*(?:[-*•]|\d+[.)])\s+(.*)$/);
-        if (bullet) {
-          return (
-            <View key={i} style={{ flexDirection: 'row', gap: 8, paddingLeft: 2 }}>
-              <T size={size} color={C.teal} w={800}>•</T>
-              <View style={{ flex: 1 }}>{renderInline(bullet[1], `b${i}`)}</View>
-            </View>
-          );
-        }
-        return renderInline(clean, i);
-      })}
-    </View>
-  );
+  const isRow = (l) => /^\s*\|.*\|\s*$/.test(l);
+  const isSep = (l) => /^\s*\|?[\s:|-]+\|[\s:|-]*$/.test(l) && l.includes('-');
+  const cells = (l) => l.trim().replace(/^\|/, '').replace(/\|$/, '').split('|').map((c) => c.trim());
+
+  const out = [];
+  for (let i = 0; i < lines.length; i++) {
+    const ln = lines[i];
+    // Tabel: kumpulkan baris berurutan yang berbentuk | a | b |
+    if (isRow(ln)) {
+      const rows = [];
+      while (i < lines.length && isRow(lines[i])) { if (!isSep(lines[i])) rows.push(cells(lines[i])); i++; }
+      i--;
+      out.push(
+        <ScrollView key={`t${i}`} horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 4 }}>
+          <View style={{ borderWidth: 1, borderColor: C.line, borderRadius: 12, overflow: 'hidden' }}>
+            {rows.map((r, ri) => (
+              <View key={ri} style={{ flexDirection: 'row', backgroundColor: ri === 0 ? C.soft : (ri % 2 ? C.card : C.ground), borderTopWidth: ri ? 1 : 0, borderTopColor: C.line }}>
+                {r.map((c, ci) => (
+                  <View key={ci} style={{ width: ci === 0 ? 124 : 112, paddingHorizontal: 8, paddingVertical: 7 }}>
+                    <T w={ri === 0 ? 800 : 500} size={size - 2} color={ri === 0 ? C.teal : color} style={{ lineHeight: Math.round((size - 2) * 1.4) }}>{c.replace(/\*\*/g, '')}</T>
+                  </View>
+                ))}
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+      );
+      continue;
+    }
+    if (/^\s*(-{3,}|\*{3,}|_{3,})\s*$/.test(ln)) { out.push(<View key={i} style={{ height: 1, backgroundColor: C.line, marginVertical: 6 }} />); continue; }
+    const head = ln.match(/^\s*#+\s*(.*)$/);
+    const clean = head ? head[1] : ln;
+    if (!clean.trim()) { out.push(<View key={i} style={{ height: 4 }} />); continue; }
+    const bullet = head ? null : clean.match(/^\s*(?:[-*•]|\d+[.)])\s+(.*)$/);
+    if (bullet) {
+      out.push(
+        <View key={i} style={{ flexDirection: 'row', gap: 8, paddingLeft: 2 }}>
+          <T size={size} color={C.teal} w={800}>•</T>
+          <View style={{ flex: 1 }}>{renderInline(bullet[1], `b${i}`)}</View>
+        </View>
+      );
+      continue;
+    }
+    out.push(head ? <T key={i} w={800} size={size + 1} color={C.teal} style={{ marginTop: 4 }}>{clean.replace(/\*\*/g, '')}</T> : renderInline(clean, i));
+  }
+  return <View style={{ gap: 4 }}>{out}</View>;
 }
 
-const s = StyleSheet.create({
+const mkStyles = () => ({
   card: { borderWidth: 1, borderRadius: R.lg, padding: 16, gap: 10 },
   chip: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 3, borderRadius: R.pill },
   btn: { minHeight: 52, borderRadius: 16, borderWidth: 1, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
@@ -271,3 +350,5 @@ const s = StyleSheet.create({
   pill: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 40, paddingHorizontal: 12, borderRadius: R.pill, borderWidth: 1, borderColor: C.line, backgroundColor: C.card },
   emptyIcon: { width: 56, height: 56, borderRadius: 18, backgroundColor: C.soft, alignItems: 'center', justifyContent: 'center' },
 });
+// Dihitung ulang tiap akses supaya ikut tema terang/gelap.
+const s = new Proxy({}, { get: (_, k) => mkStyles()[k] });

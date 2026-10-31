@@ -3,7 +3,7 @@ import { Platform, Pressable, ScrollView, View } from 'react-native';
 import Svg, { Circle, Line, Path, Polygon, Polyline, Rect, Text as SvgText } from 'react-native-svg';
 import { useApp } from '../state/AppContext';
 import { DEMO } from '../api/demoData';
-import { Button, T } from '../components/ui';
+import { Button, Screen, ScreenHeader, T } from '../components/ui';
 import Icon from '../components/Icon';
 import { C, R } from '../theme';
 import { rpShort } from '../utils/format';
@@ -428,14 +428,14 @@ function AgusRoadmap({ analysis }) {
   const agusScenarios = [
     bulanDasar != null && { label: 'A · Kondisi sekarang', sub: 'Rp600 jt', bulan: bulanDasar, isPast: true },
     bulanBengkel != null && { label: 'B · Omzet bengkel +20%', sub: bengkelLabel, bulan: bulanBengkel, isPast: true },
-    bulanKelontong != null && { label: 'C · Kelontong +25%', sub: kelontongLabel, bulan: bulanKelontong, isPast: true },
+    bulanKelontong != null && { label: 'C · Kelontong +20%', sub: kelontongLabel, bulan: bulanKelontong, isPast: true },
     bulanGabungan != null && { label: 'B + C · Keduanya berkembang', sub: 'gabungan', bulan: bulanGabungan, isPast: true },
     bulanRumahRealistis != null && { label: `${hargaLabel} + B + C`, sub: `tepat ${tenggat_tahun} tahun`, bulan: bulanRumahRealistis, isPast: false },
   ].filter(Boolean);
 
   const phases = [
     { range: 'Bln 0–12', active: false, title: 'Kembangkan bengkel', sub: 'Target omzet +20%', badge: bengkelLabel },
-    { range: 'Bln 0–12', active: false, title: 'Kembangkan kelontong', sub: 'Target omzet +25%', badge: kelontongLabel },
+    { range: 'Bln 0–12', active: false, title: 'Kembangkan kelontong', sub: 'Target omzet +20%', badge: kelontongLabel },
     { range: 'Bln 12–…', active: true, title: 'Stabil & tabung untuk DP', sub: 'Penuhi dana darurat, lalu DP KPR' },
     { range: `Bln ~17`, active: true, title: 'Siap DP KPR', sub: hargaRealistis ? `Rumah ±${rpShort(hargaRealistis)}, DP 20%` : 'Rumah realistis, DP 20%' },
   ];
@@ -633,37 +633,18 @@ export default function Roadmap({ go }) {
   const uid = app.activeUserId;
 
   return (
-    <View style={{ flex: 1, backgroundColor: C.ground }}>
-      {/* header */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, paddingBottom: 8 }}>
-        <Pressable
-          onPress={() => go('home')}
-          accessibilityRole="button"
-          accessibilityLabel="Kembali ke beranda"
-          style={{ width: 44, height: 44, borderRadius: 14, backgroundColor: C.white, borderWidth: 1, borderColor: C.line, alignItems: 'center', justifyContent: 'center' }}>
-          <Icon name="back" size={20} color={C.ink} />
-        </Pressable>
-        <T size={20} w={800} style={{ flex: 1, letterSpacing: -0.2 }}>Roadmap</T>
-        <Button
-          label="Tujuan Saya"
-          icon="flag"
-          variant="secondary"
-          onPress={() => go('tujuan')}
-          style={{ minHeight: 44, paddingHorizontal: 14 }}
-        />
-      </View>
-
-      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 8, paddingBottom: 100, gap: 14 }} showsVerticalScrollIndicator={false}>
-        {uid === 'budi' && <BudiRoadmap analysis={app.analysis} />}
-        {uid === 'agus' && <AgusRoadmap analysis={app.analysis} />}
-        {uid === 'dini' && <DiniRoadmap karier={app.karier} analysis={app.analysis} />}
-        {!['budi', 'agus', 'dini'].includes(uid) && (
-          <View style={{ padding: 24, alignItems: 'center', gap: 12 }}>
-            <Icon name="route" size={32} color={C.muted} />
-            <T size={15} w={700} color={C.muted} style={{ textAlign: 'center' }}>Roadmap tersedia setelah mengisi data karier atau usaha.</T>
-          </View>
-        )}
-      </ScrollView>
-    </View>
+    <Screen>
+      <ScreenHeader title="Roadmap" onBack={() => go('home')}
+        right={<Button label="Tujuan Saya" icon="flag" variant="secondary" onPress={() => go('tujuan')} style={{ minHeight: 44, paddingHorizontal: 14 }} />} />
+      {uid === 'budi' && <BudiRoadmap analysis={app.analysis} />}
+      {uid === 'agus' && <AgusRoadmap analysis={app.analysis} />}
+      {uid === 'dini' && <DiniRoadmap karier={app.karier} analysis={app.analysis} />}
+      {!['budi', 'agus', 'dini'].includes(uid) && (
+        <View style={{ padding: 24, alignItems: 'center', gap: 12 }}>
+          <Icon name="route" size={32} color={C.muted} />
+          <T size={15} w={700} color={C.muted} style={{ textAlign: 'center' }}>Roadmap tersedia setelah mengisi data karier atau usaha.</T>
+        </View>
+      )}
+    </Screen>
   );
 }

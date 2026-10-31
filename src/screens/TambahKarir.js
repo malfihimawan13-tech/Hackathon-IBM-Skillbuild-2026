@@ -36,7 +36,7 @@ function SkillInput({ items, onChange }) {
   return (
     <View style={{ gap: 8 }}>
       <T w={700} size={13}>Skill</T>
-      <T size={12} color={C.muted}>Pilih level, ketik nama skill, lalu tekan Tambah atau Enter.</T>
+      <T size={12} color={C.muted}>Pilih level, ketik nama skill, lalu tekan Tambah atau Enter (otomatis tertambah saat kamu pindah kolom).</T>
       {/* Level selector */}
       <View style={{ flexDirection: 'row', gap: 8 }}>
         {LEVEL_OPTIONS.map((l) => {
@@ -56,6 +56,7 @@ function SkillInput({ items, onChange }) {
           value={text}
           onChangeText={setText}
           onSubmitEditing={add}
+          onBlur={add}
           placeholder="mis. servis motor, Canva, Excel"
           placeholderTextColor="#8A9693"
           returnKeyType="done"

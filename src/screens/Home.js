@@ -1,16 +1,23 @@
 import React, { useState } from 'react';
-import { Platform, Pressable, RefreshControl, View } from 'react-native';
+import { Platform, Pressable, RefreshControl, ScrollView, View, useWindowDimensions } from 'react-native';
 import Svg, { Circle, Polygon, Polyline, Line, Rect, Text as SvgText } from 'react-native-svg';
 import { useApp } from '../state/AppContext';
-import { Bar, Card, Chip, EmptyState, ErrorBox, ScoreRing, Screen, T } from '../components/ui';
+import { Bar, Card, Chip, EmptyState, ErrorBox, FadeIn, ScoreRing, Screen, ScreenHeader, T } from '../components/ui';
 import Icon from '../components/Icon';
+import { HeroBanner, IkonBulat, Pintasan } from '../components/Visual';
 import { C, R } from '../theme';
 import { cleanStatus, pct, rpShort } from '../utils/format';
 import { findPersona } from '../state/persona';
+import { Composer, PostCard, terhubungAkun } from '../components/Feed';
+import { SisiProfil, profilPengguna } from '../components/Sisi';
+import { useKomunitas } from '../state/useKomunitas';
+import { BarisAtas, BarisStat, Rekomendasi } from '../components/BerandaBaru';
 
 // ─── Shared helpers ──────────────────────────────────────────────────────────
 
 function HeaderRow({ inisial, onProfile }) {
+  const { width } = useWindowDimensions();
+  if (width >= 900) return null; // di layar lebar, merek dan profil sudah ada di menu atas
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
       <View style={{ gap: 2 }}>
@@ -25,7 +32,7 @@ function HeaderRow({ inisial, onProfile }) {
   );
 }
 
-function ScoreCard({ d, dd, onPress }) {
+export function ScoreCard({ d, dd, onPress }) {
   if (!d) return null;
   const savingRate = d.saving_rate_persen != null ? pct(d.saving_rate_persen) : '';
   const ddText = dd ? `, dana darurat ${String(dd.cukup_untuk_bulan).replace('.', ',')} bln` : '';
@@ -38,6 +45,7 @@ function ScoreCard({ d, dd, onPress }) {
     <Pressable accessibilityRole="button"
       accessibilityLabel={`Skor Kesehatan Finansial ${d.skor_kesehatan} dari 100, ${cleanStatus(d.status)}`}
       onPress={onPress}>
+      <FadeIn>
       <Card tone="teal" style={{ flexDirection: 'row', alignItems: 'center', gap: 16, borderRadius: 24, padding: 16 }}>
         <ScoreRing score={d.skor_kesehatan} />
         <View style={{ flex: 1, gap: 5 }}>
@@ -47,6 +55,7 @@ function ScoreCard({ d, dd, onPress }) {
           {sub3 ? <T size={12} color="rgba(255,255,255,0.9)">{sub3}</T> : null}
         </View>
       </Card>
+      </FadeIn>
     </Pressable>
   );
 }
@@ -56,14 +65,15 @@ function StatRow({ d }) {
   return (
     <View style={{ flexDirection: 'row', gap: 8 }}>
       {[
-        { label: 'Pendapatan', val: rpShort(d.pendapatan), tone: null },
-        { label: 'Pengeluaran', val: rpShort(d.pengeluaran), tone: null },
-        { label: 'Sisa', val: rpShort(d.sisa), tone: 'gold' },
+        { label: 'Pendapatan', val: rpShort(d.pendapatan), tone: null, ikon: 'wallet', aksen: 'teal' },
+        { label: 'Pengeluaran', val: rpShort(d.pengeluaran), tone: null, ikon: 'chart', aksen: 'coral' },
+        { label: 'Sisa', val: rpShort(d.sisa), tone: 'gold', ikon: 'check', aksen: 'gold' },
       ].map((s) => (
         <View key={s.label} style={{
           flex: 1, backgroundColor: s.tone === 'gold' ? C.goldSoft : C.card,
           borderRadius: 16, borderWidth: 1, borderColor: C.line, padding: 10, gap: 2, minWidth: 0,
         }}>
+          <IkonBulat icon={s.ikon} aksen={s.aksen} size={30} />
           <T size={11} color={C.muted}>{s.label}</T>
           <T w={800} size={16} numberOfLines={1} adjustsFontSizeToFit>{s.val}</T>
           {s.tone === 'gold' && d.saving_rate_persen != null ? (
@@ -82,7 +92,7 @@ const CHART_W = 310;
 const CHART_H = 160;
 const CHART_LEFT = 28;
 
-function BarChart6({ bars, label, note }) {
+export function BarChart6({ bars, label, note }) {
   // bars: array of { income, expense } or just { val }
   // Simple two-colour stacked bar (income teal, extra gold)
   const maxVal = Math.max(...bars.map((b) => b.income || b.val || 0)) * 1.1 || 1;
@@ -125,7 +135,7 @@ function BarChart6({ bars, label, note }) {
 
 // ─── Donat pengeluaran ─────────────────────────────────────────────────────
 
-function DonutChart({ items, total }) {
+export function DonutChart({ items, total }) {
   // items: [{label, nilai, color}] — sudah diurutkan dari terbesar
   const R_OUTER = 56; const SW = 20;
   const SIZE = (R_OUTER + SW) * 2 + 4;
@@ -185,7 +195,7 @@ function DonutChart({ items, total }) {
 
 // ─── Tabungan mini (line chart sample) ────────────────────────────────────
 
-function SavingsChart({ currentAmount, monthlyAdd }) {
+export function SavingsChart({ currentAmount, monthlyAdd }) {
   const months = 6;
   const points = Array.from({ length: months }, (_, i) => currentAmount - (months - 1 - i) * monthlyAdd);
   const minV = Math.min(...points) * 0.9;
@@ -214,7 +224,7 @@ function SavingsChart({ currentAmount, monthlyAdd }) {
 
 // ─── Kartu hutang + dana darurat ──────────────────────────────────────────
 
-function DebtEmergencyRow({ analysis }) {
+export function DebtEmergencyRow({ analysis }) {
   const dd = analysis?.dana_darurat;
   const hutangTotal = analysis?.dashboard?.total_hutang ?? 0;
   // Pakai field asli dari flow 4: dana_likuid_saat_ini, target_dipakai, cukup_untuk_bulan
@@ -258,7 +268,7 @@ function DebtEmergencyRow({ analysis }) {
 
 // ─── Kartu tujuan ─────────────────────────────────────────────────────────
 
-function TargetCards({ targets, go }) {
+export function TargetCards({ targets, go }) {
   if (!targets?.length) return null;
   return (
     <Card style={{ gap: 12 }}>
@@ -301,7 +311,7 @@ function TargetCards({ targets, go }) {
 
 // ─── Kartu roadmap mini ───────────────────────────────────────────────────
 
-function RoadmapCard({ uid, karier, usaha, go }) {
+export function RoadmapCard({ uid, karier, usaha, go }) {
   // Ambil nama dari hasil flow 5/6 yang tersimpan
   const karierNama = karier?.hasil?.rekomendasi?.[0]?.profesi;
   const usahaNama = usaha?.hasil?.rekomendasi?.[0]?.usaha || usaha?.hasil?.rekomendasi?.[0]?.nama;
@@ -435,7 +445,7 @@ function RoadmapCard({ uid, karier, usaha, go }) {
 
 // ─── Kartu usaha Agus ─────────────────────────────────────────────────────
 
-function UsahaCards({ usahaList, go }) {
+export function UsahaCards({ usahaList, go }) {
   if (!usahaList?.length) return null;
   return (
     <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -488,7 +498,7 @@ function SkillBar({ skor }) {
 
 // JurusanList pakai rekomendasi_jurusan[] dari flow 5 mode pelajar
 // field: jurusan, skor_kecocokan, karier_terkait[]
-function JurusanList({ rekomendasiJurusan, go }) {
+export function JurusanList({ rekomendasiJurusan, go }) {
   const list = rekomendasiJurusan?.slice(0, 3) || [];
   if (!list.length) return null;
   const maxSkor = 100;
@@ -522,7 +532,7 @@ function JurusanList({ rekomendasiJurusan, go }) {
 // ─── Hero card Dini: jurusan terbaik ──────────────────────────────────────
 
 // DiniHeroCard pakai rekomendasi_jurusan[] (bukan rekomendasi/profesi)
-function DiniHeroCard({ rekomendasiJurusan }) {
+export function DiniHeroCard({ rekomendasiJurusan }) {
   const top = rekomendasiJurusan?.[0];
   const second = rekomendasiJurusan?.[1];
   if (!top && !second) return null;
@@ -550,7 +560,7 @@ function DiniHeroCard({ rekomendasiJurusan }) {
 
 // ─── Profil kemampuan Dini ────────────────────────────────────────────────
 
-function SkillProfile({ skills, minat }) {
+export function SkillProfile({ skills, minat }) {
   return (
     <Card style={{ gap: 12 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -584,7 +594,7 @@ function SkillProfile({ skills, minat }) {
 
 // ─── Karier pilihan Dini ──────────────────────────────────────────────────
 
-function KarierCards({ rekomendasi, go }) {
+export function KarierCards({ rekomendasi, go }) {
   const list = rekomendasi?.slice(0, 3) || [];
   if (!list.length) return null;
   return (
@@ -623,7 +633,7 @@ function KarierCards({ rekomendasi, go }) {
 
 // ─── Saran utama ──────────────────────────────────────────────────────────
 
-function TopReco({ text }) {
+export function TopReco({ text }) {
   if (!text) return null;
   return (
     <Card style={{ gap: 8 }}>
@@ -639,7 +649,15 @@ function TopReco({ text }) {
 
 // ─── HOME ─────────────────────────────────────────────────────────────────
 
-export default function Home({ go }) {
+// Baris pil: di layar lebar mengisi penuh lebar kolom; di HP bisa digeser.
+function BarisPil({ lebar, children }) {
+  if (lebar) return <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }} accessibilityRole="tablist">{children}</View>;
+  return <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, alignItems: 'center', paddingRight: 4 }} accessibilityRole="tablist">{children}</ScrollView>;
+}
+
+export function Dashboard(props) { return <Home {...props} dashboard />; }
+
+export default function Home({ go, dashboard, params }) {
   const app = useApp();
   const { analysis, refreshAnalysis, live, settings, karier, usaha, userId } = app;
   const [refreshing, setRefreshing] = useState(false);
@@ -649,6 +667,12 @@ export default function Home({ go }) {
   const inisial = persona?.inisial || (userId?.charAt(0)?.toUpperCase()) || 'M';
   const subJudul = persona?.subJudul || 'Kondisi finansialmu bulan ini';
   const isDini = userId === 'dini';
+  const { width: lebarLayar } = useWindowDimensions();
+  const lebar = lebarLayar >= 900;
+  const [tabFeed, setTabFeed] = useState('semua');
+  const [filter, setFilter] = useState(null);
+  const kom = useKomunitas(userId);
+  const ubah = kom.ubah;
 
   const onRefresh = async () => {
     setRefreshing(true); setErr('');
@@ -678,25 +702,8 @@ export default function Home({ go }) {
   const donutItemsSorted = [...donutItemsRaw].sort((a, b) => b.nilai - a.nilai);
   const donutItems = donutItemsSorted.map((p, i) => ({ ...p, color: donutColors[i % donutColors.length] }));
 
-  return (
-    <Screen refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.teal} />}>
-      <HeaderRow inisial={inisial} onProfile={() => go('profil')} />
-
-      {!live && (
-        <Pressable onPress={() => go('profil')} accessibilityRole="button">
-          <Card tone="gold" style={{ flexDirection: 'row', gap: 10, alignItems: 'center', padding: 12 }}>
-            <Icon name="spark" size={18} color={C.warn} />
-            <T size={13} style={{ flex: 1 }}>Mode demo aktif: memakai data contoh. Ketuk untuk menghubungkan ke Langflow.</T>
-          </Card>
-        </Pressable>
-      )}
-
-      {/* Salam */}
-      <View style={{ gap: 4 }}>
-        <T w={800} size={26} style={{ letterSpacing: -0.4 }}>Halo, {firstName}</T>
-        <T size={14} color={C.muted}>{subJudul}</T>
-      </View>
-
+  const ringkasan = (
+    <>
       <ErrorBox message={err} onRetry={onRefresh} />
 
       {!analysis ? (
@@ -803,6 +810,116 @@ export default function Home({ go }) {
       <T size={11} color={C.muted} style={{ textAlign: 'center' }}>
         {live ? `Langflow · user: ${settings.userId || userId}` : 'Data contoh'} · tarik ke bawah untuk memperbarui
       </T>
+    </>
+  );
+  const nama = profilPengguna(userId).nama;
+  // Minat/jalur tiap persona (mengikuti roadmap-nya), urut dari yang paling relevan. Beda pengguna, beda hasil.
+  const MINAT_KAT = { budi: ['pekerjaan', 'belajar', 'sertifikasi', 'bisnis'], agus: ['bisnis', 'sertifikasi', 'belajar'], dini: ['belajar', 'sertifikasi', 'pekerjaan'] };
+  const minatUser = MINAT_KAT[userId] || [];
+  const bobotKat = (kat) => { const i = minatUser.indexOf(kat); return i < 0 ? 0 : 4 - Math.min(i, 3); };
+  const skorPost = (p) => (p.reaksi?.suka || 0) + (kom.s.komentar[p.id]?.length || 0) * 3 + (p.komentar?.length || 0) * 3 + (p.bagikan || 0) * 2;
+  const menitPost = (p) => (p.menit != null ? p.menit : 0);
+  // Diikuti/terkoneksi: akun yang sudah Anda ikuti (channel) atau koneksi (orang).
+  const terhubung = (p) => p.akun !== 'saya' && terhubungAkun(kom.s, p.akun);
+  // Skor "Untuk Anda": minat/roadmap + bonus bila berasal dari akun yang diikuti/dikoneksi.
+  const skorAnda = (p) => bobotKat(p.kat) + (terhubung(p) ? 2 : 0);
+  // Filter jenis: tiap kategori hanya yang relevan bagi pengguna ini, atau dari akun yang diikuti/dikoneksi.
+  const lolosFilter = (p) => {
+    if (!filter) return true;
+    if (filter === 'anda') return skorAnda(p) > 0;
+    if (filter === 'koneksi') return terhubung(p);
+    // Hanya postingan yang memang berisi topik itu (lowongan, materi, tips usaha, info sertifikasi) dari sumber yang sesuai.
+    return (p.topik || []).includes(filter) && (bobotKat(filter) > 0 || terhubung(p));
+  };
+  const dasar = kom.posts.filter(lolosFilter);
+  const urut = tabFeed === 'populer'
+    ? [...dasar].sort((a, b) => skorPost(b) - skorPost(a))
+    : tabFeed === 'terbaru'
+      ? [...dasar].sort((a, b) => menitPost(a) - menitPost(b))
+      : filter === 'anda' ? [...dasar].sort((a, b) => skorAnda(b) - skorAnda(a)) : dasar;
+  const daftarFilter = urut;
+  const KETERANGAN = {
+    anda: 'Disarankan sistem berdasarkan minat, roadmap, dan tujuan Anda, baik dari akun yang diikuti/dikoneksi maupun bukan.',
+    koneksi: 'Postingan dari orang yang terkoneksi dengan Anda dan channel yang Anda ikuti.',
+    pekerjaan: 'Lowongan dan info kerja dari channel pekerjaan, HRD, atau orang yang berbagi pekerjaan sesuai profesinya.',
+    bisnis: 'Tips dan materi usaha dari channel bisnis, dosen/ahli bisnis, pebisnis, atau pedagang.',
+    belajar: 'Materi belajar dari channel belajar, dosen, guru, mentor, atau coach.',
+    sertifikasi: 'Info sertifikasi dari lembaga/LSP, asesor, atau channel sertifikasi.',
+  };
+  const feed = (
+    <>
+      <BarisPil lebar={lebar}>
+        {[{ k: 'semua', l: 'Semua' }, { k: 'populer', l: 'Populer' }, { k: 'terbaru', l: 'Terbaru' }].map((t) => {
+          const on = tabFeed === t.k;
+          return (
+            <Pressable key={t.k} accessibilityRole="tab" accessibilityState={{ selected: on }} onPress={() => setTabFeed(t.k)}
+              style={{ paddingHorizontal: 12, minHeight: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', flexGrow: lebar ? 1 : 0, backgroundColor: on ? C.teal : C.card, borderWidth: 1, borderColor: on ? C.teal : C.line }}>
+              <T w={on ? 800 : 600} size={12} color={on ? C.white : C.ink}>{t.l}</T>
+            </Pressable>
+          );
+        })}
+        <View style={{ width: 1, height: 22, backgroundColor: C.line, marginHorizontal: 2, flexGrow: 0 }} />
+        {[{ k: 'anda', l: 'Untuk Anda' }, { k: 'koneksi', l: 'Koneksi' }, { k: 'pekerjaan', l: 'Pekerjaan' }, { k: 'bisnis', l: 'Bisnis' }, { k: 'belajar', l: 'Belajar' }, { k: 'sertifikasi', l: 'Sertifikasi' }].map((t) => {
+          const on = filter === t.k;
+          return (
+            <Pressable key={t.k} accessibilityRole="button" accessibilityState={{ selected: on }} onPress={() => setFilter(on ? null : t.k)}
+              style={{ paddingHorizontal: 10, minHeight: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center', flexGrow: lebar ? 1 : 0, backgroundColor: on ? C.soft : 'transparent', borderWidth: 1, borderColor: on ? C.teal2 : C.line }}>
+              <T w={on ? 800 : 600} size={12} color={on ? C.teal2 : C.muted}>{t.l}</T>
+            </Pressable>
+          );
+        })}
+      </BarisPil>
+      {filter ? <T size={11} color={C.muted}>{KETERANGAN[filter]}</T> : null}
+      <Composer nama={nama} onKirim={(teks, lampiran) => ubah((x) => ({ ...x, posts: [{ id: `u${Date.now()}`, akun: 'saya', waktu: 'Baru saja', menit: 0, reaksi: { suka: 0 }, komentar: [], teks, lampiran }, ...x.posts] }))} />
+      {params?.postId ? (() => {
+        const dipilih = kom.posts.find((p) => p.id === params.postId);
+        return dipilih ? (
+          <View style={{ gap: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <T w={800} size={13} color={C.teal2} style={{ flex: 1 }}>Postingan dari riwayat interaksi Anda</T>
+              <Pressable accessibilityRole="button" onPress={() => go('home')}><T w={800} size={12} color={C.muted}>Tutup</T></Pressable>
+            </View>
+            <PostCard key={`sorot-${dipilih.id}`} post={dipilih} s={kom.s} ubah={ubah} namaSaya={nama} headlineSaya={subJudul} bukaAwal={params.jenis === 'komentar'} />
+          </View>
+        ) : null;
+      })() : null}
+      {daftarFilter.length === 0 ? <Card><T size={13} color={C.muted}>Belum ada postingan yang cocok dengan filter ini untuk Anda. Coba filter lain atau ikuti lebih banyak channel.</T></Card> : null}
+      {daftarFilter.filter((p) => p.id !== params?.postId).map((p) => <PostCard key={p.id} post={p} s={kom.s} ubah={ubah} namaSaya={nama} headlineSaya={subJudul} />)}
+      <T size={11} color={C.muted} style={{ textAlign: 'center' }}>Akun dan postingan contoh untuk demo · tanpa nominal uang atau pamer barang</T>
+    </>
+  );
+  const tengah = (
+    <View style={{ gap: 14 }}>
+      <BarisAtas uid={userId} nama={nama} go={go} />
+      <BarisStat uid={userId} persona={persona} analysis={analysis} go={go} />
+      <Rekomendasi uid={userId} go={go} />
+      {feed}
+    </View>
+  );
+  if (dashboard) {
+    return (
+      <Screen refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.teal} />}>
+        <ScreenHeader title="My Dashboard" onBack={() => go('home')} />
+        {ringkasan}
+      </Screen>
+    );
+  }
+  return (
+    <Screen refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={C.teal} />}>
+      {!live && (
+        <Pressable onPress={() => go('profil')} accessibilityRole="button">
+          <Card tone="gold" style={{ flexDirection: 'row', gap: 10, alignItems: 'center', padding: 12 }}>
+            <Icon name="spark" size={18} color={C.warn} />
+            <T size={13} style={{ flex: 1 }}>Mode demo aktif: memakai data contoh. Ketuk untuk menghubungkan ke Langflow.</T>
+          </Card>
+        </Pressable>
+      )}
+      {lebar ? tengah : (
+        <>
+          <SisiProfil uid={userId} go={go} />
+          {tengah}
+        </>
+      )}
     </Screen>
   );
 }
