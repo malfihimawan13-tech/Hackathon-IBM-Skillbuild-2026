@@ -1,0 +1,822 @@
+{
+ "name": "4_analisis_keuangan_mycita",
+ "description": "Mendukung simulasi pengembangan_usaha untuk usaha yang sudah berjalan. Menghitung kondisi keuangan, skor kesehatan 0-100, dana darurat, strategi hutang, dan simulasi pencapaian setiap target (menabung, kredit, kombinasi) dari data tersimpan. Mendukung simulasi what-if. Input JSON dengan user_id.",
+ "data": {
+  "nodes": [
+   {
+    "id": "ChatInput-udVP6",
+    "type": "genericNode",
+    "position": {
+     "x": 0,
+     "y": 0.0
+    },
+    "selected": false,
+    "data": {
+     "id": "ChatInput-udVP6",
+     "type": "ChatInput",
+     "node": {
+      "base_classes": [
+       "Message"
+      ],
+      "beta": false,
+      "conditional_paths": [],
+      "custom_fields": {},
+      "description": "Get chat inputs from the Playground.",
+      "display_name": "Chat Input",
+      "documentation": "https://docs.langflow.org/chat-input-and-output",
+      "edited": false,
+      "field_order": [
+       "input_value",
+       "should_store_message",
+       "sender",
+       "sender_name",
+       "session_id",
+       "context_id",
+       "files"
+      ],
+      "frozen": false,
+      "icon": "MessagesSquare",
+      "legacy": false,
+      "metadata": {
+       "code_hash": "45974e6b1909",
+       "dependencies": {
+        "dependencies": [
+         {
+          "name": "lfx",
+          "version": null
+         }
+        ],
+        "total_dependencies": 1
+       },
+       "module": "lfx.components.input_output.chat.ChatInput"
+      },
+      "minimized": true,
+      "output_types": [],
+      "outputs": [
+       {
+        "allows_loop": false,
+        "cache": true,
+        "display_name": "Chat Message",
+        "group_outputs": false,
+        "method": "message_response",
+        "name": "message",
+        "selected": "Message",
+        "tool_mode": true,
+        "types": [
+         "Message"
+        ],
+        "value": "__UNDEFINED__",
+        "hidden": false,
+        "options": null,
+        "required_inputs": null
+       }
+      ],
+      "pinned": false,
+      "template": {
+       "_type": "Component",
+       "code": {
+        "advanced": true,
+        "api_editable": false,
+        "dynamic": true,
+        "fileTypes": [],
+        "file_path": "",
+        "info": "",
+        "list": false,
+        "load_from_db": false,
+        "multiline": true,
+        "name": "code",
+        "password": false,
+        "placeholder": "",
+        "required": true,
+        "show": true,
+        "title_case": false,
+        "type": "code",
+        "value": "from lfx.base.data.utils import IMG_FILE_TYPES, TEXT_FILE_TYPES\nfrom lfx.base.io.chat import ChatComponent\nfrom lfx.inputs.inputs import BoolInput\nfrom lfx.io import (\n    DropdownInput,\n    FileInput,\n    MessageTextInput,\n    MultilineInput,\n    Output,\n)\nfrom lfx.schema.image import get_file_paths\nfrom lfx.schema.message import Message\nfrom lfx.services.deps import get_settings_service\nfrom lfx.utils.constants import (\n    MESSAGE_SENDER_AI,\n    MESSAGE_SENDER_NAME_USER,\n    MESSAGE_SENDER_USER,\n)\nfrom lfx.utils.file_path_security import (\n    component_file_access_scopes,\n    enforce_local_file_access,\n    is_local_file_access_restricted,\n)\n\n\nclass ChatInput(ChatComponent):\n    display_name = \"Chat Input\"\n    description = \"Get chat inputs from the Playground.\"\n    documentation: str = \"https://docs.langflow.org/chat-input-and-output\"\n    icon = \"MessagesSquare\"\n    name = \"ChatInput\"\n    minimized = True\n\n    inputs = [\n        MultilineInput(\n            name=\"input_value\",\n            display_name=\"Input Text\",\n            value=\"\",\n            info=\"Message to be passed as input.\",\n            input_types=[],\n        ),\n        BoolInput(\n            name=\"should_store_message\",\n            display_name=\"Store Messages\",\n            info=\"Store the message in the history.\",\n            value=True,\n            advanced=True,\n        ),\n        DropdownInput(\n            name=\"sender\",\n            display_name=\"Sender Type\",\n            options=[MESSAGE_SENDER_AI, MESSAGE_SENDER_USER],\n            value=MESSAGE_SENDER_USER,\n            info=\"Type of sender.\",\n            advanced=True,\n        ),\n        MessageTextInput(\n            name=\"sender_name\",\n            display_name=\"Sender Name\",\n            info=\"Name of the sender.\",\n            value=MESSAGE_SENDER_NAME_USER,\n            advanced=True,\n        ),\n        MessageTextInput(\n            name=\"session_id\",\n            display_name=\"Session ID\",\n            info=\"The session ID of the chat. If empty, the current session ID parameter will be used.\",\n            advanced=True,\n        ),\n        MessageTextInput(\n            name=\"context_id\",\n            display_name=\"Context ID\",\n            info=\"The context ID of the chat. Adds an extra layer to the local memory.\",\n            value=\"\",\n            advanced=True,\n        ),\n        FileInput(\n            name=\"files\",\n            display_name=\"Files\",\n            file_types=TEXT_FILE_TYPES + IMG_FILE_TYPES,\n            info=\"Files to be sent with the message.\",\n            advanced=True,\n            is_list=True,\n            temp_file=True,\n        ),\n    ]\n    outputs = [\n        Output(display_name=\"Chat Message\", name=\"message\", method=\"message_response\"),\n    ]\n\n    async def message_response(self) -> Message:\n        # Ensure files is a list and filter out empty/None values\n        files = self.files if self.files else []\n        if files and not isinstance(files, list):\n            files = [files]\n        # Filter out None/empty values\n        files = [f for f in files if f is not None and f != \"\"]\n\n        # Build endpoints inject caller-controlled file references directly into\n        # ChatInput. Resolve and validate local references before the Message can\n        # later read them while constructing model attachment content.\n        if files:\n            settings_service = get_settings_service()\n            storage_type = getattr(getattr(settings_service, \"settings\", None), \"storage_type\", \"local\")\n            # The storage factory falls back to local storage for unsupported\n            # values, so only the explicitly configured S3 backend may bypass\n            # filesystem containment.\n            if str(storage_type).lower() != \"s3\" and is_local_file_access_restricted():\n                scope_ids = list(component_file_access_scopes(self))\n                # Public executions replace graph.flow_id with a per-visitor\n                # virtual ID. Only the server-populated source provenance may\n                # restore the already-validated public attachment namespace.\n                source_flow_id = getattr(self.graph, \"source_flow_id\", None)\n                if source_flow_id:\n                    scope_ids.append(source_flow_id)\n                for file_path in get_file_paths(files):\n                    enforce_local_file_access(file_path, scope_ids=scope_ids)\n\n        session_id = self.session_id or self.graph.session_id or \"\"\n        message = await Message.create(\n            text=self.input_value,\n            sender=self.sender,\n            sender_name=self.sender_name,\n            session_id=session_id,\n            context_id=self.context_id,\n            files=files,\n        )\n        if session_id and isinstance(message, Message) and self.should_store_message:\n            stored_message = await self.send_message(\n                message,\n            )\n            self.message.value = stored_message\n            message = stored_message\n\n        self.status = message\n        return message\n"
+       },
+       "context_id": {
+        "_input_type": "MessageTextInput",
+        "advanced": true,
+        "api_editable": false,
+        "display_name": "Context ID",
+        "dynamic": false,
+        "info": "The context ID of the chat. Adds an extra layer to the local memory.",
+        "input_types": [
+         "Message"
+        ],
+        "list": false,
+        "list_add_label": "Add More",
+        "load_from_db": false,
+        "name": "context_id",
+        "override_skip": false,
+        "placeholder": "",
+        "required": false,
+        "show": true,
+        "title_case": false,
+        "tool_mode": false,
+        "trace_as_input": true,
+        "trace_as_metadata": true,
+        "track_in_telemetry": false,
+        "type": "str",
+        "value": ""
+       },
+       "files": {
+        "_input_type": "FileInput",
+        "advanced": true,
+        "api_editable": false,
+        "display_name": "Files",
+        "dynamic": false,
+        "fileTypes": [
+         "csv",
+         "json",
+         "pdf",
+         "txt",
+         "md",
+         "mdx",
+         "yaml",
+         "yml",
+         "xml",
+         "html",
+         "htm",
+         "docx",
+         "py",
+         "sh",
+         "sql",
+         "js",
+         "ts",
+         "tsx",
+         "jpg",
+         "jpeg",
+         "png",
+         "bmp",
+         "image"
+        ],
+        "file_path": "",
+        "info": "Files to be sent with the message.",
+        "list": true,
+        "list_add_label": "Add More",
+        "name": "files",
+        "override_skip": false,
+        "placeholder": "",
+        "required": false,
+        "show": true,
+        "temp_file": true,
+        "title_case": false,
+        "tool_mode": false,
+        "trace_as_metadata": true,
+        "track_in_telemetry": false,
+        "type": "file",
+        "value": ""
+       },
+       "input_value": {
+        "_input_type": "MultilineInput",
+        "advanced": false,
+        "ai_enabled": false,
+        "api_editable": false,
+        "copy_field": false,
+        "display_name": "Input Text",
+        "dynamic": false,
+        "info": "Message to be passed as input.",
+        "input_types": [],
+        "list": false,
+        "list_add_label": "Add More",
+        "load_from_db": false,
+        "multiline": true,
+        "name": "input_value",
+        "override_skip": false,
+        "password": false,
+        "placeholder": "",
+        "required": false,
+        "show": true,
+        "title_case": false,
+        "tool_mode": false,
+        "trace_as_input": true,
+        "trace_as_metadata": true,
+        "track_in_telemetry": false,
+        "type": "str",
+        "value": ""
+       },
+       "sender": {
+        "_input_type": "DropdownInput",
+        "advanced": true,
+        "api_editable": false,
+        "combobox": false,
+        "dialog_inputs": {},
+        "display_name": "Sender Type",
+        "dynamic": false,
+        "external_options": {},
+        "info": "Type of sender.",
+        "name": "sender",
+        "options": [
+         "Machine",
+         "User"
+        ],
+        "options_metadata": [],
+        "override_skip": false,
+        "placeholder": "",
+        "required": false,
+        "show": true,
+        "title_case": false,
+        "toggle": false,
+        "tool_mode": false,
+        "trace_as_metadata": true,
+        "track_in_telemetry": true,
+        "type": "str",
+        "value": "User"
+       },
+       "sender_name": {
+        "_input_type": "MessageTextInput",
+        "advanced": true,
+        "api_editable": false,
+        "display_name": "Sender Name",
+        "dynamic": false,
+        "info": "Name of the sender.",
+        "input_types": [
+         "Message"
+        ],
+        "list": false,
+        "list_add_label": "Add More",
+        "load_from_db": false,
+        "name": "sender_name",
+        "override_skip": false,
+        "placeholder": "",
+        "required": false,
+        "show": true,
+        "title_case": false,
+        "tool_mode": false,
+        "trace_as_input": true,
+        "trace_as_metadata": true,
+        "track_in_telemetry": false,
+        "type": "str",
+        "value": "User"
+       },
+       "session_id": {
+        "_input_type": "MessageTextInput",
+        "advanced": true,
+        "api_editable": false,
+        "display_name": "Session ID",
+        "dynamic": false,
+        "info": "The session ID of the chat. If empty, the current session ID parameter will be used.",
+        "input_types": [
+         "Message"
+        ],
+        "list": false,
+        "list_add_label": "Add More",
+        "load_from_db": false,
+        "name": "session_id",
+        "override_skip": false,
+        "placeholder": "",
+        "required": false,
+        "show": true,
+        "title_case": false,
+        "tool_mode": false,
+        "trace_as_input": true,
+        "trace_as_metadata": true,
+        "track_in_telemetry": false,
+        "type": "str",
+        "value": ""
+       },
+       "should_store_message": {
+        "_input_type": "BoolInput",
+        "advanced": true,
+        "api_editable": false,
+        "display_name": "Store Messages",
+        "dynamic": false,
+        "info": "Store the message in the history.",
+        "list": false,
+        "list_add_label": "Add More",
+        "name": "should_store_message",
+        "override_skip": false,
+        "placeholder": "",
+        "required": false,
+        "show": true,
+        "title_case": false,
+        "tool_mode": false,
+        "trace_as_metadata": true,
+        "track_in_telemetry": true,
+        "type": "bool",
+        "value": true
+       }
+      },
+      "tool_mode": false,
+      "category": "input_output"
+     },
+     "showNode": true
+    }
+   },
+   {
+    "id": "MyCITAAnalisis-RLd3L",
+    "type": "genericNode",
+    "position": {
+     "x": 480,
+     "y": 0.0
+    },
+    "selected": false,
+    "data": {
+     "id": "MyCITAAnalisis-RLd3L",
+     "type": "MyCITAAnalisis",
+     "node": {
+      "template": {
+       "_type": "Component",
+       "code": {
+        "type": "code",
+        "required": true,
+        "placeholder": "",
+        "list": false,
+        "show": true,
+        "multiline": true,
+        "value": "\"\"\"\nmyCITA (My Career, Income, Target & Achievement) - Komponen Analisis\nTempel seluruh isi file ini ke Custom Component Langflow (tombol Code).\nVersi 1.1.0\n\"\"\"\nimport json\nimport math\nimport os\nimport re\nimport sqlite3\nfrom datetime import date, datetime\nfrom pathlib import Path\n\nfrom langflow.custom import Component\nfrom langflow.io import MessageTextInput, Output, StrInput\nfrom langflow.schema.message import Message\n\n# =====================================================================\n# myCITA - utilitas bersama (bagian ini identik di semua komponen myCITA)\n# =====================================================================\nCITA_VERSI = \"1.0.0\"\nDISCLAIMER = (\n    \"myCITA adalah alat edukasi dan perencanaan keuangan, bukan nasihat investasi \"\n    \"atau rekomendasi produk keuangan tertentu. Semua angka adalah estimasi \"\n    \"berdasarkan data yang kamu isi dan asumsi yang tercantum.\"\n)\n\n\ndef mycita_db_path(custom: str = \"\") -> str:\n    \"\"\"Lokasi database myCITA. Default: ~/.mycita/mycita.db (bisa diganti lewat kolom Lokasi Database atau MYCITA_DB_PATH).\"\"\"\n    env = os.environ.get(\"MYCITA_DB_PATH\") or os.environ.get(\"MYCITA_DB_PATH\")\n    path = (custom or env or str(Path.home() / \".mycita\" / \"mycita.db\")).strip()\n    p = Path(path).expanduser()\n    p.parent.mkdir(parents=True, exist_ok=True)\n    lama = Path.home() / \".cita\" / \"cita.db\"\n    if not custom and not env and not p.exists() and lama.exists():\n        import shutil\n        shutil.copy2(lama, p)  # pindahkan otomatis data dari nama lama (mycita.db)\n    return str(p)\n\n\ndef _mycita_conn(custom: str = \"\"):\n    conn = sqlite3.connect(mycita_db_path(custom))\n    conn.execute(\n        \"CREATE TABLE IF NOT EXISTS mycita_data (\"\n        \"user_id TEXT NOT NULL, jenis TEXT NOT NULL, data TEXT NOT NULL, \"\n        \"diperbarui TEXT NOT NULL, PRIMARY KEY (user_id, jenis))\"\n    )\n    if conn.execute(\"SELECT name FROM sqlite_master WHERE type='table' AND name='cita_data'\").fetchone():\n        conn.execute(\"INSERT OR IGNORE INTO mycita_data SELECT user_id, jenis, data, diperbarui FROM cita_data\")\n        conn.execute(\"DROP TABLE cita_data\")\n        conn.commit()\n    return conn\n\n\ndef simpan_data(user_id: str, jenis: str, data, custom: str = \"\") -> None:\n    conn = _mycita_conn(custom)\n    try:\n        conn.execute(\n            \"INSERT OR REPLACE INTO mycita_data (user_id, jenis, data, diperbarui) VALUES (?, ?, ?, ?)\",\n            (user_id, jenis, json.dumps(data, ensure_ascii=False), datetime.now().isoformat(timespec=\"seconds\")),\n        )\n        conn.commit()\n    finally:\n        conn.close()\n\n\ndef baca_data(user_id: str, jenis: str, custom: str = \"\"):\n    conn = _mycita_conn(custom)\n    try:\n        row = conn.execute(\n            \"SELECT data FROM mycita_data WHERE user_id = ? AND jenis = ?\", (user_id, jenis)\n        ).fetchone()\n    finally:\n        conn.close()\n    return json.loads(row[0]) if row else None\n\n\ndef hapus_semua_data(user_id: str, custom: str = \"\") -> int:\n    conn = _mycita_conn(custom)\n    try:\n        cur = conn.execute(\"DELETE FROM mycita_data WHERE user_id = ?\", (user_id,))\n        conn.commit()\n        return cur.rowcount\n    finally:\n        conn.close()\n\n\ndef parse_input(teks) -> dict:\n    if isinstance(teks, dict):\n        return teks\n    s = str(teks or \"\").strip()\n    s = re.sub(r\"```(?:json)?\", \"\", s).strip()\n    awal, akhir = s.find(\"{\"), s.rfind(\"}\")\n    if awal == -1 or akhir == -1:\n        raise ValueError('Input harus berupa JSON object, contoh: {\"user_id\": \"budi\", ...}')\n    try:\n        return json.loads(s[awal : akhir + 1])\n    except json.JSONDecodeError as e:\n        raise ValueError(f\"Format JSON tidak valid: {e.msg} (posisi {e.pos})\") from e\n\n\ndef norm_user_id(data: dict) -> str:\n    uid = str(data.get(\"user_id\") or \"\").strip().lower()\n    uid = re.sub(r\"\\s+\", \"_\", uid)\n    if not uid:\n        raise ValueError(\"Field 'user_id' wajib diisi agar data bisa disimpan dan dibaca kembali.\")\n    return uid\n\n\ndef angka(v, default: float = 0.0) -> float:\n    \"\"\"Terima 7000000, '7.000.000', 'Rp 7.000.000', '7 juta', '7,5jt', '500rb', '1,2 miliar'.\"\"\"\n    if v is None or v == \"\":\n        return default\n    if isinstance(v, bool):\n        return default\n    if isinstance(v, (int, float)):\n        return float(v)\n    s = str(v).lower().replace(\"rp\", \"\").replace(\" \", \"\").strip()\n    pengali = 1.0\n    for akhiran, nilai in ((\"miliar\", 1e9), (\"milyar\", 1e9), (\"juta\", 1e6), (\"jt\", 1e6),\n                           (\"ribu\", 1e3), (\"rb\", 1e3), (\"k\", 1e3)):\n        if s.endswith(akhiran):\n            s, pengali = s[: -len(akhiran)], nilai\n            break\n    if pengali != 1.0:\n        s = s.replace(\",\", \".\")\n        if s.count(\".\") > 1:\n            s = s.replace(\".\", \"\")\n    else:\n        s = s.replace(\".\", \"\").replace(\",\", \".\")\n    s = re.sub(r\"[^0-9.\\-]\", \"\", s)\n    try:\n        return float(s) * pengali\n    except ValueError:\n        return default\n\n\ndef bulat(x) -> int:\n    return int(round(x or 0))\n\n\ndef rp(x) -> str:\n    n = bulat(x)\n    tanda = \"-\" if n < 0 else \"\"\n    return f\"{tanda}Rp{abs(n):,}\".replace(\",\", \".\")\n\n\ndef hasil_message(komponen, payload: dict):\n    teks = json.dumps(payload, ensure_ascii=False, indent=2)\n    komponen.status = payload.get(\"pesan\") or payload.get(\"status\", \"\")\n    return Message(text=teks)\n\n\ndef galat(pesan: str) -> dict:\n    return {\"status\": \"error\", \"pesan\": pesan}\n# =====================================================================\n\n# ---------------------------- myCITA TARGET ----------------------------\n# Harga referensi dikumpulkan Oktober 2026. Perbarui berkala; pengguna selalu boleh mengisi harga sendiri.\nREF_HARGA = [\n    # Mobil (OTR Jakarta)\n    {\"nama\": \"Toyota Avanza\", \"kategori\": \"mobil\", \"kata\": [\"avanza\"], \"min\": 244_200_000, \"max\": 282_100_000,\n     \"acuan\": 259_200_000, \"catatan\": \"Acuan varian 1.3 E CVT\", \"sumber\": \"oto.com (OTR Jakarta), 2026\"},\n    {\"nama\": \"Mitsubishi Xpander\", \"kategori\": \"mobil\", \"kata\": [\"xpander\"], \"min\": 274_500_000, \"max\": 348_000_000,\n     \"acuan\": 283_500_000, \"catatan\": \"Acuan varian GLS CVT\", \"sumber\": \"moladin.com (OTR Jakarta), Juli 2026\"},\n    {\"nama\": \"Suzuki Ertiga\", \"kategori\": \"mobil\", \"kata\": [\"ertiga\"], \"min\": 236_100_000, \"max\": 270_700_000,\n     \"acuan\": 236_100_000, \"catatan\": \"Acuan varian terendah\", \"sumber\": \"oto.com (OTR Jakarta), 2026\"},\n    {\"nama\": \"Honda Brio\", \"kategori\": \"mobil\", \"kata\": [\"brio\"], \"min\": 170_400_000, \"max\": 263_200_000,\n     \"acuan\": 170_400_000, \"catatan\": \"Acuan varian terendah\", \"sumber\": \"zigwheels.co.id (OTR Jakarta), 2026\"},\n    # Motor\n    {\"nama\": \"Honda BeAT\", \"kategori\": \"motor\", \"kata\": [\"beat\"], \"min\": 18_980_000, \"max\": 20_380_000,\n     \"acuan\": 18_980_000, \"catatan\": \"Acuan varian terendah\", \"sumber\": \"zigwheels.co.id / oto.com, 2026\"},\n    {\"nama\": \"Honda Vario 125\", \"kategori\": \"motor\", \"kata\": [\"vario\"], \"min\": 24_810_000, \"max\": 26_799_000,\n     \"acuan\": 24_810_000, \"catatan\": \"Acuan Vario 125 CBS\", \"sumber\": \"Price list AHM OTR DKI (via bernas.id), 2026\"},\n    {\"nama\": \"Honda Scoopy\", \"kategori\": \"motor\", \"kata\": [\"scoopy\"], \"min\": 24_200_000, \"max\": 25_005_000,\n     \"acuan\": 24_200_000, \"catatan\": \"Acuan Scoopy Fashion\", \"sumber\": \"Wahana Honda Jabodetabek, Oktober 2026\"},\n    {\"nama\": \"Yamaha NMAX\", \"kategori\": \"motor\", \"kata\": [\"nmax\"], \"min\": 31_620_000, \"max\": 33_180_000,\n     \"acuan\": 31_620_000, \"catatan\": \"Acuan varian terendah\", \"sumber\": \"oto.com (OTR Jakarta), 2026\"},\n    # Rumah subsidi (batas harga jual maksimal FLPP)\n    {\"nama\": \"Rumah subsidi Jabodetabek\", \"kategori\": \"rumah_subsidi\",\n     \"kata\": [\"subsidi jabodetabek\", \"subsidi jakarta\", \"subsidi bogor\", \"subsidi depok\", \"subsidi tangerang\", \"subsidi bekasi\"],\n     \"min\": 150_000_000, \"max\": 185_000_000, \"acuan\": 185_000_000,\n     \"catatan\": \"Batas harga maksimal rumah subsidi (FLPP), bunga KPR subsidi 5% tetap\",\n     \"sumber\": \"Kompas.com (Kepmen batas harga rumah subsidi), 2026\"},\n    {\"nama\": \"Rumah subsidi Jawa (luar Jabodetabek) & Sumatera\", \"kategori\": \"rumah_subsidi\",\n     \"kata\": [\"subsidi jawa\", \"subsidi sumatera\", \"subsidi bandung\", \"subsidi semarang\", \"subsidi surabaya\", \"subsidi\"],\n     \"min\": 140_000_000, \"max\": 166_000_000, \"acuan\": 166_000_000,\n     \"catatan\": \"Batas harga maksimal rumah subsidi (FLPP), bunga KPR subsidi 5% tetap\",\n     \"sumber\": \"Kompas.com (Kepmen batas harga rumah subsidi), 2026\"},\n    # Menikah\n    {\"nama\": \"Pernikahan intimate\", \"kategori\": \"menikah\", \"kata\": [\"intimate\", \"sederhana\", \"nikah\", \"menikah\", \"pernikahan\", \"wedding\"],\n     \"min\": 150_000_000, \"max\": 250_000_000, \"acuan\": 200_000_000,\n     \"catatan\": \"Sangat bergantung kota dan jumlah tamu\", \"sumber\": \"Popbela/IDN, perkiraan budget nikah 2026\"},\n    {\"nama\": \"Pernikahan menengah\", \"kategori\": \"menikah\", \"kata\": [\"menengah\", \"mid size\", \"midsize\"],\n     \"min\": 300_000_000, \"max\": 500_000_000, \"acuan\": 400_000_000,\n     \"catatan\": \"Sangat bergantung kota dan jumlah tamu\", \"sumber\": \"Popbela/IDN, perkiraan budget nikah 2026\"},\n]\n\nKATEGORI_KATA = [\n    (\"dana_darurat\", (\"darurat\", \"emergency\")),\n    (\"rumah_subsidi\", (\"rumah subsidi\", \"subsidi\")),\n    (\"rumah\", (\"rumah\", \"kpr\", \"apartemen\", \"hunian\", \"properti\")),\n    (\"mobil\", (\"mobil\", \"avanza\", \"xpander\", \"brio\", \"ertiga\", \"innova\", \"car\")),\n    (\"motor\", (\"motor\", \"beat\", \"vario\", \"nmax\", \"scoopy\", \"pcx\", \"aerox\")),\n    (\"menikah\", (\"nikah\", \"wedding\", \"pernikahan\", \"lamaran\")),\n    (\"pendidikan\", (\"kuliah\", \"sekolah\", \"pendidikan\", \"s2\", \"magister\", \"kursus\", \"sertifikasi\")),\n    (\"ibadah\", (\"umroh\", \"umrah\", \"haji\")),\n    (\"liburan\", (\"liburan\", \"travel\", \"jalan-jalan\", \"trip\")),\n    (\"gadget\", (\"laptop\", \"iphone\", \"hp\", \"gadget\", \"kamera\", \"macbook\")),\n    (\"usaha\", (\"usaha\", \"modal\", \"bisnis\")),\n]\n\n\ndef deteksi_kategori(teks: str) -> str:\n    s = str(teks or \"\").lower()\n    for kat, kata in KATEGORI_KATA:\n        if any(k in s for k in kata):\n            return kat\n    return \"lainnya\"\n\n\ndef cari_harga(query: str, kategori: str = \"\"):\n    q = str(query or \"\").lower()\n    hasil = []\n    for r in REF_HARGA:\n        skor = max((len(k) for k in r[\"kata\"] if k in q), default=0)\n        if not skor and kategori and r[\"kategori\"] == kategori and kategori in (\"menikah\",):\n            skor = 1\n        if skor:\n            hasil.append((skor, r))\n    hasil.sort(key=lambda x: -x[0])\n    return [\n        {k: r[k] for k in (\"nama\", \"kategori\", \"min\", \"max\", \"acuan\", \"catatan\", \"sumber\")}\n        for _, r in hasil[:3]\n    ]\n\n\ndef norm_target(t: dict, i: int = 1):\n    nama = t.get(\"nama\") or t.get(\"target\") or f\"Target {i}\"\n    kategori = t.get(\"kategori\") or deteksi_kategori(nama)\n    kategori = str(kategori).lower().replace(\" \", \"_\")\n    harga = angka(t.get(\"harga\"))\n    sumber_harga = \"diisi pengguna\" if harga > 0 else None\n    referensi = None\n    if harga <= 0 and kategori != \"dana_darurat\":\n        cocok = cari_harga(nama, kategori)\n        if cocok:\n            referensi = cocok[0]\n            harga = referensi[\"acuan\"]\n            sumber_harga = f\"referensi: {referensi['sumber']}\"\n    bulan = int(angka(t.get(\"target_bulan\")))\n    if not bulan and t.get(\"target_tahun\") not in (None, \"\"):\n        bulan = int(round(angka(t.get(\"target_tahun\")) * 12))\n    metode = str(t.get(\"metode\") or \"auto\").lower()\n    if metode not in (\"menabung\", \"kredit\", \"kombinasi\", \"auto\"):\n        metode = \"auto\"\n    return {\n        \"nama\": nama,\n        \"kategori\": kategori,\n        \"harga\": bulat(harga),\n        \"sumber_harga\": sumber_harga or (\"dihitung otomatis dari pengeluaran\" if kategori == \"dana_darurat\" else None),\n        \"referensi_harga\": referensi,\n        \"perlu_harga\": harga <= 0 and kategori != \"dana_darurat\",\n        \"target_bulan\": bulan or None,\n        \"metode\": metode,\n        \"prioritas\": int(angka(t.get(\"prioritas\"), default=i)),\n        \"dp_persen\": angka(t.get(\"dp_persen\"), default=-1) if t.get(\"dp_persen\") not in (None, \"\") else None,\n        \"bunga_kredit_persen\": angka(t.get(\"bunga_kredit_persen\")) if t.get(\"bunga_kredit_persen\") not in (None, \"\") else None,\n        \"dana_terkumpul\": bulat(angka(t.get(\"dana_terkumpul\"))),\n    }\n\n\ndef proses_target(d: dict, target_lama: list):\n    aksi = str(d.get(\"aksi\") or \"simpan\").lower()\n    raw = d.get(\"target\")\n    if isinstance(raw, dict):\n        raw = [raw]\n    raw = [x for x in (raw or []) if isinstance(x, dict)]\n    peringatan = []\n\n    if aksi == \"hapus\":\n        nama_hapus = {str(x.get(\"nama\") or \"\").lower() for x in raw} | {str(d.get(\"nama\") or \"\").lower()}\n        baru = [t for t in target_lama if t[\"nama\"].lower() not in nama_hapus]\n        return baru, peringatan, aksi\n    baru_list = [norm_target(t, i) for i, t in enumerate(raw, start=1)]\n    if aksi == \"tambah\":\n        nama_baru = {t[\"nama\"].lower() for t in baru_list}\n        gabung = [t for t in target_lama if t[\"nama\"].lower() not in nama_baru] + baru_list\n    else:\n        gabung = baru_list\n    for t in baru_list:\n        if t[\"perlu_harga\"]:\n            peringatan.append(f\"Harga '{t['nama']}' belum diketahui dan tidak ada di tabel referensi. Mohon isi 'harga'.\")\n        if not t[\"target_bulan\"]:\n            peringatan.append(f\"'{t['nama']}' belum punya tenggat; myCITA akan menghitung berapa lama waktu yang dibutuhkan.\")\n        if t[\"referensi_harga\"]:\n            r = t[\"referensi_harga\"]\n            peringatan.append(\n                f\"Harga '{t['nama']}' memakai referensi {r['nama']} {rp(r['acuan'])} (kisaran {rp(r['min'])}-{rp(r['max'])}). \"\n                \"Isi 'harga' jika kamu sudah punya angka sendiri.\"\n            )\n    return gabung, peringatan, aksi\n\n\n\n# --------------------------- myCITA ANALISIS ---------------------------\nASUMSI_DEFAULT = {\n    \"inflasi_umum_persen\": 3.2,\n    \"kenaikan_harga_persen\": {\n        \"rumah\": 4.0, \"rumah_subsidi\": 3.0, \"mobil\": 3.0, \"motor\": 3.0, \"menikah\": 4.0,\n        \"pendidikan\": 6.0, \"default\": 3.2,\n    },\n    \"bunga_kredit_persen\": {\"rumah\": 11.0, \"rumah_subsidi\": 5.0, \"mobil\": 10.0, \"motor\": 15.0},\n    \"dp_persen\": {\"rumah\": 20.0, \"rumah_subsidi\": 1.0, \"mobil\": 20.0, \"motor\": 15.0},\n    \"tenor_tahun\": {\"rumah\": [10, 15, 20], \"rumah_subsidi\": [10, 15, 20], \"mobil\": [3, 4, 5], \"motor\": [1, 2, 3]},\n    \"imbal_hasil_tabungan_persen\": 0.0,\n    \"kenaikan_penghasilan_persen\": 0.0,\n    \"pakai_penghasilan_konservatif\": False,\n    \"batas_aman_cicilan_persen\": 30.0,\n    \"porsi_dana_darurat_persen\": 50.0,\n}\nSUMBER_ASUMSI = [\n    \"Inflasi umum 3,2%: inflasi tahunan Indonesia Agustus 2026 tercatat 3,19% (BPS via Databoks); sasaran BI 2,5±1%.\",\n    \"Bunga KPR 11%: bunga floating KPR BCA 11% (Mandiri 13%, CIMB Niaga 13,5%), Kontan Agustus 2026.\",\n    \"KPR subsidi 5% tetap dan batas harga rumah subsidi Rp166-185 juta: Kompas.com 2026.\",\n    \"Kenaikan harga barang, bunga kredit kendaraan, DP, dan porsi alokasi adalah asumsi myCITA yang dapat diubah.\",\n    \"Penghasilan dan pengeluaran dianggap tetap (konservatif); ubah 'kenaikan_penghasilan_persen' untuk skenario kenaikan gaji.\",\n]\nKREDIT_LAYAK = (\"rumah\", \"rumah_subsidi\", \"mobil\", \"motor\")\nTIDAK_DISARANKAN_KREDIT = (\"menikah\", \"liburan\", \"gadget\", \"ibadah\", \"pendidikan\", \"dana_darurat\")\n\n\ndef _gabung_asumsi(override: dict) -> dict:\n    a = json.loads(json.dumps(ASUMSI_DEFAULT))\n    for k, v in (override or {}).items():\n        if isinstance(v, dict) and isinstance(a.get(k), dict):\n            a[k].update(v)\n        elif k in a:\n            a[k] = v\n    return a\n\n\ndef _kat_kredit(kat: str) -> str:\n    return kat if kat in KREDIT_LAYAK else \"mobil\"\n\n\ndef cicilan_anuitas(pokok: float, bunga_tahunan: float, tenor_bulan: int) -> float:\n    if pokok <= 0 or tenor_bulan <= 0:\n        return 0.0\n    i = bunga_tahunan / 100 / 12\n    if i == 0:\n        return pokok / tenor_bulan\n    return pokok * i / (1 - (1 + i) ** -tenor_bulan)\n\n\ndef _teks_durasi(bulan) -> str:\n    if bulan is None:\n        return \"lebih dari 50 tahun\"\n    if bulan <= 0:\n        return \"sudah tercapai\"\n    if bulan < 12:\n        return f\"{bulan} bulan\"\n    th, bl = divmod(bulan, 12)\n    return f\"{th} tahun\" + (f\" {bl} bulan\" if bl else \"\")\n\n\ndef _bulan_lunas(h: dict):\n    if h.get(\"sisa_tenor_bulan\"):\n        return int(h[\"sisa_tenor_bulan\"])\n    p, c = h.get(\"sisa_pokok\", 0), h.get(\"cicilan_bulanan\", 0)\n    if p > 0 and c > 0:\n        i = h.get(\"bunga_tahunan_persen\", 0) / 100 / 12\n        if i == 0:\n            return math.ceil(p / c)\n        if p * i < c:\n            return math.ceil(-math.log(1 - p * i / c) / math.log(1 + i))\n    return None  # dianggap berjalan terus\n\n\ndef simulasi_arus_kas(ctx: dict, goals: list, a: dict, tambahan: float = 0.0, maks: int = 600):\n    \"\"\"Simulasi bulan per bulan: cicilan yang lunas membebaskan dana, dana darurat diisi dulu\n    (porsi tertentu), lalu tiap target diberi setoran sesuai kebutuhan tenggatnya; sisa dana\n    mempercepat target prioritas teratas. Harga target naik sesuai asumsi.\"\"\"\n    r = a[\"imbal_hasil_tabungan_persen\"] / 100 / 12\n    naik_inc = a.get(\"kenaikan_penghasilan_persen\", 0) / 100\n    porsi = a[\"porsi_dana_darurat_persen\"] / 100\n    dd_bal = min(ctx[\"dana_likuid\"], ctx[\"dd_target\"])\n    sisa_awal = ctx[\"dana_likuid\"] - dd_bal\n    st = []\n    for g in goals:\n        bal = g.get(\"dana_terkumpul\", 0)\n        if sisa_awal > 0 and g[\"harga\"] > 0:\n            bal += sisa_awal\n            sisa_awal = 0\n        st.append({\"bal\": bal, \"selesai\": None, \"jejak\": [bal], \"alok_awal\": 0.0})\n    dd_selesai = 0 if dd_bal >= ctx[\"dd_target\"] else None\n    alok_dd_awal = 0.0\n    for i, g in enumerate(goals):\n        if g[\"harga\"] > 0 and st[i][\"bal\"] >= g[\"harga\"]:\n            st[i][\"selesai\"] = 0\n    jadwal = ctx.get(\"jadwal\") or []\n    for m in range(1, maks + 1):\n        if jadwal:\n            utama = jadwal[0][1]\n            for mulai, nilai in jadwal:\n                if mulai <= m - 1:\n                    utama = nilai\n            inc = utama + ctx.get(\"penghasilan_lain\", 0) + tambahan\n        else:\n            inc = ctx[\"penghasilan\"] * (1 + naik_inc) ** ((m - 1) // 12) + tambahan\n        ekstra = ctx.get(\"tambahan_jadwal\") or []\n        if ekstra:\n            nilai_e = 0.0\n            for mulai, nilai in ekstra:\n                if mulai <= m - 1:\n                    nilai_e = nilai\n            inc += nilai_e\n        cic = sum(c for c, akhir in ctx[\"hutang\"] if akhir is None or m <= akhir)\n        pool = max(0.0, inc - ctx[\"rutin\"] - cic)\n        aktif = [i for i, g in enumerate(goals) if g[\"harga\"] > 0 and st[i][\"selesai\"] is None]\n        if dd_bal < ctx[\"dd_target\"]:\n            a_dd = min(ctx[\"dd_target\"] - dd_bal, pool * porsi if aktif else pool)\n            dd_bal += a_dd\n            pool -= a_dd\n            if m == 1:\n                alok_dd_awal = a_dd\n            if dd_bal >= ctx[\"dd_target\"] - 1 and dd_selesai is None:\n                dd_selesai = m\n        beri = {i: 0.0 for i in aktif}\n        for i in aktif:\n            g = goals[i]\n            if g.get(\"target_bulan\") and m <= g[\"target_bulan\"]:\n                sisa_bln = g[\"target_bulan\"] - m + 1\n                harga_tenggat = g[\"harga\"] * (1 + g[\"naik\"] / 100) ** (g[\"target_bulan\"] / 12)\n                butuh = max(0.0, (harga_tenggat - st[i][\"bal\"]) / sisa_bln)\n                beri[i] = min(butuh, pool)\n                pool -= beri[i]\n        if aktif and pool > 0:\n            beri[aktif[0]] += pool\n            pool = 0.0\n        for i in range(len(goals)):\n            s_ = st[i]\n            if i in beri:\n                s_[\"bal\"] = s_[\"bal\"] * (1 + r) + beri[i]\n                if m == 1:\n                    s_[\"alok_awal\"] = beri[i]\n                harga_kini = goals[i][\"harga\"] * (1 + goals[i][\"naik\"] / 100) ** (m / 12)\n                if s_[\"bal\"] >= harga_kini:\n                    s_[\"selesai\"] = m\n            s_[\"jejak\"].append(s_[\"bal\"])\n        if dd_selesai is not None and all(st[i][\"selesai\"] is not None for i, g in enumerate(goals) if g[\"harga\"] > 0):\n            break\n    return {\"dd_selesai\": dd_selesai, \"alok_dd_awal\": alok_dd_awal, \"goals\": st}\n\n\ndef _penghasilan_bulan(ctx, m):\n    m = max(1, m)\n    jadwal = ctx.get(\"jadwal\") or []\n    if jadwal:\n        utama = jadwal[0][1]\n        for mulai, nilai in jadwal:\n            if mulai <= m - 1:\n                utama = nilai\n        inc = utama + ctx.get(\"penghasilan_lain\", 0)\n    else:\n        inc = ctx[\"penghasilan\"]\n    nilai_e = 0.0\n    for mulai, nilai in ctx.get(\"tambahan_jadwal\") or []:\n        if mulai <= m - 1:\n            nilai_e = nilai\n    return inc + nilai_e\n\n\ndef _cicilan_aktif(ctx, m):\n    return sum(c for c, akhir in ctx[\"hutang\"] if akhir is None or m <= akhir)\n\n\ndef _opsi_kredit(g, jejak, dp_persen, ctx, a):\n    kk = _kat_kredit(g[\"kategori\"])\n    bunga = g.get(\"bunga_kredit_persen\") or a[\"bunga_kredit_persen\"][kk]\n    dp_bulan = None\n    for m, bal in enumerate(jejak):\n        if bal >= g[\"harga\"] * (1 + g[\"naik\"] / 100) ** (m / 12) * dp_persen / 100:\n            dp_bulan = m\n            break\n    if dp_bulan is None:\n        return {\"dp_persen\": dp_persen, \"waktu_kumpulkan_dp\": \"lebih dari 50 tahun\",\n                \"waktu_kumpulkan_dp_bulan\": None, \"tenor_aman_terpendek\": None, \"pilihan_tenor\": []}\n    harga_beli = g[\"harga\"] * (1 + g[\"naik\"] / 100) ** (dp_bulan / 12)\n    dp = harga_beli * dp_persen / 100\n    pinjaman = harga_beli - dp\n    cic_lama = _cicilan_aktif(ctx, max(dp_bulan, 1))\n    inc_beli = _penghasilan_bulan(ctx, dp_bulan)\n    bebas = inc_beli - ctx[\"rutin\"] - cic_lama\n    opsi = []\n    for th in a[\"tenor_tahun\"][kk]:\n        c = cicilan_anuitas(pinjaman, bunga, th * 12)\n        rasio = (cic_lama + c) / inc_beli if inc_beli else 9.99\n        opsi.append({\n            \"tenor_tahun\": th,\n            \"cicilan_bulanan\": bulat(c),\n            \"total_bunga\": bulat(c * th * 12 - pinjaman),\n            \"total_dibayar\": bulat(c * th * 12 + dp),\n            \"rasio_cicilan_setelah_kredit_persen\": round(rasio * 100, 1),\n            \"aman\": rasio * 100 <= a[\"batas_aman_cicilan_persen\"] and c <= bebas,\n        })\n    return {\n        \"dp_persen\": dp_persen,\n        \"dp\": bulat(dp),\n        \"waktu_kumpulkan_dp_bulan\": dp_bulan,\n        \"waktu_kumpulkan_dp\": _teks_durasi(dp_bulan),\n        \"perkiraan_harga_saat_beli\": bulat(harga_beli),\n        \"pinjaman\": bulat(pinjaman),\n        \"bunga_tahunan_persen\": bunga,\n        \"cicilan_lama_saat_itu\": bulat(cic_lama),\n        \"pilihan_tenor\": opsi,\n        \"tenor_aman_terpendek\": next((o[\"tenor_tahun\"] for o in opsi if o[\"aman\"]), None),\n    }\n\n\ndef _cari_minimum(fungsi_ok, lo, hi, iterasi=28):\n    if not fungsi_ok(hi):\n        return None\n    for _ in range(iterasi):\n        mid = (lo + hi) / 2\n        if fungsi_ok(mid):\n            hi = mid\n        else:\n            lo = mid\n    return hi\n\n\ndef _alternatif(idx, goals, ctx, a):\n    g = goals[idx]\n    n = g[\"target_bulan\"]\n\n    def ok_tambahan(x):\n        s = simulasi_arus_kas(ctx, goals, a, tambahan=x, maks=n)\n        return s[\"goals\"][idx][\"selesai\"] is not None and s[\"goals\"][idx][\"selesai\"] <= n\n\n    def ok_harga(h):  # True jika harga h TIDAK tercapai (mencari batas atas yang tercapai)\n        gs = [dict(x) for x in goals]\n        gs[idx][\"harga\"] = h\n        s = simulasi_arus_kas(ctx, gs, a, maks=n)\n        sel = s[\"goals\"][idx][\"selesai\"]\n        return not (sel is not None and sel <= n)\n\n    tambahan = _cari_minimum(ok_tambahan, 0.0, max(g[\"harga\"], 1.0))\n    batas = _cari_minimum(ok_harga, 0.0, g[\"harga\"])\n    return {\n        \"tambahan_tabungan_per_bulan_agar_tepat_waktu\": bulat(tambahan) if tambahan is not None else None,\n        \"harga_maksimal_terjangkau_sesuai_tenggat\": ((int(batas) // 1000000) * 1000000 if batas >= 10000000 else bulat(batas)) if batas is not None else bulat(g[\"harga\"]),\n    }\n\n\ndef hitung_analisis(profil: dict, keuangan: dict, targets: list, a: dict, sim: dict = None):\n    sim = sim or {}\n    penghasilan = profil[\"total_penghasilan\"]\n    konservatif = profil.get(\"total_penghasilan_konservatif\", penghasilan)\n    if sim.get(\"penghasilan_baru\") not in (None, \"\"):\n        selisih = angka(sim[\"penghasilan_baru\"]) - penghasilan\n        penghasilan, konservatif = penghasilan + selisih, konservatif + selisih\n    d_inc = angka(sim.get(\"perubahan_penghasilan\"))\n    penghasilan, konservatif = penghasilan + d_inc, konservatif + d_inc\n    if a.get(\"pakai_penghasilan_konservatif\"):\n        penghasilan = konservatif\n\n    rutin = keuangan[\"total_pengeluaran_rutin\"]\n    if sim.get(\"pengeluaran_baru\") not in (None, \"\"):\n        rutin = angka(sim[\"pengeluaran_baru\"]) - keuangan[\"total_cicilan\"]\n    rutin += angka(sim.get(\"perubahan_pengeluaran\")) + angka(sim.get(\"perubahan_keinginan\"))\n    keinginan = keuangan[\"pengeluaran_per_jenis\"].get(\"keinginan\", 0) + angka(sim.get(\"perubahan_keinginan\"))\n    cicilan = keuangan[\"total_cicilan\"]\n    total_keluar = rutin + cicilan\n    sisa = penghasilan - total_keluar\n    kapasitas = max(0.0, sisa)\n\n    saving_rate = sisa / penghasilan if penghasilan else 0\n    rasio_cicilan = cicilan / penghasilan if penghasilan else 0\n    rasio_keinginan = keinginan / penghasilan if penghasilan else 0\n\n    tanggungan = profil.get(\"jumlah_tanggungan_total\", 0)\n    if profil.get(\"status_pernikahan\") == \"menikah\" or tanggungan:\n        dd_min_bln, dd_ideal_bln = 6, (12 if tanggungan else 9)\n    else:\n        dd_min_bln, dd_ideal_bln = 3, 6\n    if profil.get(\"penghasilan_tidak_tetap\"):\n        dd_min_bln, dd_ideal_bln = dd_min_bln + 3, dd_ideal_bln + 3\n    dana_likuid = keuangan.get(\"tabungan_saat_ini\", 0) + keuangan.get(\"dana_darurat_saat_ini\", 0)\n    dd_min, dd_ideal = total_keluar * dd_min_bln, total_keluar * dd_ideal_bln\n    bulan_tertutup = dana_likuid / total_keluar if total_keluar else 0\n\n    # ---- Skor kesehatan 0-100 ----\n    s_saving = 30 * min(1.0, max(0.0, saving_rate) / 0.20)\n    if rasio_cicilan <= 0.10:\n        s_cicilan = 25.0\n    elif rasio_cicilan <= 0.30:\n        s_cicilan = 25 - (rasio_cicilan - 0.10) / 0.20 * 10\n    elif rasio_cicilan <= 0.50:\n        s_cicilan = 15 - (rasio_cicilan - 0.30) / 0.20 * 15\n    else:\n        s_cicilan = 0.0\n    s_dd = 25 * min(1.0, bulan_tertutup / dd_ideal_bln)\n    s_keinginan = 10.0 if rasio_keinginan <= 0.30 else max(0.0, 10 - (rasio_keinginan - 0.30) / 0.20 * 10)\n    hutang_tinggi = [h for h in keuangan[\"hutang\"] if h[\"berbunga_tinggi\"] and h[\"cicilan_bulanan\"] > 0]\n    s_hutang = 3.0 if hutang_tinggi else 10.0\n    skor = bulat(s_saving + s_cicilan + s_dd + s_keinginan + s_hutang)\n    if sisa < 0:\n        skor = min(skor, 30)\n    if skor >= 80:\n        status, emoji = \"Sangat sehat\", \"🟢\"\n    elif skor >= 65:\n        status, emoji = \"Cukup sehat\", \"🟢\"\n    elif skor >= 45:\n        status, emoji = \"Perlu perhatian\", \"🟡\"\n    else:\n        status, emoji = \"Rawan\", \"🔴\"\n\n    # ---- Simulasi arus kas & target ----\n    ada_target_dd = any(t[\"kategori\"] == \"dana_darurat\" for t in targets)\n    dd_target = dd_ideal if ada_target_dd else dd_min\n    goals = []\n    for t in sorted([t for t in targets if t[\"kategori\"] != \"dana_darurat\"],\n                    key=lambda t: (t[\"prioritas\"], t.get(\"target_bulan\") or 9999)):\n        g = dict(t)\n        g[\"naik\"] = a[\"kenaikan_harga_persen\"].get(t[\"kategori\"], a[\"kenaikan_harga_persen\"][\"default\"])\n        if t.get(\"perlu_harga\"):\n            g[\"harga\"] = 0\n        goals.append(g)\n    ctx = {\n        \"penghasilan\": penghasilan, \"rutin\": rutin, \"dana_likuid\": dana_likuid, \"dd_target\": dd_target,\n        \"hutang\": [(h[\"cicilan_bulanan\"], _bulan_lunas(h)) for h in keuangan[\"hutang\"]],\n    }\n    ekstra_raw = sim.get(\"pendapatan_tambahan_jadwal\") or []\n    if ekstra_raw:\n        ctx[\"tambahan_jadwal\"] = sorted((int(angka(j.get(\"mulai_bulan\"))), angka(j.get(\"nilai\"))) for j in ekstra_raw if isinstance(j, dict))\n    biaya_awal = angka(sim.get(\"biaya_awal\"))\n    if biaya_awal:\n        ctx[\"dana_likuid\"] = max(0.0, dana_likuid - biaya_awal)\n    jadwal_raw = sim.get(\"jadwal_pendapatan\") or []\n    if jadwal_raw:\n        jd = sorted((int(angka(j.get(\"mulai_bulan\"))), angka(j.get(\"penghasilan\"))) for j in jadwal_raw if isinstance(j, dict) and angka(j.get(\"penghasilan\")) > 0)\n        if jd:\n            utama_kini = max((p.get(\"penghasilan\", 0) for p in profil.get(\"pekerjaan\") or []), default=0)\n            if jd[0][0] > 0:\n                jd.insert(0, (0, utama_kini))\n            ctx[\"jadwal\"] = jd\n            ctx[\"penghasilan_lain\"] = max(0.0, penghasilan - utama_kini)\n    hasil_sim = simulasi_arus_kas(ctx, goals, a)\n    hasil_target = []\n    for i, g in enumerate(goals):\n        s_ = hasil_sim[\"goals\"][i]\n        n = g.get(\"target_bulan\")\n        ht = {\"nama\": g[\"nama\"], \"kategori\": g[\"kategori\"], \"prioritas\": g[\"prioritas\"],\n              \"harga_saat_ini\": g[\"harga\"], \"sumber_harga\": g.get(\"sumber_harga\"),\n              \"kenaikan_harga_per_tahun_persen\": g[\"naik\"], \"tenggat_bulan\": n,\n              \"tenggat\": _teks_durasi(n) if n else None,\n              \"setoran_bulan_pertama\": bulat(s_[\"alok_awal\"])}\n        if g[\"harga\"] <= 0:\n            ht.update(status=\"perlu_harga\", pesan=\"Harga target belum diketahui. Isi harga untuk melihat simulasi.\")\n            hasil_target.append(ht)\n            continue\n        sel = s_[\"selesai\"]\n        solo = simulasi_arus_kas(ctx, [g], a)[\"goals\"][0][\"selesai\"]\n        menabung = {\n            \"waktu_tercapai_bulan\": sel,\n            \"waktu_tercapai\": _teks_durasi(sel),\n            \"perkiraan_harga_saat_tercapai\": bulat(g[\"harga\"] * (1 + g[\"naik\"] / 100) ** (sel / 12)) if sel is not None else None,\n            \"jika_hanya_fokus_target_ini\": _teks_durasi(solo),\n        }\n        if n:\n            menabung[\"harga_saat_tenggat\"] = bulat(g[\"harga\"] * (1 + g[\"naik\"] / 100) ** (n / 12))\n            menabung[\"tercapai_sesuai_tenggat\"] = sel is not None and sel <= n\n        ht[\"opsi_a_menabung\"] = menabung\n        if g[\"kategori\"] in KREDIT_LAYAK:\n            kk = _kat_kredit(g[\"kategori\"])\n            dp = g.get(\"dp_persen\") if g.get(\"dp_persen\") not in (None, -1) else a[\"dp_persen\"][kk]\n            ht[\"opsi_b_kredit\"] = _opsi_kredit(g, s_[\"jejak\"], dp, ctx, a)\n            dp_k = min(max(dp + 15, 30), 60)\n            ht[\"opsi_c_kombinasi\"] = _opsi_kredit(g, s_[\"jejak\"], dp_k, ctx, a)\n            ht[\"opsi_c_kombinasi\"][\"keterangan\"] = f\"Menabung lebih lama untuk DP {dp_k:.0f}% agar pinjaman dan total bunga lebih kecil.\"\n            if g[\"kategori\"] == \"rumah_subsidi\":\n                ht[\"catatan_subsidi\"] = (\"KPR subsidi (FLPP) punya syarat, antara lain belum memiliki rumah dan batas penghasilan \"\n                                         \"(Jabodetabek: maks Rp12 juta untuk lajang, Rp14 juta untuk menikah). Cek syarat terbaru di bank penyalur.\")\n        elif g[\"kategori\"] in TIDAK_DISARANKAN_KREDIT:\n            ht[\"catatan_kredit\"] = \"Kredit/pinjaman tidak disarankan untuk tujuan konsumtif ini; prioritaskan menabung.\"\n        tepat = menabung.get(\"tercapai_sesuai_tenggat\")\n        b = ht.get(\"opsi_b_kredit\") or {}\n        kredit_ok = b.get(\"tenor_aman_terpendek\") is not None and b.get(\"waktu_kumpulkan_dp_bulan\") is not None \\\n            and (not n or b[\"waktu_kumpulkan_dp_bulan\"] <= n)\n        if not n:\n            ht[\"status\"] = \"tanpa_tenggat\"\n            ht[\"opsi_disarankan\"] = \"menabung\" if sel is not None else (\"kredit\" if kredit_ok else \"sesuaikan_rencana\")\n        elif tepat:\n            ht[\"status\"], ht[\"opsi_disarankan\"] = \"realistis\", \"menabung\"\n        elif kredit_ok:\n            ht[\"status\"], ht[\"opsi_disarankan\"] = \"realistis_dengan_kredit\", \"kredit\"\n        else:\n            ht[\"status\"], ht[\"opsi_disarankan\"] = \"perlu_penyesuaian\", \"sesuaikan_rencana\"\n        if n and not tepat:\n            alt = _alternatif(i, goals, ctx, a)\n            alt[\"perpanjang_tenggat_menjadi\"] = _teks_durasi(sel)\n            if alt[\"harga_maksimal_terjangkau_sesuai_tenggat\"] < 0.1 * g[\"harga\"]:\n                alt[\"harga_maksimal_terjangkau_sesuai_tenggat\"] = None\n                alt[\"catatan\"] = \"Menurunkan budget saja tidak cukup karena dana sedang terpakai untuk target prioritas lebih tinggi.\"\n            ht[\"alternatif\"] = alt\n        hasil_target.append(ht)\n\n    alok_target_awal = sum(s_[\"alok_awal\"] for s_ in hasil_sim[\"goals\"])\n    lunas = sorted([(h[\"nama\"], _bulan_lunas(h), h[\"cicilan_bulanan\"]) for h in keuangan[\"hutang\"]\n                    if _bulan_lunas(h)], key=lambda x: x[1])\n\n    # ---- Strategi hutang (avalanche: bunga tertinggi dulu) ----\n    urut_hutang = sorted([h for h in keuangan[\"hutang\"] if h[\"sisa_pokok\"] > 0 or h[\"cicilan_bulanan\"] > 0],\n                         key=lambda h: -h[\"bunga_tahunan_persen\"])\n    strategi_hutang = [\n        {\"urutan\": i + 1, \"nama\": h[\"nama\"], \"jenis\": h[\"jenis\"], \"bunga_tahunan_persen\": h[\"bunga_tahunan_persen\"],\n         \"sisa_pokok\": h[\"sisa_pokok\"], \"cicilan_bulanan\": h[\"cicilan_bulanan\"],\n         \"perkiraan_lunas\": _teks_durasi(_bulan_lunas(h)) if _bulan_lunas(h) else \"tidak diketahui\",\n         \"berbunga_tinggi\": h[\"berbunga_tinggi\"]}\n        for i, h in enumerate(urut_hutang)\n    ]\n\n    # ---- Rekomendasi utama (berbasis aturan) ----\n    rek = []\n    if sisa < 0:\n        rek.append(f\"Pengeluaran melebihi penghasilan sebesar {rp(-sisa)}/bulan. Prioritas pertama: pangkas pengeluaran keinginan dan tunda target baru.\")\n    if hutang_tinggi:\n        h0 = max(hutang_tinggi, key=lambda h: h[\"bunga_tahunan_persen\"])\n        rek.append(f\"Lunasi '{h0['nama']}' ({h0['jenis'].replace('_', ' ')}, bunga ±{h0['bunga_tahunan_persen']:g}%/tahun) secepatnya, dan hindari menambah paylater/pinjol baru.\")\n    if rasio_cicilan * 100 > a[\"batas_aman_cicilan_persen\"]:\n        rek.append(f\"Rasio cicilan {rasio_cicilan * 100:.0f}% melewati batas aman {a['batas_aman_cicilan_persen']:.0f}% dari penghasilan. Hindari kredit baru sampai rasio turun.\")\n    dd_kurang = max(0.0, dd_target - dana_likuid)\n    if dd_kurang > 0:\n        bln = dd_ideal_bln if ada_target_dd else dd_min_bln\n        if hasil_sim[\"dd_selesai\"]:\n            rek.append(f\"Bangun dana darurat {rp(dd_target)} ({bln}x pengeluaran bulanan) lebih dulu. Dengan menyisihkan sebagian kapasitas menabung, perkiraan terpenuhi dalam {_teks_durasi(hasil_sim['dd_selesai'])}.\")\n        else:\n            rek.append(f\"Dana darurat idealnya {rp(dd_target)} ({bln}x pengeluaran bulanan). Mulai isi setelah arus kas bulanan kembali positif.\")\n    if lunas and sisa >= 0:\n        nama, bln, c = lunas[0]\n        rek.append(f\"'{nama}' diperkirakan lunas dalam {_teks_durasi(bln)}. Alihkan cicilan {rp(c)}/bulan itu langsung ke tabungan target agar tidak terpakai untuk konsumsi.\")\n    if 0 <= saving_rate < 0.20 and penghasilan:\n        rek.append(f\"Saving rate {saving_rate * 100:.0f}%. Untuk mencapai 20%, perlu menambah tabungan ±{rp(0.20 * penghasilan - sisa)}/bulan.\")\n    if rasio_keinginan > 0.30:\n        top = next((p for p in keuangan[\"pengeluaran\"] if p[\"jenis\"] == \"keinginan\"), None)\n        rek.append(f\"Pengeluaran keinginan {rasio_keinginan * 100:.0f}% dari penghasilan (ideal ≤30%)\" + (f\"; pos terbesar: {top['kategori']} {rp(top['nominal'])}.\" if top else \".\"))\n    for ht in hasil_target:\n        if ht.get(\"status\") == \"perlu_penyesuaian\" and ht.get(\"alternatif\"):\n            alt = ht[\"alternatif\"]\n            pil = [f\"perpanjang tenggat menjadi {alt['perpanjang_tenggat_menjadi']}\"]\n            if alt[\"harga_maksimal_terjangkau_sesuai_tenggat\"]:\n                pil.append(f\"turunkan budget ke ±{rp(alt['harga_maksimal_terjangkau_sesuai_tenggat'])}\")\n            if alt[\"tambahan_tabungan_per_bulan_agar_tepat_waktu\"]:\n                pil.append(f\"tambah tabungan/penghasilan ±{rp(alt['tambahan_tabungan_per_bulan_agar_tepat_waktu'])}/bulan\")\n            rek.append(f\"Target '{ht['nama']}' belum realistis dalam {ht['tenggat']}. Pilihan: \" + \", atau \".join(pil) + \".\")\n            solo = ht[\"opsi_a_menabung\"].get(\"jika_hanya_fokus_target_ini\")\n            solo_bln = simulasi_arus_kas(ctx, [g for g in goals if g[\"nama\"] == ht[\"nama\"]], a)[\"goals\"][0][\"selesai\"]\n            if solo_bln is not None and ht[\"tenggat_bulan\"] and solo_bln <= ht[\"tenggat_bulan\"] and ht[\"prioritas\"] > min(x[\"prioritas\"] for x in goals):\n                rek.append(f\"'{ht['nama']}' sebenarnya bisa tercapai dalam {solo} jika didahulukan. Target ini bentrok dengan target prioritas lebih tinggi, jadi pertimbangkan mengubah urutan prioritas.\")\n    if profil.get(\"penghasilan_tidak_tetap\"):\n        rek.append(f\"Sebagian penghasilan tidak tetap. Di bulan sepi, pegang angka konservatif {rp(konservatif)}; kelebihan di bulan ramai langsung ditabung.\")\n    psi = profil.get(\"psikologi\")\n    if psi and psi.get(\"tipe\") != \"seimbang\":\n        rek.append(f\"Profil kebiasaan: {psi['nama_tipe']}. {psi['saran_kebiasaan']}\")\n    if not rek:\n        rek.append(\"Kondisi keuanganmu sehat. Pertahankan saving rate dan pertimbangkan mempercepat target prioritas.\")\n\n    return {\n        \"dashboard\": {\n            \"nama\": profil.get(\"nama\"),\n            \"pendapatan\": bulat(penghasilan),\n            \"pengeluaran\": bulat(total_keluar),\n            \"sisa\": bulat(sisa),\n            \"skor_kesehatan\": skor,\n            \"status\": f\"{status} {emoji}\",\n            \"saving_rate_persen\": round(saving_rate * 100, 1),\n        },\n        \"kesehatan_keuangan\": {\n            \"penghasilan\": bulat(penghasilan),\n            \"penghasilan_konservatif\": bulat(konservatif),\n            \"pengeluaran_rutin\": bulat(rutin),\n            \"pengeluaran_keinginan\": bulat(keinginan),\n            \"total_cicilan\": bulat(cicilan),\n            \"total_pengeluaran\": bulat(total_keluar),\n            \"disposable_income\": bulat(sisa),\n            \"kapasitas_menabung\": bulat(kapasitas),\n            \"saving_rate_persen\": round(saving_rate * 100, 1),\n            \"rasio_cicilan_persen\": round(rasio_cicilan * 100, 1),\n            \"rasio_keinginan_persen\": round(rasio_keinginan * 100, 1),\n            \"rincian_skor\": {\n                \"saving_rate (maks 30)\": round(s_saving, 1), \"rasio_cicilan (maks 25)\": round(s_cicilan, 1),\n                \"dana_darurat (maks 25)\": round(s_dd, 1), \"pengeluaran_keinginan (maks 10)\": round(s_keinginan, 1),\n                \"hutang_berbunga_tinggi (maks 10)\": s_hutang,\n            },\n            \"skor\": skor,\n            \"status\": f\"{status} {emoji}\",\n        },\n        \"dana_darurat\": {\n            \"dana_likuid_saat_ini\": bulat(dana_likuid),\n            \"cukup_untuk_bulan\": round(bulan_tertutup, 1),\n            \"target_minimum\": bulat(dd_min), \"target_ideal\": bulat(dd_ideal),\n            \"target_dipakai\": bulat(dd_target),\n            \"kekurangan\": bulat(dd_kurang),\n            \"perkiraan_waktu_terpenuhi\": _teks_durasi(hasil_sim[\"dd_selesai\"]) if hasil_sim[\"dd_selesai\"] is not None else \"belum dapat diisi\",\n        },\n        \"alokasi_bulan_ini\": {\n            \"kapasitas_menabung\": bulat(kapasitas),\n            \"untuk_dana_darurat\": bulat(hasil_sim[\"alok_dd_awal\"]),\n            \"untuk_target\": bulat(alok_target_awal),\n            \"catatan\": \"Alokasi berubah otomatis: setelah dana darurat terpenuhi atau cicilan lunas, dananya dialihkan ke target.\",\n        },\n        \"strategi_hutang\": strategi_hutang,\n        \"target\": hasil_target,\n        \"rekomendasi_utama\": rek[:8],\n        \"psikologi\": psi,\n    }\n\n\ndef _ringkas(h: dict) -> str:\n    d = h[\"dashboard\"]\n    teks = (f\"{d['nama']}: pendapatan {rp(d['pendapatan'])}, pengeluaran {rp(d['pengeluaran'])}, sisa {rp(d['sisa'])}. \"\n            f\"Skor kesehatan {d['skor_kesehatan']}/100 ({d['status']}), saving rate {d['saving_rate_persen']}%.\")\n    for t in h[\"target\"]:\n        if t.get(\"status\") == \"perlu_harga\":\n            continue\n        a = t[\"opsi_a_menabung\"]\n        teks += f\" Target {t['nama']}: dengan menabung tercapai dalam {a['waktu_tercapai']}\"\n        b = t.get(\"opsi_b_kredit\")\n        if b and b.get(\"tenor_aman_terpendek\"):\n            o = next(x for x in b[\"pilihan_tenor\"] if x[\"tenor_tahun\"] == b[\"tenor_aman_terpendek\"])\n            teks += f\"; via kredit DP {rp(b['dp'])} dan cicilan {rp(o['cicilan_bulanan'])}/bln ({o['tenor_tahun']} th)\"\n        teks += \".\"\n    return teks\n\n\ndef jalankan_analisis(data: dict, db_path: str = \"\"):\n    uid = norm_user_id(data)\n    profil = baca_data(uid, \"profil\", db_path)\n    keuangan = baca_data(uid, \"keuangan\", db_path)\n    targets = baca_data(uid, \"target\", db_path) or []\n    kurang = [n for n, v in ((\"profil\", profil), (\"keuangan\", keuangan)) if not v]\n    if kurang:\n        return {\n            \"status\": \"data_belum_lengkap\", \"user_id\": uid,\n            \"pesan\": f\"Data {', '.join(kurang)} untuk '{uid}' belum ada. Simpan dulu dengan \"\n                     + \" dan \".join(f\"simpan_{k}_mycita\" for k in kurang) + \".\",\n        }\n    sim = data.get(\"simulasi\") or {}\n    # Usaha yang sudah berjalan: kenaikan omzet X% dengan margin bersih tetap = laba bersih naik X%\n    pengembangan = []\n    for u in (sim.get(\"pengembangan_usaha\") or []):\n        if isinstance(u, dict) and angka(u.get(\"laba_bersih\")) > 0:\n            laba, pct = angka(u.get(\"laba_bersih\")), angka(u.get(\"kenaikan_persen\"))\n            pengembangan.append({\"nama\": u.get(\"nama\") or \"usaha\", \"laba_bersih_sekarang\": bulat(laba), \"kenaikan_persen\": pct,\n                                 \"tambahan_laba_bulanan\": bulat(laba * pct / 100)})\n    if pengembangan:\n        sim = {**sim, \"perubahan_penghasilan\": angka(sim.get(\"perubahan_penghasilan\")) + sum(x[\"tambahan_laba_bulanan\"] for x in pengembangan)}\n    a = _gabung_asumsi(data.get(\"asumsi\") or sim.get(\"asumsi\"))\n    is_sim = bool(sim)\n    targets_sim = targets\n    if sim.get(\"target\"):\n        raw = sim[\"target\"] if isinstance(sim[\"target\"], list) else [sim[\"target\"]]\n        targets_sim = [norm_target(t, i) for i, t in enumerate(raw, start=1) if isinstance(t, dict)]\n\n    hasil = hitung_analisis(profil, keuangan, targets_sim, a, sim)\n    payload = {\n        \"status\": \"ok\", \"user_id\": uid,\n        \"mode\": \"simulasi_what_if\" if is_sim else \"analisis\",\n        \"pesan\": \"Simulasi what-if selesai (tidak mengubah data tersimpan).\" if is_sim else \"Analisis selesai dan tersimpan.\",\n        \"ringkasan\": _ringkas(hasil),\n        **hasil,\n    }\n    if pengembangan:\n        payload[\"pengembangan_usaha\"] = pengembangan\n        payload[\"catatan_pengembangan_usaha\"] = \"Asumsi: kenaikan omzet dengan margin bersih tetap, sehingga laba bersih naik dengan persentase yang sama.\"\n    if is_sim:\n        dasar = hitung_analisis(profil, keuangan, targets_sim, _gabung_asumsi(data.get(\"asumsi\")), {})\n        payload[\"perubahan_yang_disimulasikan\"] = {k: v for k, v in sim.items() if k != \"asumsi\"}\n        payload[\"perbandingan\"] = {\n            \"sebelum\": {\"sisa\": dasar[\"dashboard\"][\"sisa\"], \"skor\": dasar[\"dashboard\"][\"skor_kesehatan\"],\n                        \"target\": {t[\"nama\"]: (t.get(\"opsi_a_menabung\") or {}).get(\"waktu_tercapai\") for t in dasar[\"target\"]}},\n            \"sesudah\": {\"sisa\": hasil[\"dashboard\"][\"sisa\"], \"skor\": hasil[\"dashboard\"][\"skor_kesehatan\"],\n                        \"target\": {t[\"nama\"]: (t.get(\"opsi_a_menabung\") or {}).get(\"waktu_tercapai\") for t in hasil[\"target\"]}},\n        }\n    else:\n        simpan_data(uid, \"analisis\", payload, db_path)\n    payload[\"asumsi\"] = a\n    payload[\"sumber_asumsi\"] = SUMBER_ASUMSI\n    payload[\"disclaimer\"] = DISCLAIMER\n    return payload\n\n\nclass MyCITAAnalisis(Component):\n    display_name = \"myCITA Analisis\"\n    description = (\n        \"Menganalisis kondisi keuangan pengguna myCITA dari data profil, keuangan, dan target yang sudah tersimpan: \"\n        \"skor kesehatan keuangan 0-100, saving rate, rasio cicilan, dana darurat, strategi pelunasan hutang, dan \"\n        \"simulasi tiap target (menabung, kredit dengan beberapa tenor, kombinasi) dengan memperhitungkan kenaikan harga. \"\n        \"Input JSON {'user_id': ...}. Tambahkan 'simulasi' untuk what-if tanpa menyimpan, misalnya \"\n        \"{'jadwal_pendapatan': [...]} dari eksplorasi_karier_mycita, atau simulasi_siap_pakai dari eksplorasi_usaha_mycita \"\n        \"(pendapatan_tambahan_jadwal + biaya_awal), untuk melihat dampak jalur karier/usaha ke target finansial, \"\n        \"{'perubahan_penghasilan': 2000000}, {'perubahan_pengeluaran': 500000}, \"\n        \"{'pengembangan_usaha': [{'nama': 'bengkel', 'laba_bersih': 11000000, 'kenaikan_persen': 20}]} untuk usaha yang sudah berjalan, atau {'target': {'nama': 'Rumah', \"\n        \"'harga': 400000000, 'target_tahun': 8}}. Semua angka dihitung pasti dengan rumus, bukan perkiraan AI.\"\n    )\n    icon = \"chart-line\"\n    name = \"MyCITAAnalisis\"\n\n    inputs = [\n        MessageTextInput(\n            name=\"input_json\",\n            display_name=\"Permintaan Analisis (JSON)\",\n            info='Contoh {\"user_id\": \"budi\"} atau {\"user_id\": \"budi\", \"simulasi\": {\"perubahan_penghasilan\": 2000000}}',\n            tool_mode=True,\n        ),\n        StrInput(name=\"db_path\", display_name=\"Lokasi Database\", value=\"\", advanced=True,\n                 info=\"Kosongkan untuk memakai ~/.mycita/mycita.db. Harus sama di semua komponen myCITA.\"),\n    ]\n    outputs = [Output(display_name=\"Hasil\", name=\"hasil\", method=\"analisis_keuangan_mycita\")]\n\n    def analisis_keuangan_mycita(self) -> Message:\n        try:\n            payload = jalankan_analisis(parse_input(self.input_json), self.db_path)\n        except Exception as e:  # noqa: BLE001\n            payload = galat(str(e))\n        return hasil_message(self, payload)\n",
+        "fileTypes": [],
+        "file_path": "",
+        "password": false,
+        "name": "code",
+        "advanced": true,
+        "api_editable": false,
+        "dynamic": true,
+        "info": "",
+        "load_from_db": false,
+        "title_case": false
+       },
+       "db_path": {
+        "tool_mode": false,
+        "trace_as_metadata": true,
+        "load_from_db": false,
+        "list": false,
+        "list_add_label": "Add More",
+        "override_skip": false,
+        "required": false,
+        "placeholder": "",
+        "show": true,
+        "name": "db_path",
+        "value": "",
+        "display_name": "Lokasi Database",
+        "advanced": true,
+        "api_editable": false,
+        "dynamic": false,
+        "info": "Kosongkan untuk memakai ~/.mycita/mycita.db. Harus sama di semua komponen myCITA.",
+        "title_case": false,
+        "track_in_telemetry": false,
+        "type": "str",
+        "_input_type": "StrInput"
+       },
+       "input_json": {
+        "tool_mode": true,
+        "trace_as_input": true,
+        "trace_as_metadata": true,
+        "load_from_db": false,
+        "list": false,
+        "list_add_label": "Add More",
+        "override_skip": false,
+        "required": false,
+        "placeholder": "",
+        "show": true,
+        "name": "input_json",
+        "value": "",
+        "display_name": "Permintaan Analisis (JSON)",
+        "advanced": false,
+        "api_editable": false,
+        "input_types": [
+         "Message"
+        ],
+        "dynamic": false,
+        "info": "Contoh {\"user_id\": \"budi\"} atau {\"user_id\": \"budi\", \"simulasi\": {\"perubahan_penghasilan\": 2000000}}",
+        "title_case": false,
+        "track_in_telemetry": false,
+        "type": "str",
+        "_input_type": "MessageTextInput"
+       }
+      },
+      "description": "Menganalisis kondisi keuangan pengguna myCITA dari data profil, keuangan, dan target yang sudah tersimpan: skor kesehatan keuangan 0-100, saving rate, rasio cicilan, dana darurat, strategi pelunasan hutang, dan simulasi tiap target (menabung, kredit dengan beberapa tenor, kombinasi) dengan memperhitungkan kenaikan harga. Input JSON {'user_id': ...}. Tambahkan 'simulasi' untuk what-if tanpa menyimpan, misalnya {'jadwal_pendapatan': [...]} dari eksplorasi_karier_mycita, atau simulasi_siap_pakai dari eksplorasi_usaha_mycita (pendapatan_tambahan_jadwal + biaya_awal), untuk melihat dampak jalur karier/usaha ke target finansial, {'perubahan_penghasilan': 2000000}, {'perubahan_pengeluaran': 500000}, {'pengembangan_usaha': [{'nama': 'bengkel', 'laba_bersih': 11000000, 'kenaikan_persen': 20}]} untuk usaha yang sudah berjalan, atau {'target': {'nama': 'Rumah', 'harga': 400000000, 'target_tahun': 8}}. Semua angka dihitung pasti dengan rumus, bukan perkiraan AI.",
+      "icon": "chart-line",
+      "base_classes": [
+       "Message"
+      ],
+      "display_name": "myCITA Analisis",
+      "documentation": "",
+      "minimized": false,
+      "custom_fields": {},
+      "output_types": [],
+      "pinned": false,
+      "conditional_paths": [],
+      "frozen": false,
+      "outputs": [
+       {
+        "types": [
+         "Message"
+        ],
+        "selected": "Message",
+        "name": "hasil",
+        "display_name": "Hasil",
+        "method": "analisis_keuangan_mycita",
+        "value": "__UNDEFINED__",
+        "cache": true,
+        "allows_loop": false,
+        "group_outputs": false,
+        "tool_mode": true,
+        "hidden": false,
+        "options": null,
+        "required_inputs": null
+       }
+      ],
+      "field_order": [
+       "input_json",
+       "db_path"
+      ],
+      "beta": false,
+      "legacy": false,
+      "edited": false,
+      "metadata": {
+       "module": "custom_components.mycita_analisis",
+       "code_hash": "b51be0d15630",
+       "dependencies": {
+        "total_dependencies": 1,
+        "dependencies": [
+         {
+          "name": "langflow",
+          "version": null
+         }
+        ]
+       }
+      },
+      "tool_mode": false
+     },
+     "showNode": true
+    }
+   },
+   {
+    "id": "ChatOutput-ONVNF",
+    "type": "genericNode",
+    "position": {
+     "x": 960,
+     "y": 0.0
+    },
+    "selected": false,
+    "data": {
+     "id": "ChatOutput-ONVNF",
+     "type": "ChatOutput",
+     "node": {
+      "base_classes": [
+       "Message"
+      ],
+      "beta": false,
+      "conditional_paths": [],
+      "custom_fields": {},
+      "description": "Display a chat message in the Playground.",
+      "display_name": "Chat Output",
+      "documentation": "https://docs.langflow.org/chat-input-and-output",
+      "edited": false,
+      "field_order": [
+       "input_value",
+       "should_store_message",
+       "sender",
+       "sender_name",
+       "session_id",
+       "context_id",
+       "data_template",
+       "clean_data"
+      ],
+      "frozen": false,
+      "icon": "MessagesSquare",
+      "legacy": false,
+      "metadata": {
+       "code_hash": "0aab1c78e1dc",
+       "dependencies": {
+        "dependencies": [
+         {
+          "name": "orjson",
+          "version": "3.11.9"
+         },
+         {
+          "name": "fastapi",
+          "version": "0.139.2"
+         },
+         {
+          "name": "lfx",
+          "version": null
+         }
+        ],
+        "total_dependencies": 3
+       },
+       "module": "lfx.components.input_output.chat_output.ChatOutput"
+      },
+      "minimized": true,
+      "output_types": [],
+      "outputs": [
+       {
+        "allows_loop": false,
+        "cache": true,
+        "display_name": "Output Message",
+        "group_outputs": false,
+        "method": "message_response",
+        "name": "message",
+        "selected": "Message",
+        "tool_mode": true,
+        "types": [
+         "Message"
+        ],
+        "value": "__UNDEFINED__",
+        "hidden": false,
+        "options": null,
+        "required_inputs": null
+       }
+      ],
+      "pinned": false,
+      "template": {
+       "_type": "Component",
+       "clean_data": {
+        "_input_type": "BoolInput",
+        "advanced": true,
+        "api_editable": false,
+        "display_name": "Basic Clean Data",
+        "dynamic": false,
+        "info": "Whether to clean data before converting to string.",
+        "list": false,
+        "list_add_label": "Add More",
+        "name": "clean_data",
+        "override_skip": false,
+        "placeholder": "",
+        "required": false,
+        "show": true,
+        "title_case": false,
+        "tool_mode": false,
+        "trace_as_metadata": true,
+        "track_in_telemetry": true,
+        "type": "bool",
+        "value": true
+       },
+       "code": {
+        "advanced": true,
+        "api_editable": false,
+        "dynamic": true,
+        "fileTypes": [],
+        "file_path": "",
+        "info": "",
+        "list": false,
+        "load_from_db": false,
+        "multiline": true,
+        "name": "code",
+        "password": false,
+        "placeholder": "",
+        "required": true,
+        "show": true,
+        "title_case": false,
+        "type": "code",
+        "value": "from collections.abc import Generator\nfrom typing import Any\n\nimport orjson\nfrom fastapi.encoders import jsonable_encoder\n\nfrom lfx.base.io.chat import ChatComponent\nfrom lfx.helpers.data import safe_convert\nfrom lfx.inputs.inputs import BoolInput, DropdownInput, HandleInput, MessageTextInput\nfrom lfx.schema.data import Data\nfrom lfx.schema.dataframe import DataFrame\nfrom lfx.schema.message import Message\nfrom lfx.schema.properties import Source\nfrom lfx.template.field.base import Output\nfrom lfx.utils.constants import (\n    MESSAGE_SENDER_AI,\n    MESSAGE_SENDER_NAME_AI,\n    MESSAGE_SENDER_USER,\n)\n\n\nclass ChatOutput(ChatComponent):\n    display_name = \"Chat Output\"\n    description = \"Display a chat message in the Playground.\"\n    documentation: str = \"https://docs.langflow.org/chat-input-and-output\"\n    icon = \"MessagesSquare\"\n    name = \"ChatOutput\"\n    minimized = True\n\n    inputs = [\n        HandleInput(\n            name=\"input_value\",\n            display_name=\"Inputs\",\n            info=\"Message to be passed as output.\",\n            input_types=[\"Data\", \"JSON\", \"DataFrame\", \"Table\", \"Message\"],\n            required=True,\n        ),\n        BoolInput(\n            name=\"should_store_message\",\n            display_name=\"Store Messages\",\n            info=\"Store the message in the history.\",\n            value=True,\n            advanced=True,\n        ),\n        DropdownInput(\n            name=\"sender\",\n            display_name=\"Sender Type\",\n            options=[MESSAGE_SENDER_AI, MESSAGE_SENDER_USER],\n            value=MESSAGE_SENDER_AI,\n            advanced=True,\n            info=\"Type of sender.\",\n        ),\n        MessageTextInput(\n            name=\"sender_name\",\n            display_name=\"Sender Name\",\n            info=\"Name of the sender.\",\n            value=MESSAGE_SENDER_NAME_AI,\n            advanced=True,\n        ),\n        MessageTextInput(\n            name=\"session_id\",\n            display_name=\"Session ID\",\n            info=\"The session ID of the chat. If empty, the current session ID parameter will be used.\",\n            advanced=True,\n        ),\n        MessageTextInput(\n            name=\"context_id\",\n            display_name=\"Context ID\",\n            info=\"The context ID of the chat. Adds an extra layer to the local memory.\",\n            value=\"\",\n            advanced=True,\n        ),\n        MessageTextInput(\n            name=\"data_template\",\n            display_name=\"Data Template\",\n            value=\"{text}\",\n            advanced=True,\n            info=\"Template to convert Data to Text. If left empty, it will be dynamically set to the Data's text key.\",\n        ),\n        BoolInput(\n            name=\"clean_data\",\n            display_name=\"Basic Clean Data\",\n            value=True,\n            advanced=True,\n            info=\"Whether to clean data before converting to string.\",\n        ),\n    ]\n    outputs = [\n        Output(\n            display_name=\"Output Message\",\n            name=\"message\",\n            method=\"message_response\",\n        ),\n    ]\n\n    def _build_source(self, id_: str | None, display_name: str | None, source: str | None) -> Source:\n        source_dict = {}\n        if id_:\n            source_dict[\"id\"] = id_\n        if display_name:\n            source_dict[\"display_name\"] = display_name\n        if source:\n            # Handle case where source is a ChatOpenAI object\n            if hasattr(source, \"model_name\"):\n                source_dict[\"source\"] = source.model_name\n            elif hasattr(source, \"model\"):\n                source_dict[\"source\"] = str(source.model)\n            else:\n                source_dict[\"source\"] = str(source)\n        return Source(**source_dict)\n\n    async def message_response(self) -> Message:\n        # First convert the input to string if needed\n        text = self.convert_to_string()\n\n        # Get source properties\n        source, _, display_name, source_id = self.get_properties_from_source_component()\n\n        # Create or use existing Message object\n        if isinstance(self.input_value, Message) and not self.is_connected_to_chat_input():\n            message = self.input_value\n            # Update message properties\n            message.text = text\n            # Preserve existing session_id from the incoming message if it exists\n            existing_session_id = message.session_id\n        else:\n            message = Message(text=text)\n            existing_session_id = None\n\n        # Set message properties\n        message.sender = self.sender\n        message.sender_name = self.sender_name\n        # Preserve session_id from incoming message, or use component/graph session_id\n        message.session_id = (\n            self.session_id or existing_session_id or (self.graph.session_id if hasattr(self, \"graph\") else None) or \"\"\n        )\n        message.context_id = self.context_id\n        message.flow_id = self.graph.flow_id if hasattr(self, \"graph\") else None\n        message.properties.source = self._build_source(source_id, display_name, source)\n\n        # Store message if needed\n        if message.session_id and self.should_store_message:\n            stored_message = await self.send_message(message)\n            self.message.value = stored_message\n            message = stored_message\n\n        # Set accumulated token usage from all upstream LLM vertices.\n        # This must happen AFTER send_message() because streaming captures\n        # usage from chunks and would overwrite accumulated totals.\n        if hasattr(self, \"_vertex\") and self._vertex is not None:\n            accumulated_usage = self._vertex._accumulate_upstream_token_usage()  # noqa: SLF001\n            if accumulated_usage:\n                message.properties.usage = accumulated_usage\n                if self.should_store_message and message.get_id():\n                    message = await self._update_stored_message(message)\n                    await self._send_message_event(message, id_=message.get_id())\n\n        self.status = message\n        return message\n\n    def _serialize_data(self, data: Data) -> str:\n        \"\"\"Serialize Data object to JSON string.\"\"\"\n        # Convert data.data to JSON-serializable format\n        serializable_data = jsonable_encoder(data.data)\n        # Serialize with orjson, enabling pretty printing with indentation\n        json_bytes = orjson.dumps(serializable_data, option=orjson.OPT_INDENT_2)\n        # Convert bytes to string and wrap in Markdown code blocks\n        return \"```json\\n\" + json_bytes.decode(\"utf-8\") + \"\\n```\"\n\n    def _validate_input(self) -> None:\n        \"\"\"Validate the input data and raise ValueError if invalid.\"\"\"\n        if self.input_value is None:\n            msg = \"Input data cannot be None\"\n            raise ValueError(msg)\n        if isinstance(self.input_value, list) and not all(\n            isinstance(item, Message | Data | DataFrame | str) for item in self.input_value\n        ):\n            invalid_types = [\n                type(item).__name__\n                for item in self.input_value\n                if not isinstance(item, Message | Data | DataFrame | str)\n            ]\n            msg = f\"Expected Data or DataFrame or Message or str, got {invalid_types}\"\n            raise TypeError(msg)\n        if not isinstance(\n            self.input_value,\n            Message | Data | DataFrame | str | list | Generator | type(None),\n        ):\n            type_name = type(self.input_value).__name__\n            msg = f\"Expected Data or DataFrame or Message or str, Generator or None, got {type_name}\"\n            raise TypeError(msg)\n\n    def convert_to_string(self) -> str | Generator[Any, None, None]:\n        \"\"\"Convert input data to string with proper error handling.\"\"\"\n        self._validate_input()\n        clean_data: bool = getattr(self, \"clean_data\", False)\n        if isinstance(self.input_value, list):\n            return \"\\n\".join([safe_convert(item, clean_data=clean_data) for item in self.input_value])\n        if isinstance(self.input_value, Generator):\n            return self.input_value\n        return safe_convert(self.input_value, clean_data=clean_data)\n"
+       },
+       "context_id": {
+        "_input_type": "MessageTextInput",
+        "advanced": true,
+        "api_editable": false,
+        "display_name": "Context ID",
+        "dynamic": false,
+        "info": "The context ID of the chat. Adds an extra layer to the local memory.",
+        "input_types": [
+         "Message"
+        ],
+        "list": false,
+        "list_add_label": "Add More",
+        "load_from_db": false,
+        "name": "context_id",
+        "override_skip": false,
+        "placeholder": "",
+        "required": false,
+        "show": true,
+        "title_case": false,
+        "tool_mode": false,
+        "trace_as_input": true,
+        "trace_as_metadata": true,
+        "track_in_telemetry": false,
+        "type": "str",
+        "value": ""
+       },
+       "data_template": {
+        "_input_type": "MessageTextInput",
+        "advanced": true,
+        "api_editable": false,
+        "display_name": "Data Template",
+        "dynamic": false,
+        "info": "Template to convert Data to Text. If left empty, it will be dynamically set to the Data's text key.",
+        "input_types": [
+         "Message"
+        ],
+        "list": false,
+        "list_add_label": "Add More",
+        "load_from_db": false,
+        "name": "data_template",
+        "override_skip": false,
+        "placeholder": "",
+        "required": false,
+        "show": true,
+        "title_case": false,
+        "tool_mode": false,
+        "trace_as_input": true,
+        "trace_as_metadata": true,
+        "track_in_telemetry": false,
+        "type": "str",
+        "value": "{text}"
+       },
+       "input_value": {
+        "_input_type": "HandleInput",
+        "advanced": false,
+        "api_editable": false,
+        "display_name": "Inputs",
+        "dynamic": false,
+        "info": "Message to be passed as output.",
+        "input_types": [
+         "Data",
+         "JSON",
+         "DataFrame",
+         "Table",
+         "Message"
+        ],
+        "list": false,
+        "list_add_label": "Add More",
+        "name": "input_value",
+        "override_skip": false,
+        "placeholder": "",
+        "required": true,
+        "show": true,
+        "title_case": false,
+        "trace_as_metadata": true,
+        "track_in_telemetry": false,
+        "type": "other",
+        "value": ""
+       },
+       "sender": {
+        "_input_type": "DropdownInput",
+        "advanced": true,
+        "api_editable": false,
+        "combobox": false,
+        "dialog_inputs": {},
+        "display_name": "Sender Type",
+        "dynamic": false,
+        "external_options": {},
+        "info": "Type of sender.",
+        "name": "sender",
+        "options": [
+         "Machine",
+         "User"
+        ],
+        "options_metadata": [],
+        "override_skip": false,
+        "placeholder": "",
+        "required": false,
+        "show": true,
+        "title_case": false,
+        "toggle": false,
+        "tool_mode": false,
+        "trace_as_metadata": true,
+        "track_in_telemetry": true,
+        "type": "str",
+        "value": "Machine"
+       },
+       "sender_name": {
+        "_input_type": "MessageTextInput",
+        "advanced": true,
+        "api_editable": false,
+        "display_name": "Sender Name",
+        "dynamic": false,
+        "info": "Name of the sender.",
+        "input_types": [
+         "Message"
+        ],
+        "list": false,
+        "list_add_label": "Add More",
+        "load_from_db": false,
+        "name": "sender_name",
+        "override_skip": false,
+        "placeholder": "",
+        "required": false,
+        "show": true,
+        "title_case": false,
+        "tool_mode": false,
+        "trace_as_input": true,
+        "trace_as_metadata": true,
+        "track_in_telemetry": false,
+        "type": "str",
+        "value": "AI"
+       },
+       "session_id": {
+        "_input_type": "MessageTextInput",
+        "advanced": true,
+        "api_editable": false,
+        "display_name": "Session ID",
+        "dynamic": false,
+        "info": "The session ID of the chat. If empty, the current session ID parameter will be used.",
+        "input_types": [
+         "Message"
+        ],
+        "list": false,
+        "list_add_label": "Add More",
+        "load_from_db": false,
+        "name": "session_id",
+        "override_skip": false,
+        "placeholder": "",
+        "required": false,
+        "show": true,
+        "title_case": false,
+        "tool_mode": false,
+        "trace_as_input": true,
+        "trace_as_metadata": true,
+        "track_in_telemetry": false,
+        "type": "str",
+        "value": ""
+       },
+       "should_store_message": {
+        "_input_type": "BoolInput",
+        "advanced": true,
+        "api_editable": false,
+        "display_name": "Store Messages",
+        "dynamic": false,
+        "info": "Store the message in the history.",
+        "list": false,
+        "list_add_label": "Add More",
+        "name": "should_store_message",
+        "override_skip": false,
+        "placeholder": "",
+        "required": false,
+        "show": true,
+        "title_case": false,
+        "tool_mode": false,
+        "trace_as_metadata": true,
+        "track_in_telemetry": true,
+        "type": "bool",
+        "value": true
+       }
+      },
+      "tool_mode": false,
+      "category": "input_output"
+     },
+     "showNode": true
+    }
+   }
+  ],
+  "edges": [
+   {
+    "animated": false,
+    "className": "",
+    "data": {
+     "sourceHandle": {
+      "dataType": "ChatInput",
+      "id": "ChatInput-udVP6",
+      "name": "message",
+      "output_types": [
+       "Message"
+      ]
+     },
+     "targetHandle": {
+      "fieldName": "input_json",
+      "id": "MyCITAAnalisis-RLd3L",
+      "inputTypes": [
+       "Message"
+      ],
+      "type": "str"
+     }
+    },
+    "id": "reactflow__edge-ChatInput-udVP6{œdataTypeœ:œChatInputœ,œidœ:œChatInput-udVP6œ,œnameœ:œmessageœ,œoutput_typesœ:[œMessageœ]}-MyCITAAnalisis-RLd3L{œfieldNameœ:œinput_jsonœ,œidœ:œMyCITAAnalisis-RLd3Lœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}",
+    "selected": false,
+    "source": "ChatInput-udVP6",
+    "sourceHandle": "{œdataTypeœ:œChatInputœ,œidœ:œChatInput-udVP6œ,œnameœ:œmessageœ,œoutput_typesœ:[œMessageœ]}",
+    "target": "MyCITAAnalisis-RLd3L",
+    "targetHandle": "{œfieldNameœ:œinput_jsonœ,œidœ:œMyCITAAnalisis-RLd3Lœ,œinputTypesœ:[œMessageœ],œtypeœ:œstrœ}"
+   },
+   {
+    "animated": false,
+    "className": "",
+    "data": {
+     "sourceHandle": {
+      "dataType": "MyCITAAnalisis",
+      "id": "MyCITAAnalisis-RLd3L",
+      "name": "hasil",
+      "output_types": [
+       "Message"
+      ]
+     },
+     "targetHandle": {
+      "fieldName": "input_value",
+      "id": "ChatOutput-ONVNF",
+      "inputTypes": [
+       "Data",
+       "JSON",
+       "DataFrame",
+       "Table",
+       "Message"
+      ],
+      "type": "other"
+     }
+    },
+    "id": "reactflow__edge-MyCITAAnalisis-RLd3L{œdataTypeœ:œMyCITAAnalisisœ,œidœ:œMyCITAAnalisis-RLd3Lœ,œnameœ:œhasilœ,œoutput_typesœ:[œMessageœ]}-ChatOutput-ONVNF{œfieldNameœ:œinput_valueœ,œidœ:œChatOutput-ONVNFœ,œinputTypesœ:[œDataœ,œJSONœ,œDataFrameœ,œTableœ,œMessageœ],œtypeœ:œotherœ}",
+    "selected": false,
+    "source": "MyCITAAnalisis-RLd3L",
+    "sourceHandle": "{œdataTypeœ:œMyCITAAnalisisœ,œidœ:œMyCITAAnalisis-RLd3Lœ,œnameœ:œhasilœ,œoutput_typesœ:[œMessageœ]}",
+    "target": "ChatOutput-ONVNF",
+    "targetHandle": "{œfieldNameœ:œinput_valueœ,œidœ:œChatOutput-ONVNFœ,œinputTypesœ:[œDataœ,œJSONœ,œDataFrameœ,œTableœ,œMessageœ],œtypeœ:œotherœ}"
+   }
+  ],
+  "viewport": {
+   "x": 0,
+   "y": 0,
+   "zoom": 1
+  }
+ },
+ "endpoint_name": "4_analisis_keuangan_mycita"
+}

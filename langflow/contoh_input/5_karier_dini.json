@@ -1,0 +1,25 @@
+{
+  "user_id": "dini",
+  "status": "pelajar",
+  "minat": [
+    "teknologi",
+    "matematika",
+    "desain",
+    "memecahkan masalah"
+  ],
+  "skill": [
+    "Microsoft Office",
+    "Basic Python",
+    "Canva",
+    "Bahasa Inggris",
+    "Public speaking"
+  ],
+  "pengalaman": [
+    {
+      "bidang": "ekstrakurikuler coding dan website sederhana",
+      "tahun": 1
+    }
+  ],
+  "pendidikan_terakhir": "SMA kelas 3",
+  "kota": "Bandung"
+}

@@ -1,0 +1,18 @@
+{
+  "user_id": "budi",
+  "pengeluaran": {
+    "kebutuhan_pokok": 2000000,
+    "kos": 1000000,
+    "listrik": 300000,
+    "internet": 300000,
+    "transportasi": 500000,
+    "hiburan": 500000,
+    "langganan_streaming": 150000,
+    "lainnya": 300000
+  },
+  "hutang": [
+    {"nama": "Cicilan motor", "jenis": "kendaraan", "sisa_pokok": 8000000, "cicilan_bulanan": 800000, "bunga_tahunan": 12, "sisa_tenor_bulan": 10},
+    {"nama": "Paylater", "jenis": "paylater", "sisa_pokok": 1500000, "cicilan_bulanan": 500000, "sisa_tenor_bulan": 3}
+  ],
+  "tabungan_saat_ini": 10000000
+}

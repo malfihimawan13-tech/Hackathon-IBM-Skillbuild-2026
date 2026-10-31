@@ -1,0 +1,27 @@
+{
+  "user_id": "budi",
+  "simulasi": {
+    "jadwal_pendapatan": [
+      {
+        "mulai_bulan": 0,
+        "penghasilan": 7500000,
+        "keterangan": "penghasilan pekerjaan utama saat ini"
+      },
+      {
+        "mulai_bulan": 4,
+        "penghasilan": 9000000,
+        "keterangan": "perkiraan tahap entry (nilai tengah rentang)"
+      },
+      {
+        "mulai_bulan": 28,
+        "penghasilan": 11750000,
+        "keterangan": "perkiraan tahap mid (nilai tengah rentang)"
+      },
+      {
+        "mulai_bulan": 64,
+        "penghasilan": 27500000,
+        "keterangan": "perkiraan tahap senior (nilai tengah rentang)"
+      }
+    ]
+  }
+}

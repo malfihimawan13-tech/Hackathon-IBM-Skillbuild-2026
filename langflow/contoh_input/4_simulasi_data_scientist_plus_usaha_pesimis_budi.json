@@ -1,0 +1,54 @@
+{
+  "user_id": "budi",
+  "simulasi": {
+    "jadwal_pendapatan": [
+      {
+        "mulai_bulan": 0,
+        "penghasilan": 7500000,
+        "keterangan": "penghasilan pekerjaan utama saat ini"
+      },
+      {
+        "mulai_bulan": 4,
+        "penghasilan": 9000000,
+        "keterangan": "perkiraan tahap entry (nilai tengah rentang)"
+      },
+      {
+        "mulai_bulan": 28,
+        "penghasilan": 11750000,
+        "keterangan": "perkiraan tahap mid (nilai tengah rentang)"
+      },
+      {
+        "mulai_bulan": 64,
+        "penghasilan": 27500000,
+        "keterangan": "perkiraan tahap senior (nilai tengah rentang)"
+      }
+    ],
+    "pendapatan_tambahan_jadwal": [
+      {
+        "mulai_bulan": 0,
+        "nilai": 720000
+      },
+      {
+        "mulai_bulan": 1,
+        "nilai": 1056000
+      },
+      {
+        "mulai_bulan": 2,
+        "nilai": 1392000
+      },
+      {
+        "mulai_bulan": 3,
+        "nilai": 1728000
+      },
+      {
+        "mulai_bulan": 4,
+        "nilai": 2064000
+      },
+      {
+        "mulai_bulan": 5,
+        "nilai": 2400000
+      }
+    ],
+    "biaya_awal": 2500000
+  }
+}

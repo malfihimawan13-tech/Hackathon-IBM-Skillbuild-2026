@@ -1,0 +1,16 @@
+{
+  "user_id": "agus",
+  "pengeluaran": {
+    "makan": 3000000,
+    "listrik": 500000,
+    "air": 200000,
+    "internet": 350000,
+    "transportasi": 1000000,
+    "pendidikan_anak": 1500000,
+    "kesehatan": 500000,
+    "kebutuhan_rumah": 700000,
+    "hiburan": 300000,
+    "lainnya": 450000
+  },
+  "tabungan_saat_ini": 45000000
+}

@@ -1,0 +1,32 @@
+{
+  "user_id": "budi",
+  "simulasi": {
+    "pendapatan_tambahan_jadwal": [
+      {
+        "mulai_bulan": 0,
+        "nilai": 1282500
+      },
+      {
+        "mulai_bulan": 1,
+        "nilai": 1881000
+      },
+      {
+        "mulai_bulan": 2,
+        "nilai": 2479500
+      },
+      {
+        "mulai_bulan": 3,
+        "nilai": 3078000
+      },
+      {
+        "mulai_bulan": 4,
+        "nilai": 3676500
+      },
+      {
+        "mulai_bulan": 5,
+        "nilai": 4275000
+      }
+    ],
+    "biaya_awal": 2500000
+  }
+}

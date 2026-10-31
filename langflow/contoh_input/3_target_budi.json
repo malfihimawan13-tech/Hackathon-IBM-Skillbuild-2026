@@ -1,0 +1,20 @@
+{
+  "user_id": "budi",
+  "aksi": "simpan",
+  "target": [
+    {
+      "nama": "Menikah",
+      "kategori": "menikah",
+      "harga": 60000000,
+      "target_tahun": 3,
+      "prioritas": 1
+    },
+    {
+      "nama": "Mobil",
+      "kategori": "mobil",
+      "harga": 250000000,
+      "target_tahun": 5,
+      "prioritas": 2
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "user_id": "budi",
+  "pengeluaran": {
+    "makan": 1500000,
+    "kos": 1200000,
+    "transportasi": 600000,
+    "internet": 300000,
+    "listrik": 200000,
+    "kebutuhan_pribadi": 500000,
+    "hiburan": 300000,
+    "orang_tua": 500000,
+    "lainnya": 400000
+  },
+  "tabungan_saat_ini": 35000000
+}

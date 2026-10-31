@@ -1,0 +1,12 @@
+{
+  "user_id": "rudi",
+  "minat": ["angka", "komputer", "analisis"],
+  "skill": ["Excel", "SAP", "memimpin tim kecil", "stok opname"],
+  "pengalaman": [
+    {"bidang": "gudang dan logistik", "tahun": 9},
+    {"bidang": "produksi perakitan", "tahun": 1}
+  ],
+  "pendidikan_terakhir": "SMK",
+  "kota": "Kabupaten Bekasi",
+  "penghasilan_sekarang": 5500000
+}

@@ -1,0 +1,10 @@
+Tempel salah satu kata kunci ini di Playground flow 9_pustaka_database_mycita
+(setelah file myCITA_Database_Eksternal.pdf di-upload di komponen Read File):
+
+harga Toyota Agya          -> Rp174,3 jt (Moladin, Agustus 2026), halaman 17
+gaji perawat               -> awal kerja Rp2,98-5,61 jt (WageIndicator 2026), halaman 4
+UKT Universitas Padjadjaran -> Rp0,5-15 jt per semester, halaman 12 dan 18
+modal warkop               -> Rp5-10 jt, halaman 23
+UMK Kota Bandung           -> Rp4.737.678, halaman 21
+gaji polisi bintara        -> Rp2,42 jt (gaji pokok Brigpol), halaman 6
+inflasi 2025               -> 2,92% (BPS), halaman 20

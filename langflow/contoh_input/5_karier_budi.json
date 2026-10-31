@@ -1,0 +1,52 @@
+{
+  "user_id": "budi",
+  "minat": [
+    "data",
+    "AI",
+    "matematika",
+    "komputer"
+  ],
+  "target_profesi": "Data Scientist",
+  "skill": [
+    {
+      "nama": "Python",
+      "level": "Intermediate"
+    },
+    {
+      "nama": "SQL",
+      "level": "Intermediate"
+    },
+    {
+      "nama": "Machine Learning",
+      "level": "Basic–Intermediate"
+    },
+    {
+      "nama": "Statistics",
+      "level": "Basic"
+    },
+    {
+      "nama": "Pandas",
+      "level": "Intermediate"
+    },
+    {
+      "nama": "Data Visualization",
+      "level": "Intermediate"
+    },
+    {
+      "nama": "Excel",
+      "level": "Advanced"
+    },
+    {
+      "nama": "AI",
+      "level": "Basic"
+    }
+  ],
+  "pengalaman": [
+    {
+      "bidang": "operator produksi",
+      "tahun": 10
+    }
+  ],
+  "pendidikan_terakhir": "S1 Teknik Informatika",
+  "kota": "Tangerang"
+}

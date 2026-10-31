@@ -1,0 +1,13 @@
+{
+  "user_id": "dini",
+  "pengeluaran": {
+    "makan_jajan": 500000,
+    "transportasi": 250000,
+    "internet_pulsa": 150000,
+    "hiburan": 200000,
+    "pendidikan_kursus": 200000,
+    "lainnya": 50000
+  },
+  "tabungan_saat_ini": 2500000,
+  "tabungan_rutin_bulanan": 150000
+}

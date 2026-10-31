@@ -1,0 +1,16 @@
+{
+  "user_id": "budi",
+  "nama": "Budi",
+  "usia": 29,
+  "kota": "Tangerang",
+  "pendidikan_terakhir": "S1 Teknik Informatika",
+  "status_pernikahan": "single",
+  "pekerjaan": [
+    {
+      "nama": "Operator Produksi",
+      "jenis": "full_time",
+      "penghasilan": 7500000,
+      "lama_kerja_bulan": 120
+    }
+  ]
+}

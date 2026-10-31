@@ -1,0 +1,15 @@
+{
+  "user_id": "dini",
+  "nama": "Dini",
+  "usia": 17,
+  "kota": "Bandung",
+  "pendidikan_terakhir": "SMA kelas 3",
+  "status_pernikahan": "single",
+  "pekerjaan": [],
+  "pendapatan_tambahan": [
+    {
+      "sumber": "Uang saku",
+      "nominal": 1500000
+    }
+  ]
+}

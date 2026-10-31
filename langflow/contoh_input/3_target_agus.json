@@ -1,0 +1,12 @@
+{
+  "user_id": "agus",
+  "aksi": "simpan",
+  "target": [
+    {
+      "nama": "Rumah",
+      "kategori": "rumah",
+      "harga": 600000000,
+      "target_tahun": 7
+    }
+  ]
+}

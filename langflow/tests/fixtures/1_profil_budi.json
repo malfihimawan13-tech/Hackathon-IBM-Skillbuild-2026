@@ -1,0 +1,16 @@
+{
+  "user_id": "budi",
+  "nama": "Budi Santoso",
+  "jenis_kelamin": "laki-laki",
+  "tanggal_lahir": "1998-05-12",
+  "kota": "Bogor",
+  "pendidikan_terakhir": "S1",
+  "status_pernikahan": "single",
+  "pekerjaan": [
+    {"nama": "Software Engineer", "jenis": "full_time", "lama_kerja_bulan": 24, "penghasilan": 7000000},
+    {"nama": "Freelance Web Developer", "jenis": "freelance", "lama_kerja_bulan": 12, "penghasilan": 2000000, "penghasilan_min": 1000000}
+  ],
+  "pendapatan_tambahan": [],
+  "jumlah_tanggungan": 0,
+  "psikologi": {"impulsif": 4, "fomo": 3, "menghindar": 2, "emosional": 3, "terlalu_hemat": 1, "disiplin": 2}
+}

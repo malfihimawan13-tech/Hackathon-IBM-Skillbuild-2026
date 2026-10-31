@@ -1,0 +1,730 @@
+"""
+myCITA (My Career, Income, Target & Achievement) - myCITA Komponen Usaha
+Tempel seluruh isi file ini ke Custom Component Langflow (tombol Code).
+Versi 1.1.0
+"""
+import json
+import math
+import os
+import re
+import sqlite3
+from datetime import date, datetime
+from pathlib import Path
+
+from langflow.custom import Component
+from langflow.io import MessageTextInput, Output, StrInput
+from langflow.schema.message import Message
+
+# =====================================================================
+# myCITA - utilitas bersama (bagian ini identik di semua komponen myCITA)
+# =====================================================================
+CITA_VERSI = "1.0.0"
+DISCLAIMER = (
+    "myCITA adalah alat edukasi dan perencanaan keuangan, bukan nasihat investasi "
+    "atau rekomendasi produk keuangan tertentu. Semua angka adalah estimasi "
+    "berdasarkan data yang kamu isi dan asumsi yang tercantum."
+)
+
+
+def mycita_db_path(custom: str = "") -> str:
+    """Lokasi database myCITA. Default: ~/.mycita/mycita.db (bisa diganti lewat kolom Lokasi Database atau MYCITA_DB_PATH)."""
+    env = os.environ.get("MYCITA_DB_PATH") or os.environ.get("MYCITA_DB_PATH")
+    path = (custom or env or str(Path.home() / ".mycita" / "mycita.db")).strip()
+    p = Path(path).expanduser()
+    p.parent.mkdir(parents=True, exist_ok=True)
+    lama = Path.home() / ".cita" / "cita.db"
+    if not custom and not env and not p.exists() and lama.exists():
+        import shutil
+        shutil.copy2(lama, p)  # pindahkan otomatis data dari nama lama (mycita.db)
+    return str(p)
+
+
+def _mycita_conn(custom: str = ""):
+    conn = sqlite3.connect(mycita_db_path(custom))
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS mycita_data ("
+        "user_id TEXT NOT NULL, jenis TEXT NOT NULL, data TEXT NOT NULL, "
+        "diperbarui TEXT NOT NULL, PRIMARY KEY (user_id, jenis))"
+    )
+    if conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='cita_data'").fetchone():
+        conn.execute("INSERT OR IGNORE INTO mycita_data SELECT user_id, jenis, data, diperbarui FROM cita_data")
+        conn.execute("DROP TABLE cita_data")
+        conn.commit()
+    return conn
+
+
+def simpan_data(user_id: str, jenis: str, data, custom: str = "") -> None:
+    conn = _mycita_conn(custom)
+    try:
+        conn.execute(
+            "INSERT OR REPLACE INTO mycita_data (user_id, jenis, data, diperbarui) VALUES (?, ?, ?, ?)",
+            (user_id, jenis, json.dumps(data, ensure_ascii=False), datetime.now().isoformat(timespec="seconds")),
+        )
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def baca_data(user_id: str, jenis: str, custom: str = ""):
+    conn = _mycita_conn(custom)
+    try:
+        row = conn.execute(
+            "SELECT data FROM mycita_data WHERE user_id = ? AND jenis = ?", (user_id, jenis)
+        ).fetchone()
+    finally:
+        conn.close()
+    return json.loads(row[0]) if row else None
+
+
+def hapus_semua_data(user_id: str, custom: str = "") -> int:
+    conn = _mycita_conn(custom)
+    try:
+        cur = conn.execute("DELETE FROM mycita_data WHERE user_id = ?", (user_id,))
+        conn.commit()
+        return cur.rowcount
+    finally:
+        conn.close()
+
+
+def parse_input(teks) -> dict:
+    if isinstance(teks, dict):
+        return teks
+    s = str(teks or "").strip()
+    s = re.sub(r"```(?:json)?", "", s).strip()
+    awal, akhir = s.find("{"), s.rfind("}")
+    if awal == -1 or akhir == -1:
+        raise ValueError('Input harus berupa JSON object, contoh: {"user_id": "budi", ...}')
+    try:
+        return json.loads(s[awal : akhir + 1])
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Format JSON tidak valid: {e.msg} (posisi {e.pos})") from e
+
+
+def norm_user_id(data: dict) -> str:
+    uid = str(data.get("user_id") or "").strip().lower()
+    uid = re.sub(r"\s+", "_", uid)
+    if not uid:
+        raise ValueError("Field 'user_id' wajib diisi agar data bisa disimpan dan dibaca kembali.")
+    return uid
+
+
+def angka(v, default: float = 0.0) -> float:
+    """Terima 7000000, '7.000.000', 'Rp 7.000.000', '7 juta', '7,5jt', '500rb', '1,2 miliar'."""
+    if v is None or v == "":
+        return default
+    if isinstance(v, bool):
+        return default
+    if isinstance(v, (int, float)):
+        return float(v)
+    s = str(v).lower().replace("rp", "").replace(" ", "").strip()
+    pengali = 1.0
+    for akhiran, nilai in (("miliar", 1e9), ("milyar", 1e9), ("juta", 1e6), ("jt", 1e6),
+                           ("ribu", 1e3), ("rb", 1e3), ("k", 1e3)):
+        if s.endswith(akhiran):
+            s, pengali = s[: -len(akhiran)], nilai
+            break
+    if pengali != 1.0:
+        s = s.replace(",", ".")
+        if s.count(".") > 1:
+            s = s.replace(".", "")
+    else:
+        s = s.replace(".", "").replace(",", ".")
+    s = re.sub(r"[^0-9.\-]", "", s)
+    try:
+        return float(s) * pengali
+    except ValueError:
+        return default
+
+
+def bulat(x) -> int:
+    return int(round(x or 0))
+
+
+def rp(x) -> str:
+    n = bulat(x)
+    tanda = "-" if n < 0 else ""
+    return f"{tanda}Rp{abs(n):,}".replace(",", ".")
+
+
+def hasil_message(komponen, payload: dict):
+    teks = json.dumps(payload, ensure_ascii=False, indent=2)
+    komponen.status = payload.get("pesan") or payload.get("status", "")
+    return Message(text=teks)
+
+
+def galat(pesan: str) -> dict:
+    return {"status": "error", "pesan": pesan}
+# =====================================================================
+
+# ---------------------------- myCITA KARIER ----------------------------
+# Database eksternal myCITA (disematkan saat build dari myCITA_database_eksternal.json).
+DB_EKSTERNAL = json.loads(r'''{"meta":{"nama":"Database Eksternal myCITA","versi":"1.0 (MVP Hackathon)","tanggal_kompilasi":"4 Oktober 2026","catatan_umum":["Angka adalah rentang referensi, bukan angka pasti. Gaji dan harga berbeda per perusahaan, kota, dan waktu.","Setiap baris data mencantumkan sumber dan tahun/periode. Perbarui berkala.","Data gaji dari portal lowongan (Jobstreet, Glassdoor) adalah agregat iklan/laporan pengguna, bukan survei resmi.","Data profesi, skill, dan pendidikan disusun tim myCITA dari deskripsi umum jabatan; verifikasi detail ke KBJI dan SKKNI.","Data bisnis adalah estimasi dari artikel dan analisa usaha; gunakan untuk simulasi skenario, bukan janji keuntungan."]},"gaji":[{"id":"staf_gudang","profesi":"Staf Gudang","level":"Entry","wilayah":"Indonesia","min":3150000,"median":3850000,"max":4900000,"keterangan":"Rentang = persentil 25-75","sumber":"Jobstreet - Gaji Staf Gudang","periode":"Agustus 2026"},{"id":"admin_gudang","profesi":"Admin Gudang","level":"Entry","wilayah":"Jabodetabek","min":3500000,"median":null,"max":5000000,"keterangan":"Rentang dari iklan lowongan aktif","sumber":"Jobstreet - lowongan Admin Gudang/PPIC","periode":"Agustus 2026"},{"id":"operator_gudang","profesi":"Operator Gudang","level":"Entry","wilayah":"Indonesia","min":4370000,"median":null,"max":5470000,"keterangan":"Rentang rata-rata","sumber":"Jobstreet - Gaji Operator Gudang","periode":"Agustus 2026"},{"id":"supervisor_gudang","profesi":"Supervisor Gudang","level":"Mid","wilayah":"Indonesia","min":5250000,"median":6250000,"max":7000000,"keterangan":"Persentil 25-75; Karawang rata-rata ±Rp9 jt, Kab. Bekasi ±Rp8,3 jt","sumber":"Jobstreet - Gaji Supervisor Gudang","periode":"September-Oktober 2026"},{"id":"pengawas_logistik","profesi":"Pengawas/Supervisor Logistik","level":"Mid","wilayah":"Indonesia","min":5000000,"median":null,"max":8000000,"keterangan":"Manajer Logistik tercatat ±Rp15 jt","sumber":"Jobstreet - Gaji Pengawas Logistik","periode":"2025"},{"id":"staff_ppic","profesi":"Staff PPIC","level":"Entry (0-1 thn)","wilayah":"Jabodetabek","min":5500000,"median":null,"max":8000000,"keterangan":"Luar Jabodetabek Rp3,7-5 jt","sumber":"Jobstreet Career Advice - Staff PPIC","periode":"2026"},{"id":"supervisor_ppic","profesi":"Supervisor/Manajer PPIC","level":"Senior","wilayah":"Indonesia","min":10000000,"median":null,"max":15000000,"keterangan":"Rata-rata jenjang supervisor/manajer","sumber":"Jobstreet Career Advice - Staff PPIC","periode":"2026"},{"id":"supply_chain_staff","profesi":"Supply Chain Staff","level":"Entry-Mid","wilayah":"Indonesia","min":4000000,"median":null,"max":10000000,"keterangan":"Senior/supervisor (5+ thn) Rp15-25 jt+","sumber":"KantorKu - Gaji Supply Chain Staff 2026","periode":"2026"},{"id":"supply_chain_analyst_entry","profesi":"Supply Chain Analyst","level":"Entry","wilayah":"Indonesia","min":6000000,"median":null,"max":9000000,"keterangan":"","sumber":"HRBS Global - Average Salary in Indonesia 2026","periode":"2026"},{"id":"supply_chain_analyst_senior","profesi":"Supply Chain Analyst","level":"Senior","wilayah":"Indonesia","min":12000000,"median":null,"max":20000000,"keterangan":"","sumber":"HRBS Global - Average Salary in Indonesia 2026","periode":"2026"},{"id":"data_analyst_entry","profesi":"Data Analyst","level":"Entry","wilayah":"Indonesia","min":5000000,"median":null,"max":9000000,"keterangan":"","sumber":"HRBS Global - Average Salary in Indonesia 2026","periode":"2026"},{"id":"data_analyst_jakarta","profesi":"Data Analyst","level":"Semua level","wilayah":"Jakarta","min":7635417,"median":10000000,"max":14000000,"keterangan":"Persentil 25-75, 505 laporan gaji","sumber":"Glassdoor - Data Analyst Jakarta","periode":"Oktober 2026"},{"id":"data_analyst_senior","profesi":"Data Analyst","level":"Senior","wilayah":"Indonesia","min":15000000,"median":null,"max":28000000,"keterangan":"","sumber":"HRBS Global - Average Salary in Indonesia 2026","periode":"2026"},{"id":"data_engineer_jakarta","profesi":"Data Engineer","level":"Semua level","wilayah":"Jakarta","min":8833333,"median":11108333,"max":17812500,"keterangan":"Persentil 25-75, 478 laporan gaji","sumber":"Glassdoor - Data Engineer Jakarta","periode":"Oktober 2026"},{"id":"software_engineer_entry","profesi":"Software Engineer","level":"Entry","wilayah":"Indonesia","min":6000000,"median":9000000,"max":10000000,"keterangan":"Median nasional semua level ±Rp9 jt (NodeFlair)","sumber":"HRBS Global 2026; NodeFlair via whatisthesalary.com","periode":"2026"},{"id":"software_engineer_senior","profesi":"Software Engineer","level":"Senior","wilayah":"Indonesia","min":18000000,"median":null,"max":35000000,"keterangan":"","sumber":"HRBS Global - Average Salary in Indonesia 2026","periode":"2026"},{"id":"data_scientist_junior","profesi":"Data Scientist","level":"Junior (0-2 thn)","wilayah":"Indonesia","min":7000000,"median":null,"max":11000000,"keterangan":"","sumber":"Glassdoor via Tempo Institute","periode":"Januari 2026"},{"id":"data_scientist_jakarta","profesi":"Data Scientist","level":"Semua level","wilayah":"Jakarta","min":8633333,"median":12000000,"max":19166667,"keterangan":"Persentil 25-75, 489 laporan gaji","sumber":"Glassdoor - Data Scientist Jakarta","periode":"Februari 2026"},{"id":"data_scientist_mid","profesi":"Data Scientist","level":"Mid (3-5 thn)","wilayah":"Indonesia","min":8000000,"median":null,"max":15000000,"keterangan":"","sumber":"Glassdoor via Tempo Institute","periode":"Januari 2026"},{"id":"data_scientist_senior","profesi":"Data Scientist","level":"Senior (5+ thn)","wilayah":"Indonesia","min":20000000,"median":null,"max":35000000,"keterangan":"","sumber":"KantorKu - Gaji Data Scientist 2026","periode":"2026"},{"id":"uiux_junior","profesi":"UI/UX Designer","level":"Junior (0-2 thn)","wilayah":"Indonesia","min":5000000,"median":null,"max":8000000,"keterangan":"","sumber":"bernas.id - Standar Gaji UI/UX Designer 2026","periode":"September 2026"},{"id":"uiux_mid","profesi":"UI/UX Designer","level":"Mid (2-5 thn)","wilayah":"Indonesia","min":8500000,"median":null,"max":15000000,"keterangan":"","sumber":"bernas.id - Standar Gaji UI/UX Designer 2026","periode":"September 2026"},{"id":"uiux_senior","profesi":"UI/UX Designer","level":"Senior/Lead","wilayah":"Indonesia","min":16000000,"median":null,"max":28000000,"keterangan":"","sumber":"bernas.id - Standar Gaji UI/UX Designer 2026","periode":"September 2026"},{"id":"digital_marketing","profesi":"Digital Marketing","level":"Semua level","wilayah":"Indonesia","min":5930000,"median":6625000,"max":7250000,"keterangan":"Persentil 25-75; pemula 0-2 thn Rp4-8 jt","sumber":"Jobstreet - Gaji Pemasar Digital; digibos.id 2026","periode":"Agustus 2026"},{"id":"teknisi_listrik","profesi":"Teknisi Listrik","level":"Semua level","wilayah":"Indonesia","min":5330000,"median":6834000,"max":8330000,"keterangan":"Persentil 25-75","sumber":"Jobstreet - Gaji Teknisi Listrik","periode":"September 2026"},{"id":"teknisi_mekanik","profesi":"Teknisi Mekanik","level":"Semua level","wilayah":"Indonesia","min":3930000,"median":5500000,"max":6000000,"keterangan":"Persentil 25-75","sumber":"Jobstreet - Gaji Teknisi Mekanik","periode":"September 2026"},{"id":"mekanik","profesi":"Mekanik","level":"Semua level","wilayah":"Indonesia","min":4000000,"median":4500000,"max":6000000,"keterangan":"Persentil 25-75","sumber":"Jobstreet - Gaji Mekanik","periode":"2025"},{"id":"akuntan_awal","profesi":"Akuntan","level":"Entry (awal kerja)","wilayah":"Indonesia","min":4289963,"median":null,"max":7919984,"keterangan":"Gaji bersih per bulan saat awal bekerja","sumber":"WageIndicator Indonesia (wageindicator.org)","periode":"2026"},{"id":"akuntan_5th","profesi":"Akuntan","level":"Mid (setelah 5 tahun)","wilayah":"Indonesia","min":5634653,"median":null,"max":13304736,"keterangan":"","sumber":"WageIndicator Indonesia (wageindicator.org)","periode":"2026"},{"id":"dokter_umum_awal","profesi":"Dokter Umum","level":"Entry (awal kerja)","wilayah":"Indonesia","min":5391073,"median":null,"max":12378330,"keterangan":"","sumber":"WageIndicator Indonesia (wageindicator.org)","periode":"2026"},{"id":"dokter_umum_5th","profesi":"Dokter Umum","level":"Mid (setelah 5 tahun)","wilayah":"Indonesia","min":6826030,"median":null,"max":21495701,"keterangan":"","sumber":"WageIndicator Indonesia (wageindicator.org)","periode":"2026"},{"id":"dokter_umum_rata","profesi":"Dokter Umum","level":"Semua level","wilayah":"Indonesia","min":7250000,"median":null,"max":11250000,"keterangan":"Rata-rata nasional","sumber":"Dealls (Gaji Dokter 2026)","periode":"2026"},{"id":"dokter_spesialis_awal","profesi":"Dokter Spesialis","level":"Entry (awal kerja)","wilayah":"Indonesia","min":5048157,"median":null,"max":13809013,"keterangan":"","sumber":"WageIndicator Indonesia (wageindicator.org)","periode":"2026"},{"id":"dokter_spesialis_5th","profesi":"Dokter Spesialis","level":"Mid (setelah 5 tahun)","wilayah":"Indonesia","min":6487923,"median":null,"max":23394131,"keterangan":"","sumber":"WageIndicator Indonesia (wageindicator.org)","periode":"2026"},{"id":"dokter_spesialis_rata","profesi":"Dokter Spesialis","level":"Senior (rata-rata spesialis)","wilayah":"Indonesia","min":23000000,"median":null,"max":25000000,"keterangan":"Rata-rata; bervariasi besar per spesialisasi","sumber":"Dealls (Gaji Dokter 2026)","periode":"2026"},{"id":"dokter_hewan_awal","profesi":"Dokter Hewan","level":"Entry (awal kerja)","wilayah":"Indonesia","min":3665251,"median":null,"max":8425014,"keterangan":"","sumber":"WageIndicator Indonesia (wageindicator.org)","periode":"2026"},{"id":"dokter_hewan_5th","profesi":"Dokter Hewan","level":"Mid (setelah 5 tahun)","wilayah":"Indonesia","min":4740183,"median":null,"max":14993964,"keterangan":"","sumber":"WageIndicator Indonesia (wageindicator.org)","periode":"2026"},{"id":"perawat_awal","profesi":"Perawat","level":"Entry (awal kerja)","wilayah":"Indonesia","min":2976658,"median":null,"max":5608003,"keterangan":"Profesional keperawatan","sumber":"WageIndicator Indonesia (wageindicator.org)","periode":"2026"},{"id":"perawat_5th","profesi":"Perawat","level":"Mid (setelah 5 tahun)","wilayah":"Indonesia","min":3777231,"median":null,"max":9461355,"keterangan":"","sumber":"WageIndicator Indonesia (wageindicator.org)","periode":"2026"},{"id":"apoteker_junior","profesi":"Apoteker","level":"Junior","wilayah":"Indonesia","min":4000000,"median":null,"max":5500000,"keterangan":"","sumber":"KantorKu (Gaji Apoteker 2026)","periode":"2026"},{"id":"apoteker_mid","profesi":"Apoteker","level":"Mid","wilayah":"Indonesia","min":7500000,"median":null,"max":12000000,"keterangan":"","sumber":"KantorKu (Gaji Apoteker 2026)","periode":"2026"},{"id":"apoteker_senior","profesi":"Apoteker","level":"Senior","wilayah":"Indonesia","min":10000000,"median":null,"max":20000000,"keterangan":"","sumber":"KantorKu (Gaji Apoteker 2026)","periode":"2026"},{"id":"psikolog_klinis","profesi":"Psikolog","level":"Entry (psikolog klinis)","wilayah":"Indonesia","min":2500000,"median":null,"max":5000000,"keterangan":"Tergantung pengalaman dan tempat kerja","sumber":"Dealls (Prospek Kerja Psikologi)","periode":"2026"},{"id":"psikolog_industri","profesi":"Psikolog","level":"Mid (psikolog industri & organisasi)","wilayah":"Indonesia","min":4000000,"median":null,"max":7000000,"keterangan":"","sumber":"Dealls (Prospek Kerja Psikologi)","periode":"2026"},{"id":"psikolog_loker","profesi":"Psikolog","level":"Semua level","wilayah":"Indonesia","min":4000000,"median":5800000,"max":7500000,"keterangan":"Dari iklan lowongan yang mencantumkan gaji (sampel kecil)","sumber":"Loker.id","periode":"2026"},{"id":"it_support_fresh","profesi":"IT Support","level":"Entry (fresh graduate)","wilayah":"Kota besar","min":5000000,"median":null,"max":8000000,"keterangan":"Termasuk network administrator","sumber":"RRI (Februari 2026)","periode":"2026"},{"id":"it_support_nasional","profesi":"IT Support","level":"Semua level","wilayah":"Indonesia","min":4500000,"median":null,"max":7000000,"keterangan":"Estimasi nasional","sumber":"KantorKu (Gaji IT Support 2026)","periode":"Juli 2026"},{"id":"it_support_senior","profesi":"IT Support","level":"Senior (ahli)","wilayah":"Indonesia","min":12000000,"median":null,"max":20000000,"keterangan":"","sumber":"KantorKu (Gaji IT Support 2026)","periode":"Juli 2026"},{"id":"insinyur_industri_awal","profesi":"Insinyur Teknik Industri","level":"Entry (awal kerja)","wilayah":"Indonesia","min":4827091,"median":null,"max":12796846,"keterangan":"","sumber":"WageIndicator Indonesia (wageindicator.org)","periode":"2026"},{"id":"insinyur_industri_5th","profesi":"Insinyur Teknik Industri","level":"Mid (setelah 5 tahun)","wilayah":"Indonesia","min":6355976,"median":null,"max":21907392,"keterangan":"","sumber":"WageIndicator Indonesia (wageindicator.org)","periode":"2026"},{"id":"guru_pppk_gol3","profesi":"Guru","level":"Entry (PPPK golongan III, gaji pokok)","wilayah":"Indonesia","min":2206500,"median":null,"max":3201200,"keterangan":"Belum termasuk tunjangan keluarga, pangan, jabatan, dan TPG","sumber":"Perpres 11/2024 via Dealls & Metro TV","periode":"2026"},{"id":"guru_pns_gol3","profesi":"Guru","level":"Mid (PNS golongan III, gaji pokok)","wilayah":"Indonesia","min":2785700,"median":null,"max":5180700,"keterangan":"Guru ASN bersertifikat mendapat TPG setara 1x gaji pokok","sumber":"PP 5/2024 via Dealls & CNBC Indonesia","periode":"2026"},{"id":"guru_honorer_tpg","profesi":"Guru","level":"Entry (honorer bersertifikat PPG, tunjangan)","wilayah":"Indonesia","min":1500000,"median":null,"max":2000000,"keterangan":"Tunjangan profesi di luar gaji dari sekolah; Rp1,5 jt jika tanpa SK inpassing","sumber":"Bisnis.com; CNBC Indonesia (kebijakan 2025-2026)","periode":"2026"},{"id":"tni_tamtama","profesi":"TNI","level":"Entry (Tamtama, gaji pokok)","wilayah":"Indonesia","min":1775000,"median":null,"max":2741300,"keterangan":"Prajurit Dua; belum termasuk tunjangan","sumber":"PP 6/2024 via IDX Channel","periode":"2026"},{"id":"tni_pati","profesi":"TNI","level":"Senior (Perwira Tinggi, gaji pokok)","wilayah":"Indonesia","min":3553800,"median":null,"max":6405500,"keterangan":"Brigjen hingga Jenderal","sumber":"PP 6/2024 via Tirto & Antara","periode":"2026"},{"id":"polri_tamtama","profesi":"Polisi","level":"Entry (Tamtama, gaji pokok)","wilayah":"Indonesia","min":1775000,"median":null,"max":2741300,"keterangan":"Bharada; belum termasuk tunjangan","sumber":"PP 7/2024 via Kontan","periode":"2026"},{"id":"polri_bintara","profesi":"Polisi","level":"Mid (Bintara Brigpol, gaji pokok)","wilayah":"Indonesia","min":2416400,"median":null,"max":3971000,"keterangan":"Tunjangan istri/suami 10%, anak 2% per anak","sumber":"PP 7/2024 via Kontan","periode":"2026"},{"id":"polri_pati","profesi":"Polisi","level":"Senior (Jenderal, gaji pokok)","wilayah":"Indonesia","min":5657400,"median":null,"max":6405500,"keterangan":"","sumber":"PP 7/2024 via Kontan","periode":"2026"}],"profesi":[{"id":"supervisor_gudang","nama":"Supervisor Gudang","bidang":"Logistik & Gudang","deskripsi":"Memimpin tim gudang, mengatur penerimaan, penyimpanan, dan pengiriman barang, serta memastikan akurasi stok.","jenjang":["Staf/Operator Gudang","Kepala Regu/Leader","Supervisor Gudang","Warehouse Manager","Logistics/Operations Manager"],"pendidikan_umum":"SMA/SMK; D3/S1 Manajemen Logistik atau Teknik Industri jadi nilai tambah untuk level manajer","minat_cocok":["memimpin tim","operasional","keteraturan"],"id_gaji":["supervisor_gudang"]},{"id":"staff_ppic","nama":"Staff PPIC","bidang":"Manufaktur & Rantai Pasok","deskripsi":"Merencanakan jadwal produksi dan mengendalikan stok bahan baku serta barang jadi agar produksi sesuai permintaan.","jenjang":["Admin PPIC","Staff PPIC","Senior PPIC","Supervisor PPIC","PPIC/Supply Chain Manager"],"pendidikan_umum":"D3/S1 Teknik Industri, Manajemen, atau Logistik; lulusan SMK dengan pengalaman gudang/produksi bisa mulai dari Admin PPIC","minat_cocok":["angka","perencanaan","manufaktur"],"id_gaji":["staff_ppic","supervisor_ppic"]},{"id":"supply_chain_analyst","nama":"Supply Chain Analyst","bidang":"Rantai Pasok","deskripsi":"Menganalisis data persediaan, pemasok, dan distribusi untuk menekan biaya dan mencegah kehabisan stok.","jenjang":["Supply Chain Staff","Supply Chain Analyst","Senior Analyst","Supply Chain Supervisor/Lead","Supply Chain Manager"],"pendidikan_umum":"S1 Teknik Industri, Manajemen, Statistik, atau Logistik; sertifikasi analisis data membantu","minat_cocok":["angka","analisis","komputer","logistik"],"id_gaji":["supply_chain_staff","supply_chain_analyst_entry","supply_chain_analyst_senior"]},{"id":"data_analyst","nama":"Data Analyst","bidang":"Teknologi & Data","deskripsi":"Mengolah data menjadi laporan dan dashboard untuk membantu keputusan bisnis.","jenjang":["Junior Data Analyst","Data Analyst","Senior Data Analyst","Analytics Lead","Head of Data/Analytics"],"pendidikan_umum":"S1 berbagai jurusan (Statistik, Matematika, Informatika, Sistem Informasi, Teknik Industri); banyak career switcher masuk lewat bootcamp + portofolio","minat_cocok":["angka","komputer","memecahkan masalah"],"id_gaji":["data_analyst_entry","data_analyst_jakarta","data_analyst_senior"]},{"id":"data_scientist","nama":"Data Scientist","bidang":"Teknologi & Data","deskripsi":"Membangun model statistik dan machine learning untuk memprediksi, mengelompokkan, atau mengotomatiskan keputusan bisnis.","jenjang":["Junior Data Scientist","Data Scientist","Senior Data Scientist","Lead Data Scientist","Head of Data Science"],"pendidikan_umum":"S1 Informatika, Statistika, Matematika, Sains Data, atau setara; jalur umum: dari Data Analyst dengan portofolio machine learning","minat_cocok":["matematika","statistik","komputer","pemrograman","AI"],"id_gaji":["data_scientist_junior","data_scientist_jakarta","data_scientist_mid","data_scientist_senior"]},{"id":"data_engineer","nama":"Data Engineer","bidang":"Teknologi & Data","deskripsi":"Membangun dan merawat pipeline serta infrastruktur data agar data siap dipakai analis dan sistem AI.","jenjang":["Junior Data Engineer","Data Engineer","Senior Data Engineer","Lead/Staff Engineer","Data Architect"],"pendidikan_umum":"S1 Informatika/Sistem Informasi/Teknik Komputer atau setara; jalur umum: dari Data Analyst atau Software Engineer","minat_cocok":["komputer","pemrograman","sistem"],"id_gaji":["data_engineer_jakarta"]},{"id":"software_engineer","nama":"Software Engineer","bidang":"Teknologi","deskripsi":"Merancang, membangun, dan memelihara aplikasi web, mobile, atau sistem backend.","jenjang":["Junior","Mid","Senior","Lead/Staff","Engineering Manager/Architect"],"pendidikan_umum":"S1 Informatika/Ilmu Komputer atau setara; bootcamp + portofolio juga diterima banyak perusahaan","minat_cocok":["komputer","pemrograman","membuat sesuatu"],"id_gaji":["software_engineer_entry","software_engineer_senior"]},{"id":"uiux_designer","nama":"UI/UX Designer","bidang":"Teknologi & Kreatif","deskripsi":"Merancang tampilan dan pengalaman pengguna aplikasi atau situs agar mudah dan nyaman dipakai.","jenjang":["Junior Designer","UI/UX Designer","Senior Designer","Lead/Principal Designer","Head of Design"],"pendidikan_umum":"S1 DKV, Desain Produk, Informatika, atau Psikologi; portofolio lebih menentukan daripada ijazah","minat_cocok":["desain","empati pengguna","kreatif"],"id_gaji":["uiux_junior","uiux_mid","uiux_senior"]},{"id":"digital_marketing","nama":"Digital Marketing","bidang":"Pemasaran","deskripsi":"Menjalankan kampanye pemasaran di media sosial, iklan digital, SEO, dan e-commerce.","jenjang":["Digital Marketing Staff","Specialist","Senior Specialist","Digital Marketing Manager","Head of Marketing"],"pendidikan_umum":"S1 Manajemen/Pemasaran/Komunikasi; kursus dan sertifikasi digital marketing umum dipakai untuk pindah karier","minat_cocok":["kreatif","komunikasi","media sosial"],"id_gaji":["digital_marketing"]},{"id":"teknisi_listrik","nama":"Teknisi Listrik","bidang":"Teknik & Perawatan","deskripsi":"Memasang, merawat, dan memperbaiki instalasi serta peralatan listrik di industri atau gedung.","jenjang":["Helper/Teknisi Junior","Teknisi Listrik","Teknisi Senior","Supervisor Maintenance","Maintenance Manager"],"pendidikan_umum":"SMK Teknik Instalasi Tenaga Listrik (TITL) atau D3 Teknik Elektro; sertifikasi kompetensi kelistrikan menjadi nilai tambah","minat_cocok":["teknik","praktik langsung","memperbaiki"],"id_gaji":["teknisi_listrik"]},{"id":"teknisi_mekanik","nama":"Teknisi Mekanik / Mekanik","bidang":"Teknik & Otomotif","deskripsi":"Merawat dan memperbaiki mesin produksi, kendaraan, atau peralatan mekanis.","jenjang":["Helper","Mekanik/Teknisi","Teknisi Senior","Kepala Mekanik/Supervisor","Pemilik bengkel atau Maintenance Manager"],"pendidikan_umum":"SMK Teknik Kendaraan Ringan/Sepeda Motor atau Teknik Mesin; D3 Teknik Mesin untuk jalur industri","minat_cocok":["otomotif","mesin","praktik langsung"],"id_gaji":["teknisi_mekanik","mekanik"]},{"id":"akuntan","nama":"Akuntan","bidang":"Keuangan & Akuntansi","deskripsi":"Menyusun, memeriksa, dan menganalisis laporan keuangan serta memastikan kepatuhan pajak dan standar akuntansi.","jenjang":["Staf Akuntansi","Akuntan","Senior Akuntan","Manajer Akuntansi","Finance Controller / CFO"],"pendidikan_umum":"S1 Akuntansi; nilai tambah Brevet Pajak, CA, atau CPA","minat_cocok":["angka","keuangan","ketelitian","bisnis","akuntansi"],"id_gaji":["akuntan_awal","akuntan_5th"]},{"id":"dokter_umum","nama":"Dokter Umum","bidang":"Kesehatan","deskripsi":"Mendiagnosis, mengobati, dan mencegah penyakit umum di klinik, puskesmas, atau rumah sakit.","jenjang":["Dokter Internsip","Dokter Umum","Dokter Umum Senior / Kepala Klinik","Dokter Spesialis (lanjut PPDS)"],"pendidikan_umum":"S1 Kedokteran + Profesi Dokter + UKMPPD + Internsip","minat_cocok":["kesehatan","biologi","menolong orang","sains","kedokteran"],"id_gaji":["dokter_umum_awal","dokter_umum_rata","dokter_umum_5th"]},{"id":"dokter_spesialis","nama":"Dokter Spesialis","bidang":"Kesehatan","deskripsi":"Menangani penyakit pada bidang tertentu (anak, penyakit dalam, bedah, dan lainnya) dengan pendidikan spesialis.","jenjang":["Residen PPDS","Dokter Spesialis","Dokter Spesialis Senior","Konsultan / Subspesialis"],"pendidikan_umum":"Dokter umum + Program Pendidikan Dokter Spesialis (PPDS)","minat_cocok":["kesehatan","biologi","menolong orang","sains","kedokteran"],"id_gaji":["dokter_spesialis_awal","dokter_spesialis_5th","dokter_spesialis_rata"]},{"id":"dokter_hewan","nama":"Dokter Hewan","bidang":"Kesehatan Hewan","deskripsi":"Mendiagnosis dan merawat kesehatan hewan peliharaan maupun ternak.","jenjang":["Dokter Hewan Baru","Dokter Hewan","Dokter Hewan Senior / Pemilik Klinik"],"pendidikan_umum":"S1 Kedokteran Hewan + Profesi Dokter Hewan","minat_cocok":["hewan","biologi","kesehatan","sains"],"id_gaji":["dokter_hewan_awal","dokter_hewan_5th"]},{"id":"perawat","nama":"Perawat","bidang":"Kesehatan","deskripsi":"Memberikan asuhan keperawatan, memantau kondisi pasien, dan mendukung tindakan medis.","jenjang":["Perawat Pelaksana","Perawat Senior","Kepala Ruangan","Manajer Keperawatan"],"pendidikan_umum":"D3 Keperawatan atau S1 Keperawatan + Profesi Ners; STR","minat_cocok":["kesehatan","menolong orang","merawat","biologi"],"id_gaji":["perawat_awal","perawat_5th"]},{"id":"apoteker","nama":"Apoteker","bidang":"Kesehatan & Farmasi","deskripsi":"Mengelola dan menyerahkan obat, memberi konseling obat, serta bekerja di apotek, rumah sakit, atau industri farmasi.","jenjang":["Apoteker Pendamping","Apoteker Penanggung Jawab","Apoteker Senior / Manajer Farmasi"],"pendidikan_umum":"S1 Farmasi + Program Profesi Apoteker; STRA","minat_cocok":["kesehatan","kimia","biologi","sains"],"id_gaji":["apoteker_junior","apoteker_mid","apoteker_senior"]},{"id":"psikolog","nama":"Psikolog","bidang":"Psikologi","deskripsi":"Melakukan asesmen dan konseling psikologis, atau mengelola pengembangan SDM di perusahaan.","jenjang":["Asisten Psikolog / Staf HR","Psikolog","Psikolog Senior","Kepala Layanan / Praktik Mandiri"],"pendidikan_umum":"S1 Psikologi + Magister Psikologi Profesi (untuk gelar psikolog)","minat_cocok":["psikologi","menolong orang","mendengarkan","manusia","komunikasi"],"id_gaji":["psikolog_klinis","psikolog_loker","psikolog_industri"]},{"id":"it_support","nama":"IT Support","bidang":"Teknologi & Data","deskripsi":"Menangani masalah komputer, jaringan, dan aplikasi pengguna di perusahaan.","jenjang":["IT Support / Helpdesk","IT Support Senior","System / Network Administrator","IT Infrastructure Lead"],"pendidikan_umum":"SMK TKJ, D3/S1 Teknik Informatika; sertifikasi jaringan menjadi nilai tambah","minat_cocok":["komputer","memperbaiki","jaringan","hardware","teknologi"],"id_gaji":["it_support_fresh","it_support_nasional","it_support_senior"]},{"id":"insinyur_industri","nama":"Insinyur Teknik Industri","bidang":"Manufaktur & Operasional","deskripsi":"Merancang dan memperbaiki sistem produksi agar lebih efisien, aman, dan hemat biaya.","jenjang":["Engineer Trainee","Industrial Engineer","Senior Engineer","Manajer Produksi / Operasional"],"pendidikan_umum":"S1 Teknik Industri","minat_cocok":["manufaktur","produksi","efisiensi","teknik","pabrik"],"id_gaji":["insinyur_industri_awal","insinyur_industri_5th"]},{"id":"guru","nama":"Guru","bidang":"Pendidikan","deskripsi":"Mengajar dan membimbing siswa di sekolah; jalur ASN (PNS/PPPK) atau sekolah swasta.","jenjang":["Guru Honorer / Swasta","Guru PPPK","Guru PNS","Kepala Sekolah / Pengawas"],"pendidikan_umum":"S1 Kependidikan atau S1 bidang terkait + Pendidikan Profesi Guru (PPG)","minat_cocok":["mengajar","pendidikan","anak-anak","berbagi ilmu","komunikasi"],"id_gaji":["guru_honorer_tpg","guru_pppk_gol3","guru_pns_gol3"]},{"id":"tni","nama":"TNI (Tentara)","bidang":"Pertahanan","deskripsi":"Menjaga pertahanan negara di matra darat, laut, atau udara melalui jalur Tamtama, Bintara, atau Perwira.","jenjang":["Tamtama","Bintara","Perwira Pertama","Perwira Menengah","Perwira Tinggi"],"pendidikan_umum":"SMA/SMK (Tamtama/Bintara), Akademi Militer/AAL/AAU, atau Perwira Prajurit Karier (lulusan S1)","minat_cocok":["militer","fisik","disiplin","bela negara","olahraga"],"id_gaji":["tni_tamtama","tni_pati"]},{"id":"polri","nama":"Polisi","bidang":"Keamanan & Ketertiban","deskripsi":"Menjaga keamanan dan ketertiban masyarakat, menegakkan hukum, dan melayani masyarakat.","jenjang":["Tamtama","Bintara","Perwira Pertama","Perwira Menengah","Perwira Tinggi"],"pendidikan_umum":"SMA/SMK (Tamtama/Bintara), Akademi Kepolisian, atau SIPSS (lulusan S1)","minat_cocok":["hukum","fisik","disiplin","keamanan","olahraga"],"id_gaji":["polri_tamtama","polri_bintara","polri_pati"]}],"pendidikan":[{"jurusan":"S1 Teknik Industri","profesi_terkait":["Staff PPIC","Supply Chain Analyst","Supervisor Gudang"],"skill_dibangun":["perencanaan produksi","analisis data","optimasi proses","manajemen persediaan"]},{"jurusan":"D3/S1 Manajemen Logistik","profesi_terkait":["Supervisor Gudang","Supply Chain Staff","Staff PPIC"],"skill_dibangun":["manajemen gudang","distribusi","manajemen persediaan","pengadaan"]},{"jurusan":"S1 Sistem Informasi","profesi_terkait":["Data Analyst","Software Engineer","Data Engineer"],"skill_dibangun":["basis data/SQL","analisis sistem","pemrograman","manajemen proyek TI"]},{"jurusan":"S1 Sains Data / Statistika","profesi_terkait":["Data Analyst","Data Scientist","Data Engineer"],"skill_dibangun":["statistik","Python","SQL","visualisasi data","machine learning dasar"]},{"jurusan":"S1 Informatika / Ilmu Komputer","profesi_terkait":["Software Engineer","Data Engineer","Data Scientist","Data Analyst"],"skill_dibangun":["pemrograman","struktur data & algoritma","basis data","rekayasa perangkat lunak"]},{"jurusan":"S1 Matematika / Statistika","profesi_terkait":["Data Scientist","Data Analyst"],"skill_dibangun":["statistik & probabilitas","pemodelan matematika","analisis data"]},{"jurusan":"S1 Desain Komunikasi Visual","profesi_terkait":["UI/UX Designer"],"skill_dibangun":["desain visual","tipografi","prototyping","riset pengguna dasar"]},{"jurusan":"S1 Manajemen / Pemasaran","profesi_terkait":["Digital Marketing","Supply Chain Staff"],"skill_dibangun":["strategi pemasaran","analisis pasar","komunikasi bisnis"]},{"jurusan":"SMK Teknik Instalasi Tenaga Listrik","profesi_terkait":["Teknisi Listrik"],"skill_dibangun":["instalasi listrik","membaca diagram","K3 kelistrikan"]},{"jurusan":"SMK Teknik Kendaraan Ringan/Sepeda Motor","profesi_terkait":["Mekanik","Teknisi Mekanik"],"skill_dibangun":["perawatan mesin","diagnosis kerusakan","sistem injeksi"]},{"jurusan":"Jalur non-gelar: bootcamp + sertifikasi","profesi_terkait":["Data Analyst","Data Scientist","UI/UX Designer","Digital Marketing","Software Engineer"],"skill_dibangun":["skill praktis sesuai program","portofolio proyek"]},{"jurusan":"S1 Akuntansi","profesi_terkait":["Akuntan"],"skill_dibangun":["akuntansi keuangan","perpajakan","audit","Excel"]},{"jurusan":"S1 Manajemen","profesi_terkait":["Digital Marketing","Supervisor Gudang","Supply Chain Analyst"],"skill_dibangun":["manajemen","pemasaran","keuangan dasar","kepemimpinan"]},{"jurusan":"S1 Kedokteran + Profesi Dokter","profesi_terkait":["Dokter Umum","Dokter Spesialis"],"skill_dibangun":["ilmu kedokteran dasar & klinis","diagnosis","komunikasi pasien"]},{"jurusan":"S1 Kedokteran Hewan + Profesi Dokter Hewan","profesi_terkait":["Dokter Hewan"],"skill_dibangun":["anatomi & penyakit hewan","bedah veteriner"]},{"jurusan":"D3 Keperawatan","profesi_terkait":["Perawat"],"skill_dibangun":["asuhan keperawatan dasar","tindakan keperawatan"]},{"jurusan":"S1 Keperawatan + Profesi Ners","profesi_terkait":["Perawat"],"skill_dibangun":["asuhan keperawatan","manajemen keperawatan","riset keperawatan"]},{"jurusan":"S1 Farmasi + Profesi Apoteker","profesi_terkait":["Apoteker"],"skill_dibangun":["farmakologi","kimia farmasi","pelayanan kefarmasian"]},{"jurusan":"S1 Psikologi + Magister Psikologi Profesi","profesi_terkait":["Psikolog"],"skill_dibangun":["asesmen psikologi","konseling","metode penelitian"]},{"jurusan":"S1 Pendidikan (PGSD/PGPAUD/pendidikan bidang studi) + PPG","profesi_terkait":["Guru"],"skill_dibangun":["pedagogi","perencanaan pembelajaran","penguasaan materi"]},{"jurusan":"S1 Teknik Industri","profesi_terkait":["Insinyur Teknik Industri","Staff PPIC","Supply Chain Analyst"],"skill_dibangun":["perencanaan produksi","optimasi","statistik industri"]},{"jurusan":"S1 Teknik Sipil","profesi_terkait":[],"skill_dibangun":["struktur bangunan","manajemen konstruksi","AutoCAD"]},{"jurusan":"S1 Teknik Mesin","profesi_terkait":["Teknisi Mekanik"],"skill_dibangun":["perancangan mesin","termodinamika","manufaktur"]},{"jurusan":"S1 Teknik Elektro","profesi_terkait":["Teknisi Listrik"],"skill_dibangun":["rangkaian listrik","sistem tenaga","elektronika"]},{"jurusan":"D3/D4 Teknik Komputer & Jaringan","profesi_terkait":["IT Support"],"skill_dibangun":["jaringan komputer","perangkat keras","administrasi sistem"]},{"jurusan":"SMK Teknik Komputer & Jaringan (TKJ)","profesi_terkait":["IT Support"],"skill_dibangun":["perakitan komputer","jaringan dasar","troubleshooting"]},{"jurusan":"S1 Ilmu Hukum","profesi_terkait":["Polisi"],"skill_dibangun":["hukum pidana & perdata","analisis kasus","argumentasi"]},{"jurusan":"S1 Ilmu Komunikasi","profesi_terkait":["Digital Marketing"],"skill_dibangun":["komunikasi massa","public relations","produksi konten"]},{"jurusan":"S1 Gizi","profesi_terkait":[],"skill_dibangun":["ilmu gizi","perencanaan menu","konseling gizi"]},{"jurusan":"D3/S1 Kebidanan + Profesi Bidan","profesi_terkait":[],"skill_dibangun":["asuhan kebidanan","kesehatan ibu & anak"]},{"jurusan":"S1 Agribisnis / Agroteknologi","profesi_terkait":[],"skill_dibangun":["usaha tani","pemasaran hasil pertanian","manajemen agribisnis"]},{"jurusan":"S1/D4 Pariwisata & Perhotelan","profesi_terkait":[],"skill_dibangun":["layanan tamu","manajemen hotel & restoran","bahasa asing"]},{"jurusan":"S1 Arsitektur","profesi_terkait":[],"skill_dibangun":["desain bangunan","gambar teknik","SketchUp/AutoCAD"]},{"jurusan":"Akademi Militer / AAL / AAU (ikatan dinas)","profesi_terkait":["TNI"],"skill_dibangun":["kepemimpinan militer","taktik","kebugaran"]},{"jurusan":"Akademi Kepolisian (ikatan dinas)","profesi_terkait":["Polisi"],"skill_dibangun":["ilmu kepolisian","kepemimpinan","hukum"]},{"jurusan":"Pendidikan pembentukan Tamtama/Bintara TNI-Polri","profesi_terkait":["TNI","Polisi"],"skill_dibangun":["kebugaran","disiplin","keterampilan dasar keprajuritan/kepolisian"]},{"jurusan":"S1 Ilmu Gizi / Kesehatan Masyarakat","profesi_terkait":[],"skill_dibangun":["epidemiologi","promosi kesehatan"]}],"skill":[{"profesi":"Supervisor Gudang","wajib":["manajemen stok & inventory","kepemimpinan tim","Microsoft Excel","K3 gudang"],"pendukung":["sistem WMS/ERP (mis. SAP)","pelaporan KPI","negosiasi dengan vendor/ekspedisi"]},{"profesi":"Staff PPIC","wajib":["perencanaan produksi","pengendalian persediaan","Microsoft Excel lanjutan","komunikasi lintas divisi"],"pendukung":["ERP (SAP/Odoo)","forecasting permintaan","lean manufacturing"]},{"profesi":"Supply Chain Analyst","wajib":["Excel lanjutan (pivot, lookup)","analisis persediaan","SQL dasar","dashboard (Power BI/Looker Studio)"],"pendukung":["forecasting","Python dasar","pengetahuan pengadaan & distribusi"]},{"profesi":"Data Analyst","wajib":["Excel/Google Sheets","SQL","visualisasi data (Power BI/Tableau/Looker Studio)","statistik dasar"],"pendukung":["Python (pandas)","storytelling data","pemahaman bisnis"]},{"profesi":"Data Scientist","wajib":["Python (pandas, scikit-learn)","statistik & probabilitas","machine learning","SQL"],"pendukung":["deep learning","deployment model (MLOps dasar)","komunikasi hasil analisis"]},{"profesi":"Data Engineer","wajib":["SQL lanjutan","Python","ETL/ELT pipeline","konsep data warehouse"],"pendukung":["cloud (GCP/AWS/Azure)","Airflow/orchestration","Spark"]},{"profesi":"Software Engineer","wajib":["satu bahasa pemrograman (JavaScript/Python/Java/Go)","Git","basis data","dasar web/API"],"pendukung":["framework (React, Node.js, dsb.)","testing","cloud & deployment"]},{"profesi":"UI/UX Designer","wajib":["Figma","wireframe & prototyping","prinsip desain visual","riset pengguna dasar"],"pendukung":["design system","usability testing","dasar HTML/CSS"]},{"profesi":"Digital Marketing","wajib":["media sosial & konten","iklan digital (Meta/Google Ads)","analitik (Google Analytics)","copywriting"],"pendukung":["SEO","e-commerce marketplace","email marketing"]},{"profesi":"Teknisi Listrik","wajib":["instalasi & perawatan listrik","membaca diagram/wiring","K3 listrik","alat ukur listrik"],"pendukung":["PLC dasar","panel listrik industri","sertifikasi kompetensi"]},{"profesi":"Teknisi Mekanik / Mekanik","wajib":["perawatan & perbaikan mesin","diagnosis kerusakan","penggunaan perkakas","K3 bengkel/pabrik"],"pendukung":["sistem injeksi/elektrikal kendaraan","hidrolik & pneumatik","manajemen bengkel"]},{"profesi":"Akuntan","wajib":["akuntansi keuangan & jurnal","Excel","perpajakan dasar (PPh, PPN)","software akuntansi (Accurate/Jurnal/SAP)"],"pendukung":["analisis laporan keuangan","audit dasar","Brevet Pajak A/B"]},{"profesi":"Dokter Umum","wajib":["diagnosis klinis","anamnesis & pemeriksaan fisik","farmakologi","komunikasi dengan pasien"],"pendukung":["kegawatdaruratan (ACLS/ATLS)","manajemen klinik","rekam medis elektronik"]},{"profesi":"Dokter Spesialis","wajib":["keahlian klinis spesialistik","diagnosis lanjut","tindakan medis spesialis","komunikasi dengan pasien"],"pendukung":["penelitian klinis","pengajaran residen"]},{"profesi":"Dokter Hewan","wajib":["diagnosis penyakit hewan","bedah dasar hewan","farmakologi veteriner","komunikasi dengan pemilik hewan"],"pendukung":["manajemen klinik","kesehatan ternak"]},{"profesi":"Perawat","wajib":["asuhan keperawatan","tindakan keperawatan dasar","pemantauan tanda vital","komunikasi terapeutik"],"pendukung":["BTCLS / kegawatdaruratan","dokumentasi keperawatan elektronik","bahasa Inggris (peluang kerja luar negeri)"]},{"profesi":"Apoteker","wajib":["farmakologi","pelayanan kefarmasian","manajemen stok obat","konseling obat"],"pendukung":["regulasi BPOM","manajemen apotek"]},{"profesi":"Psikolog","wajib":["asesmen & tes psikologi","konseling","etika profesi","menulis laporan psikologis"],"pendukung":["rekrutmen & pengembangan SDM","psikoedukasi","statistik penelitian"]},{"profesi":"IT Support","wajib":["troubleshooting hardware & software","jaringan dasar (LAN, Wi-Fi, IP)","sistem operasi Windows/Linux","layanan pengguna (helpdesk)"],"pendukung":["sertifikasi jaringan (mis. MTCNA/CCNA)","Active Directory","keamanan siber dasar"]},{"profesi":"Insinyur Teknik Industri","wajib":["perencanaan & pengendalian produksi","lean / perbaikan proses","Excel & analisis data","K3"],"pendukung":["six sigma","simulasi sistem","ERP"]},{"profesi":"Guru","wajib":["penguasaan materi bidang studi","perencanaan pembelajaran","manajemen kelas","komunikasi"],"pendukung":["teknologi pembelajaran digital","asesmen pembelajaran","bimbingan konseling dasar"]},{"profesi":"TNI","wajib":["kebugaran fisik","disiplin & kepemimpinan","kesehatan jasmani & rohani","kemampuan bekerja dalam tim"],"pendukung":["bahasa asing","keahlian teknis (mesin, komunikasi, medis)"]},{"profesi":"Polisi","wajib":["kebugaran fisik","disiplin & integritas","pemahaman hukum dasar","komunikasi pelayanan masyarakat"],"pendukung":["bahasa asing","teknologi informasi & forensik digital"]},{"profesi":"Customer Service (umum)","wajib":["komunikasi lisan & tulisan","empati & penanganan keluhan","Microsoft Office"],"pendukung":["CRM","bahasa Inggris"]}],"skill_transferable_logistik":["manajemen stok & inventory","ketelitian pencatatan","Microsoft Excel dasar","koordinasi tim","K3 gudang","pemahaman alur distribusi","kerja dengan target/KPI"],"portofolio":{"supervisor_gudang":["Laporan perbaikan akurasi stok (sebelum-sesudah) dari tempat kerja","SOP penerimaan & pengiriman barang yang kamu susun","Dashboard KPI gudang sederhana di Excel"],"staff_ppic":["Simulasi jadwal produksi mingguan di Excel","Analisis safety stock untuk 10 bahan baku","Studi kasus pengurangan stok mati (dead stock)"],"supply_chain_analyst":["Dashboard persediaan & perputaran stok (Power BI/Looker Studio)","Analisis ABC/XYZ produk dengan SQL","Forecast permintaan sederhana dengan Excel/Python"],"data_analyst":["Dashboard penjualan interaktif (Power BI/Looker Studio)","Analisis data publik (mis. BPS/Kaggle) dengan SQL + Python","Laporan insight bisnis 1 halaman dari dataset nyata"],"data_scientist":["Model prediksi (mis. churn/harga) end-to-end dengan scikit-learn","Analisis eksploratif + uji statistik di Jupyter Notebook","Model yang di-deploy sebagai API/web app sederhana (Streamlit)"],"data_engineer":["Pipeline ETL harian dari API ke database","Data warehouse kecil dengan model bintang (star schema)","Penjadwalan pipeline dengan Airflow atau cron"],"software_engineer":["Aplikasi web lengkap (frontend + backend + database) di GitHub","REST API dengan autentikasi dan testing","Kontribusi ke proyek open-source"],"uiux_designer":["Studi kasus redesign aplikasi lokal (riset → wireframe → prototipe)","Design system mini di Figma","Hasil usability test dengan 5 pengguna"],"digital_marketing":["Kampanye media sosial untuk UMKM dengan laporan hasil","Analisis Google Analytics sebuah situs","Contoh iklan dan copywriting A/B test"],"teknisi_listrik":["Dokumentasi proyek instalasi/perbaikan dengan foto","Gambar diagram wiring yang kamu buat","Sertifikat kompetensi kelistrikan"],"teknisi_mekanik":["Log servis dan perbaikan yang kamu tangani","Dokumentasi diagnosis kerusakan (sebelum-sesudah)","Sertifikat kompetensi otomotif/mesin"],"akuntan":["Laporan keuangan UMKM sederhana (neraca & laba rugi)","Simulasi perhitungan PPh 21 dan PPN","Sertifikat Brevet Pajak A/B"],"dokter_umum":["Logbook kepaniteraan klinik","Sertifikat ACLS/ATLS","Kegiatan bakti sosial kesehatan"],"dokter_spesialis":["Publikasi atau laporan kasus","Logbook residensi"],"dokter_hewan":["Logbook koasistensi","Dokumentasi penanganan kasus hewan"],"perawat":["STR dan sertifikat BTCLS","Logbook praktik klinik","Sertifikat bahasa Inggris untuk peluang luar negeri"],"apoteker":["STRA","Pengalaman praktik kerja profesi apotek/rumah sakit"],"psikolog":["Laporan asesmen (anonim)","Pengalaman praktik profesi","Program psikoedukasi yang pernah dijalankan"],"it_support":["Dokumentasi troubleshooting jaringan","Lab jaringan rumahan (router, VLAN)","Sertifikat MTCNA/CCNA"],"insinyur_industri":["Studi kasus perbaikan proses (sebelum-sesudah)","Analisis tata letak pabrik","Proyek lean/kaizen"],"guru":["Rencana pembelajaran (modul ajar)","Video praktik mengajar","Sertifikat PPG"],"tni":["Prestasi olahraga/kebugaran","Rekam kesehatan prima","Pengalaman organisasi (Pramuka/Paskibra)"],"polri":["Prestasi olahraga/kebugaran","Rekam kesehatan prima","Pengalaman organisasi (Pramuka/Paskibra)"]},"universitas":[{"id":"ui","nama":"Universitas Indonesia (UI)","kota":"Depok","jenis":"PTN","qs_2026":"189","peringkat_nasional":1,"prodi":["S1 Ilmu Komputer","S1 Sistem Informasi"],"rumpun":["informatika","sistem_informasi"],"biaya_min":500000,"biaya_max":17500000,"satuan":"UKT per semester","catatan":"Fakultas Ilmu Komputer","sumber":"Keputusan Rektor UI No. 297/SK/R/UI/2026 via Gebrak; QS WUR 2026 via Detik","periode":"2026"},{"id":"ugm","nama":"Universitas Gadjah Mada (UGM)","kota":"Yogyakarta","jenis":"PTN","qs_2026":"224","peringkat_nasional":2,"prodi":["S1 Ilmu Komputer","S1 Teknologi Informasi"],"rumpun":["informatika","sistem_informasi"],"biaya_min":0,"biaya_max":13300000,"satuan":"UKT per semester","catatan":"Kelompok bidang rekayasa (perangkat lunak, internet)","sumber":"Mamikos (UKT UGM SNBP/SNBT 2026)","periode":"2026"},{"id":"itb","nama":"Institut Teknologi Bandung (ITB)","kota":"Bandung","jenis":"PTN","qs_2026":"255","peringkat_nasional":3,"prodi":["S1 Teknik Informatika (STEI)","S1 Sistem dan Teknologi Informasi (STEI)"],"rumpun":["informatika","sistem_informasi"],"biaya_min":500000,"biaya_max":12500000,"satuan":"UKT per semester","catatan":"STEI; persaingan masuk sangat ketat","sumber":"Mamikos (UKT SNBT ITB 2026)","periode":"2026"},{"id":"unair","nama":"Universitas Airlangga (Unair)","kota":"Surabaya","jenis":"PTN","qs_2026":"287","peringkat_nasional":4,"prodi":["S1 Sistem Informasi"],"rumpun":["sistem_informasi"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"UKT prodi belum tersedia di database; cek unair.ac.id","sumber":"QS WUR 2026 via Detik","periode":"2026"},{"id":"ipb","nama":"IPB University","kota":"Bogor","jenis":"PTN","qs_2026":"399","peringkat_nasional":5,"prodi":["S1 Ilmu Komputer","S1 Statistika dan Sains Data"],"rumpun":["informatika","sains_data"],"biaya_min":2400000,"biaya_max":12000000,"satuan":"UKT per semester","catatan":"Kisaran umum program sarjana","sumber":"Sevima; Mamikos (Januari 2026)","periode":"2026"},{"id":"its","nama":"Institut Teknologi Sepuluh Nopember (ITS)","kota":"Surabaya","jenis":"PTN","qs_2026":"509","peringkat_nasional":6,"prodi":["S1 Teknik Informatika","S1 Sistem Informasi","S1 Sains Data"],"rumpun":["informatika","sistem_informasi","sains_data"],"biaya_min":500000,"biaya_max":7500000,"satuan":"UKT per semester","catatan":"Kisaran umum program sarjana; verifikasi di its.ac.id","sumber":"Sevima","periode":"kisaran umum"},{"id":"unpad","nama":"Universitas Padjadjaran (Unpad)","kota":"Bandung/Jatinangor","jenis":"PTN","qs_2026":"515","peringkat_nasional":7,"prodi":["S1 Teknik Informatika","S1 Statistika"],"rumpun":["informatika","sains_data"],"biaya_min":500000,"biaya_max":15000000,"satuan":"UKT per semester","catatan":"Teknik Informatika termasuk UKT tertinggi di Unpad","sumber":"Mamikos (Kep. Rektor Unpad No. 110/UN6.RKT/Kep/HK/2025)","periode":"2026"},{"id":"undip","nama":"Universitas Diponegoro (Undip)","kota":"Semarang","jenis":"PTN","qs_2026":"624","peringkat_nasional":8,"prodi":["S1 Informatika"],"rumpun":["informatika"],"biaya_min":null,"biaya_max":9500000,"satuan":"UKT per semester","catatan":"Batas atas umum universitas","sumber":"Mamikos (Januari 2026)","periode":"2026"},{"id":"ub","nama":"Universitas Brawijaya (UB)","kota":"Malang","jenis":"PTN","qs_2026":"680","peringkat_nasional":9,"prodi":["S1 Teknik Informatika","S1 Sistem Informasi"],"rumpun":["informatika","sistem_informasi"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"UKT prodi belum tersedia di database; cek ub.ac.id","sumber":"QS WUR 2026 via Detik","periode":"2026"},{"id":"binus","nama":"BINUS University","kota":"Jakarta","jenis":"PTS","qs_2026":"851-900","peringkat_nasional":10,"prodi":["S1 Computer Science","S1 Information Systems","S1 Data Science"],"rumpun":["informatika","sistem_informasi","sains_data"],"biaya_min":null,"biaya_max":null,"satuan":"per semester","catatan":"Kampus swasta peringkat teratas; biaya belum tersedia di database","sumber":"QS WUR 2026 via Detik","periode":"2026"},{"id":"telkom","nama":"Telkom University","kota":"Bandung","jenis":"PTS","qs_2026":"1001-1200","peringkat_nasional":12,"prodi":["S1 Informatika","S1 Sistem Informasi","S1 Sains Data"],"rumpun":["informatika","sistem_informasi","sains_data"],"biaya_min":12000000,"biaya_max":13500000,"satuan":"BPP per semester","catatan":"Ditambah uang pangkal (UP3/SDP2) sekali bayar","sumber":"Telkom University (hive.telkomuniversity.ac.id); Tirto 2025","periode":"2025-2026"},{"id":"upi","nama":"Universitas Pendidikan Indonesia (UPI)","kota":"Bandung","jenis":"PTN","qs_2026":"1201-1400","peringkat_nasional":17,"prodi":["S1 Ilmu Komputer"],"rumpun":["informatika"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"UKT prodi belum tersedia di database; cek upi.edu","sumber":"QS WUR 2026 via Detik","periode":"2026"},{"id":"ut","nama":"Universitas Terbuka (UT)","kota":"Daring (seluruh Indonesia)","jenis":"PTN","qs_2026":"-","peringkat_nasional":null,"prodi":["S1 Sistem Informasi","S1 Sains Data"],"rumpun":["sistem_informasi","sains_data"],"biaya_min":1800000,"biaya_max":1900000,"satuan":"per semester","catatan":"Alternatif hemat dan fleksibel, bisa sambil bekerja","sumber":"Kompas Edu","periode":"2026"},{"id":"uns","nama":"Universitas Sebelas Maret (UNS)","kota":"Surakarta","jenis":"PTN","qs_2026":"1001-1200","peringkat_nasional":13,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":475000,"biaya_max":30000000,"satuan":"UKT per semester","catatan":"UKT semua prodi (data 2024)","sumber":"QS via Detik; UKT: Tirto 2024","periode":"2024-2026"},{"id":"usu","nama":"Universitas Sumatera Utara (USU)","kota":"Medan","jenis":"PTN","qs_2026":"1001-1200","peringkat_nasional":14,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":32500000,"satuan":"UKT per semester","catatan":"UKT tertinggi di S1 Pendidikan Dokter","sumber":"QS via Detik; UKT: GoodStats 2026","periode":"2026"},{"id":"unhas","nama":"Universitas Hasanuddin (Unhas)","kota":"Makassar","jenis":"PTN","qs_2026":"951-1000","peringkat_nasional":11,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":500000,"biaya_max":25000000,"satuan":"UKT per semester","catatan":"","sumber":"QS via Detik; UKT: Mamikos 2026","periode":"2026"},{"id":"uny","nama":"Universitas Negeri Yogyakarta (UNY)","kota":"Yogyakarta","jenis":"PTN","qs_2026":"1201-1400","peringkat_nasional":19,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":30000000,"satuan":"UKT per semester","catatan":"UKT tertinggi di S1 Kedokteran","sumber":"QS via Detik; UKT: GoodStats 2026","periode":"2026"},{"id":"unp","nama":"Universitas Negeri Padang (UNP)","kota":"Padang","jenis":"PTN","qs_2026":"1401+","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"um","nama":"Universitas Negeri Malang (UM)","kota":"Malang","jenis":"PTN","qs_2026":"1401+","peringkat_nasional":null,"prodi":["S1 Teknik Informatika","S1 Pendidikan Teknik Informatika","dan prodi lain"],"rumpun":["informatika"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"usk","nama":"Universitas Syiah Kuala (USK)","kota":"Banda Aceh","jenis":"PTN","qs_2026":"1401+","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"unand","nama":"Universitas Andalas (Unand)","kota":"Padang","jenis":"PTN","qs_2026":"1401+","peringkat_nasional":null,"prodi":["S1 Sistem Informasi","S1 Teknik Komputer","dan prodi lain"],"rumpun":["sistem_informasi"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"unesa","nama":"Universitas Negeri Surabaya (Unesa)","kota":"Surabaya","jenis":"PTN","qs_2026":"1401+","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":30000000,"satuan":"UKT per semester","catatan":"UKT tertinggi di S1 Kedokteran","sumber":"QS via Gebrak; UKT: GoodStats 2026","periode":"2026"},{"id":"unsoed","nama":"Universitas Jenderal Soedirman (Unsoed)","kota":"Purwokerto","jenis":"PTN","qs_2026":"1401+","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":4500000,"biaya_max":7500000,"satuan":"UKT kelompok tertinggi saintek per semester","catatan":"Kedokteran hingga Rp17 jt","sumber":"QS via Gebrak; UKT: BIC Januari 2026","periode":"2026"},{"id":"ulm","nama":"Universitas Lambung Mangkurat (ULM)","kota":"Banjarmasin","jenis":"PTN","qs_2026":"1401+","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"untan","nama":"Universitas Tanjungpura (Untan)","kota":"Pontianak","jenis":"PTN","qs_2026":"1401+","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"unsri","nama":"Universitas Sriwijaya (Unsri)","kota":"Palembang","jenis":"PTN","qs_2026":"1401+","peringkat_nasional":null,"prodi":["S1 Teknik Informatika","S1 Sistem Informasi","dan prodi lain"],"rumpun":["informatika","sistem_informasi"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"unri","nama":"Universitas Riau (Unri)","kota":"Pekanbaru","jenis":"PTN","qs_2026":"1401+","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"unram","nama":"Universitas Mataram (Unram)","kota":"Mataram","jenis":"PTN","qs_2026":"1401+","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"unsrat","nama":"Universitas Sam Ratulangi (Unsrat)","kota":"Manado","jenis":"PTN","qs_2026":"1401+","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"untad","nama":"Universitas Tadulako (Untad)","kota":"Palu","jenis":"PTN","qs_2026":"1401+","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"unnes","nama":"Universitas Negeri Semarang (UNNES)","kota":"Semarang","jenis":"PTN","qs_2026":"-","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":500000,"biaya_max":7500000,"satuan":"UKT per semester","catatan":"Non-kedokteran; Kedokteran hingga Rp22 jt","sumber":"unnes.ac.id","periode":"2026"},{"id":"unud","nama":"Universitas Udayana (Unud)","kota":"Denpasar","jenis":"PTN","qs_2026":"-","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"unila","nama":"Universitas Lampung (Unila)","kota":"Bandar Lampung","jenis":"PTN","qs_2026":"-","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"unej","nama":"Universitas Jember (Unej)","kota":"Jember","jenis":"PTN","qs_2026":"-","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"unmul","nama":"Universitas Mulawarman (Unmul)","kota":"Samarinda","jenis":"PTN","qs_2026":"-","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"unpatti","nama":"Universitas Pattimura (Unpatti)","kota":"Ambon","jenis":"PTN","qs_2026":"-","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"uncen","nama":"Universitas Cenderawasih (Uncen)","kota":"Jayapura","jenis":"PTN","qs_2026":"-","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"unj","nama":"Universitas Negeri Jakarta (UNJ)","kota":"Jakarta","jenis":"PTN","qs_2026":"-","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"untirta","nama":"Universitas Sultan Ageng Tirtayasa (Untirta)","kota":"Serang","jenis":"PTN","qs_2026":"-","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"unja","nama":"Universitas Jambi (Unja)","kota":"Jambi","jenis":"PTN","qs_2026":"-","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"unib","nama":"Universitas Bengkulu (Unib)","kota":"Bengkulu","jenis":"PTN","qs_2026":"-","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"uin_jakarta","nama":"UIN Syarif Hidayatullah Jakarta","kota":"Tangerang Selatan","jenis":"PTN","qs_2026":"-","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"uin_suka","nama":"UIN Sunan Kalijaga","kota":"Yogyakarta","jenis":"PTN","qs_2026":"-","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"upnvj","nama":"UPN Veteran Jakarta","kota":"Jakarta","jenis":"PTN","qs_2026":"-","peringkat_nasional":null,"prodi":["S1 Informatika","S1 Sistem Informasi","dan prodi lain"],"rumpun":["informatika","sistem_informasi"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"upnvy","nama":"UPN Veteran Yogyakarta","kota":"Yogyakarta","jenis":"PTN","qs_2026":"-","peringkat_nasional":null,"prodi":["S1 Informatika","S1 Sistem Informasi","dan prodi lain"],"rumpun":["informatika","sistem_informasi"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"upnvjt","nama":"UPN Veteran Jawa Timur","kota":"Surabaya","jenis":"PTN","qs_2026":"-","peringkat_nasional":null,"prodi":["S1 Informatika","S1 Sistem Informasi","S1 Sains Data","dan prodi lain"],"rumpun":["informatika","sistem_informasi","sains_data"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"itera","nama":"Institut Teknologi Sumatera (ITERA)","kota":"Lampung Selatan","jenis":"PTN","qs_2026":"-","peringkat_nasional":null,"prodi":["S1 Teknik Informatika","S1 Sains Data","dan prodi teknik lain"],"rumpun":["informatika","sains_data"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"itk","nama":"Institut Teknologi Kalimantan (ITK)","kota":"Balikpapan","jenis":"PTN","qs_2026":"-","peringkat_nasional":null,"prodi":["S1 Informatika","S1 Sistem Informasi","dan prodi teknik lain"],"rumpun":["informatika","sistem_informasi"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"polban","nama":"Politeknik Negeri Bandung (Polban)","kota":"Bandung","jenis":"PTN (vokasi)","qs_2026":"-","peringkat_nasional":null,"prodi":["D3/D4 Teknik Informatika","dan prodi vokasi lain"],"rumpun":["informatika"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"pnj","nama":"Politeknik Negeri Jakarta (PNJ)","kota":"Depok","jenis":"PTN (vokasi)","qs_2026":"-","peringkat_nasional":null,"prodi":["D3/D4 Teknik Informatika & Komputer","dan prodi vokasi lain"],"rumpun":["informatika"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"pens","nama":"Politeknik Elektronika Negeri Surabaya (PENS)","kota":"Surabaya","jenis":"PTN (vokasi)","qs_2026":"-","peringkat_nasional":null,"prodi":["D3/D4 Teknik Informatika","D4 Sains Data Terapan","dan prodi lain"],"rumpun":["informatika","sains_data"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"umy","nama":"Universitas Muhammadiyah Yogyakarta (UMY)","kota":"Yogyakarta","jenis":"PTS","qs_2026":"1201-1400","peringkat_nasional":16,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"trisakti","nama":"Universitas Trisakti","kota":"Jakarta","jenis":"PTS","qs_2026":"1201-1400","peringkat_nasional":17,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"atmajaya","nama":"Universitas Katolik Indonesia Atma Jaya","kota":"Jakarta","jenis":"PTS","qs_2026":"1401+","peringkat_nasional":20,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"uii","nama":"Universitas Islam Indonesia (UII)","kota":"Yogyakarta","jenis":"PTS","qs_2026":"1401+","peringkat_nasional":null,"prodi":["S1 Informatika","dan prodi lain"],"rumpun":["informatika"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"petra","nama":"Universitas Kristen Petra","kota":"Surabaya","jenis":"PTS","qs_2026":"1401+","peringkat_nasional":null,"prodi":["S1 Informatika","S1 Sistem Informasi Bisnis","S1 Sains Data","dan prodi lain"],"rumpun":["informatika","sistem_informasi","sains_data"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"uad","nama":"Universitas Ahmad Dahlan (UAD)","kota":"Yogyakarta","jenis":"PTS","qs_2026":"1401+","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"maranatha","nama":"Universitas Kristen Maranatha","kota":"Bandung","jenis":"PTS","qs_2026":"1401+","peringkat_nasional":null,"prodi":["S1 Teknik Informatika","S1 Sistem Informasi","dan prodi lain"],"rumpun":["informatika","sistem_informasi"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"umm","nama":"Universitas Muhammadiyah Malang (UMM)","kota":"Malang","jenis":"PTS","qs_2026":"1401+","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"unika_soegijapranata","nama":"Universitas Katolik Soegijapranata","kota":"Semarang","jenis":"PTS","qs_2026":"1401+","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"itenas","nama":"Institut Teknologi Nasional (Itenas)","kota":"Bandung","jenis":"PTS","qs_2026":"1201-1400 (QS 2025)","peringkat_nasional":null,"prodi":["S1 Informatika","S1 Sistem Informasi","dan prodi teknik lain"],"rumpun":["informatika","sistem_informasi"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"Binus Bandung (QS WUR 2025)","periode":"2025"},{"id":"untar","nama":"Universitas Tarumanagara (Untar)","kota":"Jakarta","jenis":"PTS","qs_2026":"-","peringkat_nasional":null,"prodi":["S1 Teknik Informatika","S1 Sistem Informasi","dan prodi lain"],"rumpun":["informatika","sistem_informasi"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"gunadarma","nama":"Universitas Gunadarma","kota":"Depok","jenis":"PTS","qs_2026":"-","peringkat_nasional":null,"prodi":["S1 Informatika","S1 Sistem Informasi","dan prodi lain"],"rumpun":["informatika","sistem_informasi"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"mercubuana","nama":"Universitas Mercu Buana","kota":"Jakarta","jenis":"PTS","qs_2026":"-","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"uph","nama":"Universitas Pelita Harapan (UPH)","kota":"Tangerang","jenis":"PTS","qs_2026":"-","peringkat_nasional":null,"prodi":["S1 Informatika","S1 Sistem Informasi","dan prodi lain"],"rumpun":["informatika","sistem_informasi"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"umn","nama":"Universitas Multimedia Nusantara (UMN)","kota":"Tangerang","jenis":"PTS","qs_2026":"-","peringkat_nasional":null,"prodi":["S1 Informatika","S1 Sistem Informasi","S1 DKV","dan prodi lain"],"rumpun":["informatika","sistem_informasi"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"prasmul","nama":"Universitas Prasetiya Mulya","kota":"Tangerang","jenis":"PTS","qs_2026":"-","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"president","nama":"President University","kota":"Bekasi","jenis":"PTS","qs_2026":"-","peringkat_nasional":null,"prodi":["S1 Informatika","S1 Sistem Informasi","dan prodi lain"],"rumpun":["informatika","sistem_informasi"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"ciputra","nama":"Universitas Ciputra","kota":"Surabaya","jenis":"PTS","qs_2026":"-","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"unpas","nama":"Universitas Pasundan (Unpas)","kota":"Bandung","jenis":"PTS","qs_2026":"-","peringkat_nasional":null,"prodi":["S1 Teknik Informatika","dan prodi lain"],"rumpun":["informatika"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"unisba","nama":"Universitas Islam Bandung (Unisba)","kota":"Bandung","jenis":"PTS","qs_2026":"-","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"widyatama","nama":"Universitas Widyatama","kota":"Bandung","jenis":"PTS","qs_2026":"-","peringkat_nasional":null,"prodi":["S1 Teknik Informatika","S1 Sistem Informasi","dan prodi lain"],"rumpun":["informatika","sistem_informasi"],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"ums","nama":"Universitas Muhammadiyah Surakarta (UMS)","kota":"Surakarta","jenis":"PTS","qs_2026":"-","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"},{"id":"esaunggul","nama":"Universitas Esa Unggul","kota":"Jakarta","jenis":"PTS","qs_2026":"-","peringkat_nasional":null,"prodi":["Berbagai program studi (cek PDDikti / situs resmi)"],"rumpun":[],"biaya_min":null,"biaya_max":null,"satuan":"UKT per semester","catatan":"","sumber":"QS WUR 2026 via Detik/Gebrak","periode":"2026"}],"harga_rumah":[{"wilayah":"Jabodetabek","tipe":"Rumah subsidi (FLPP)","harga_min":null,"harga_max":185000000,"keterangan":"Batas harga jual maksimal; KPR subsidi bunga 5% tetap; ada syarat penghasilan & belum punya rumah","sumber":"Kompas.com (Kepmen batas harga rumah subsidi)","periode":"2026"},{"wilayah":"Jawa (luar Jabodetabek) & Sumatera","tipe":"Rumah subsidi (FLPP)","harga_min":null,"harga_max":166000000,"keterangan":"Batas harga jual maksimal","sumber":"Kompas.com (Kepmen batas harga rumah subsidi)","periode":"2026"},{"wilayah":"Bekasi","tipe":"Rumah kecil (≤60 m²)","harga_min":null,"harga_max":null,"median":565000000,"keterangan":"Median listing; ukuran 61-90 m² median ±Rp935 jt","sumber":"Rumah123 via detikProperti","periode":"Agustus 2025"},{"wilayah":"Tangerang","tipe":"Rumah kecil (≤60 m²)","harga_min":null,"harga_max":null,"median":850000000,"keterangan":"Median listing; ukuran 61-90 m² median ±Rp1,4 M","sumber":"Rumah123 via detikProperti","periode":"Agustus 2025"},{"wilayah":"Bogor","tipe":"Rumah tipe 36 (baru, perumahan)","harga_min":350000000,"harga_max":550000000,"keterangan":"Kisaran listing; sumber artikel properti lokal, verifikasi ke portal","sumber":"Artikel properti Bogor 2026 (listing)","periode":"2026"},{"wilayah":"Tangerang / Bekasi / Depok / Bogor","tipe":"Rata-rata semua rumah per unit","harga_min":null,"harga_max":null,"median":null,"keterangan":"Rata-rata per unit: Tangerang ±Rp2,8 M; Bekasi ±Rp1,6 M; Depok ±Rp1,5 M; Bogor ±Rp1,3 M","sumber":"Leads Property Services Indonesia via detikProperti","periode":"Agustus 2025"},{"wilayah":"Jabodetabek","tipe":"Harga tanah rata-rata per m²","harga_min":null,"harga_max":null,"median":null,"keterangan":"Jakarta Rp16,2 jt/m²; Tangerang Rp14,8 jt/m²; Bekasi Rp11,0 jt/m²; Bogor-Depok Rp8,95 jt/m²","sumber":"Cushman & Wakefield MarketBeat via detikProperti","periode":"Akhir 2025"}],"harga_kendaraan":[{"nama":"Toyota Avanza","jenis":"Mobil","harga_min":244200000,"harga_max":282100000,"acuan":259200000,"catatan":"Acuan 1.3 E CVT","sumber":"oto.com (OTR Jakarta)","periode":"2026"},{"nama":"Mitsubishi Xpander","jenis":"Mobil","harga_min":274500000,"harga_max":348000000,"acuan":283500000,"catatan":"Acuan GLS CVT","sumber":"moladin.com (OTR Jakarta)","periode":"Juli 2026"},{"nama":"Suzuki Ertiga","jenis":"Mobil","harga_min":236100000,"harga_max":270700000,"acuan":236100000,"catatan":"Varian terendah","sumber":"oto.com (OTR Jakarta)","periode":"2026"},{"nama":"Honda Brio","jenis":"Mobil","harga_min":170400000,"harga_max":263200000,"acuan":170400000,"catatan":"Varian terendah","sumber":"zigwheels.co.id (OTR Jakarta)","periode":"2026"},{"nama":"Honda BeAT","jenis":"Motor","harga_min":18980000,"harga_max":20380000,"acuan":18980000,"catatan":"Varian terendah","sumber":"zigwheels.co.id / oto.com","periode":"2026"},{"nama":"Honda Vario 125","jenis":"Motor","harga_min":24810000,"harga_max":26799000,"acuan":24810000,"catatan":"Vario 125 CBS","sumber":"Price list AHM OTR DKI (via bernas.id)","periode":"2026"},{"nama":"Honda Scoopy","jenis":"Motor","harga_min":24200000,"harga_max":25005000,"acuan":24200000,"catatan":"Scoopy Fashion","sumber":"Wahana Honda Jabodetabek","periode":"Oktober 2026"},{"nama":"Yamaha NMAX","jenis":"Motor","harga_min":31620000,"harga_max":33180000,"acuan":31620000,"catatan":"Varian terendah","sumber":"oto.com (OTR Jakarta)","periode":"2026"},{"nama":"Daihatsu Ayla","jenis":"Mobil","harga_min":141200000,"harga_max":190200000,"acuan":153100000,"catatan":"LCGC; acuan 1.0 X MT","sumber":"Moladin (Agustus 2026); Detik Oto (Januari 2026)","periode":"2026"},{"nama":"Daihatsu Sigra","jenis":"Mobil","harga_min":143200000,"harga_max":183000000,"acuan":161500000,"catatan":"LCGC 7 penumpang; acuan 1.2 X MT","sumber":"Detik Oto (Januari 2026)","periode":"2026"},{"nama":"Toyota Agya","jenis":"Mobil","harga_min":174300000,"harga_max":201700000,"acuan":182000000,"catatan":"Acuan 1.2 G M/T","sumber":"Moladin (Agustus 2026)","periode":"2026"},{"nama":"Toyota Calya","jenis":"Mobil","harga_min":170700000,"harga_max":193700000,"acuan":179300000,"catatan":"LCGC 7 penumpang; acuan G M/T","sumber":"Moladin (Agustus 2026)","periode":"2026"},{"nama":"Honda Brio Satya","jenis":"Mobil","harga_min":170400000,"harga_max":206700000,"acuan":185500000,"catatan":"Acuan E M/T","sumber":"Moladin (Agustus 2026)","periode":"2026"},{"nama":"Honda Brio RS","jenis":"Mobil","harga_min":264100000,"harga_max":274100000,"acuan":264100000,"catatan":"","sumber":"Zigwheels (2026)","periode":"2026"},{"nama":"Toyota Veloz","jenis":"Mobil","harga_min":297200000,"harga_max":344900000,"acuan":313200000,"catatan":"Acuan CVT","sumber":"Zigwheels (2026)","periode":"2026"},{"nama":"Toyota Kijang Innova (diesel)","jenis":"Mobil","harga_min":417800000,"harga_max":438700000,"acuan":417800000,"catatan":"2.4 G","sumber":"Zigwheels (2026)","periode":"2026"},{"nama":"Honda PCX 160","jenis":"Motor","harga_min":34350000,"harga_max":40950000,"acuan":34350000,"catatan":"CBS","sumber":"Zigwheels (Juni 2026)","periode":"2026"},{"nama":"Honda Vario 160","jenis":"Motor","harga_min":28375000,"harga_max":31256000,"acuan":28375000,"catatan":"CBS Grande","sumber":"Detik Oto (Mei 2026)","periode":"2026"},{"nama":"Honda Stylo 160","jenis":"Motor","harga_min":29170000,"harga_max":32160000,"acuan":29170000,"catatan":"","sumber":"oto.com (Agustus 2026)","periode":"2026"},{"nama":"Yamaha Aerox","jenis":"Motor","harga_min":28880000,"harga_max":41730000,"acuan":30200000,"catatan":"Acuan Aerox Alpha Standard","sumber":"Detik Oto (Mei 2026)","periode":"2026"},{"nama":"Yamaha Fazzio","jenis":"Motor","harga_min":23050000,"harga_max":23050000,"acuan":23050000,"catatan":"","sumber":"oto.com (Agustus 2026)","periode":"2026"},{"nama":"Yamaha Fino 125","jenis":"Motor","harga_min":20150000,"harga_max":20150000,"acuan":20150000,"catatan":"","sumber":"oto.com (Agustus 2026)","periode":"2026"},{"nama":"Yamaha Jupiter Z1","jenis":"Motor","harga_min":19790000,"harga_max":19790000,"acuan":19790000,"catatan":"Motor bebek","sumber":"oto.com (Agustus 2026)","periode":"2026"}],"biaya_pendidikan":[{"program":"Universitas Terbuka - S1 (umum)","jenis":"Kuliah jarak jauh (cocok sambil bekerja)","biaya_min":1300000,"biaya_max":1300000,"satuan":"per semester","durasi":"±8 semester","catatan":"Registrasi mahasiswa baru Rp100 rb","sumber":"Kompas.com Edu; laman admisi UT","periode":"2026"},{"program":"Universitas Terbuka - S1 Sistem Informasi","jenis":"Kuliah jarak jauh","biaya_min":1800000,"biaya_max":1800000,"satuan":"per semester","durasi":"±8 semester","catatan":"","sumber":"Kompas.com Edu","periode":"2026"},{"program":"Universitas Terbuka - S1 Sains Data","jenis":"Kuliah jarak jauh","biaya_min":1900000,"biaya_max":1900000,"satuan":"per semester","durasi":"±8 semester","catatan":"","sumber":"Kompas.com Edu","periode":"2026"},{"program":"Universitas Terbuka - Diploma","jenis":"Kuliah jarak jauh","biaya_min":1150000,"biaya_max":1150000,"satuan":"per semester","durasi":"±6 semester (D3)","catatan":"","sumber":"Kompas.com Edu","periode":"2026"},{"program":"UKT Universitas Indonesia - S1","jenis":"PTN reguler","biaya_min":500000,"biaya_max":16900000,"satuan":"per semester","durasi":"8 semester","catatan":"Tergantung golongan UKT (kemampuan ekonomi) dan prodi","sumber":"Kontan (rilis UKT UI 2026)","periode":"2026"},{"program":"UKT Universitas Negeri Semarang - S1","jenis":"PTN reguler","biaya_min":500000,"biaya_max":8250000,"satuan":"per semester","durasi":"8 semester","catatan":"Golongan I-VII","sumber":"Kompas.com Edu","periode":"2026"},{"program":"Bootcamp Data Analyst (umum)","jenis":"Bootcamp","biaya_min":2000000,"biaya_max":40000000,"satuan":"per program","durasi":"1-6 bulan","catatan":"Kelas menengah umumnya Rp7-22 jt","sumber":"tempatbelajar.id","periode":"2026"},{"program":"Bootcamp Data Analyst offline Jakarta (Dibimbing)","jenis":"Bootcamp","biaya_min":25499000,"biaya_max":25499000,"satuan":"per program","durasi":"beberapa bulan","catatan":"Contoh harga program premium dengan cicilan","sumber":"dibimbing.id","periode":"2026"},{"program":"Google Data Analytics Professional Certificate (Coursera)","jenis":"Kursus online bersertifikat","biaya_min":null,"biaya_max":null,"satuan":"±USD 49 per bulan","durasi":"beberapa bulan, mandiri","catatan":"Tersedia dalam Bahasa Indonesia","sumber":"tempatbelajar.id (rangkuman bootcamp 2026)","periode":"2026"},{"program":"Sertifikasi BNSP Data Analyst","jenis":"Sertifikasi kompetensi","biaya_min":800000,"biaya_max":2500000,"satuan":"per sertifikasi","durasi":"pembekalan ±5-7 hari","catatan":"Paket pelatihan + sertifikasi di penyedia lain Rp6-9 jt","sumber":"LSP Ditekindo; dilatih.co","periode":"2026"},{"program":"Sertifikasi BNSP (skema umum)","jenis":"Sertifikasi kompetensi","biaya_min":800000,"biaya_max":1500000,"satuan":"per sertifikasi","durasi":"bervariasi","catatan":"Bervariasi per skema dan LSP","sumber":"LSP Ditekindo","periode":"2026"},{"program":"UKT UI - S1 Ilmu Komputer / Sistem Informasi","jenis":"PTN","biaya_min":500000,"biaya_max":17500000,"satuan":"per semester","durasi":"8 semester","catatan":"Jalur SNBP/SNBT; sesuai golongan ekonomi","sumber":"Kep. Rektor UI 297/SK/R/UI/2026 via Gebrak","periode":"2026"},{"program":"UKT ITB - STEI dan fakultas teknik","jenis":"PTN","biaya_min":500000,"biaya_max":12500000,"satuan":"per semester","durasi":"8 semester","catatan":"SBM hingga Rp14,5 jt","sumber":"Mamikos (UKT SNBT ITB 2026); Gebrak","periode":"2026"},{"program":"UKT UGM - bidang rekayasa (perangkat lunak, elektro, sipil)","jenis":"PTN","biaya_min":0,"biaya_max":13300000,"satuan":"per semester","durasi":"8 semester","catatan":"UKT 1-2 subsidi penuh","sumber":"Mamikos (UKT UGM 2026)","periode":"2026"},{"program":"UKT Unpad - semua prodi S1","jenis":"PTN","biaya_min":500000,"biaya_max":15000000,"satuan":"per semester","durasi":"8 semester","catatan":"Teknik Informatika termasuk tertinggi","sumber":"Mamikos (Kep. Rektor Unpad 110/2025)","periode":"2026"},{"program":"UKT Unhas - semua prodi S1","jenis":"PTN","biaya_min":500000,"biaya_max":25000000,"satuan":"per semester","durasi":"8 semester","catatan":"Berlaku semua jalur; tertinggi di Kedokteran","sumber":"Mamikos (UKT Unhas 2026)","periode":"2026"},{"program":"UKT USU - S1 Pendidikan Dokter (kelompok tertinggi)","jenis":"PTN","biaya_min":null,"biaya_max":32500000,"satuan":"per semester","durasi":"8 semester + profesi","catatan":"Jalur mandiri reguler","sumber":"GoodStats (2026)","periode":"2026"},{"program":"UKT UNY - S1 Kedokteran (tertinggi)","jenis":"PTN","biaya_min":null,"biaya_max":30000000,"satuan":"per semester","durasi":"8 semester + profesi","catatan":"","sumber":"GoodStats (2026)","periode":"2026"},{"program":"UKT Unesa - S1 Kedokteran (kelompok 8)","jenis":"PTN","biaya_min":null,"biaya_max":30000000,"satuan":"per semester","durasi":"8 semester + profesi","catatan":"","sumber":"GoodStats (2026)","periode":"2026"},{"program":"UKT Unair - S1 Kedokteran (SNBP/SNBT)","jenis":"PTN","biaya_min":500000,"biaya_max":25000000,"satuan":"per semester","durasi":"8 semester + profesi","catatan":"","sumber":"Mamikos (UKT FK 2026)","periode":"2026"},{"program":"UKT UNNES - prodi non-kedokteran","jenis":"PTN","biaya_min":500000,"biaya_max":7500000,"satuan":"per semester","durasi":"8 semester","catatan":"Kedokteran hingga Rp22 jt","sumber":"unnes.ac.id","periode":"2026"},{"program":"UKT Unsoed - saintek (kelompok tertinggi)","jenis":"PTN","biaya_min":4500000,"biaya_max":7500000,"satuan":"per semester (kelompok tertinggi)","durasi":"8 semester","catatan":"Soshum Rp3-5 jt; Kedokteran hingga Rp17 jt","sumber":"Info Pendidikan BIC (Januari 2026)","periode":"2026"},{"program":"UKT UNS - semua prodi","jenis":"PTN","biaya_min":475000,"biaya_max":30000000,"satuan":"per semester","durasi":"8 semester","catatan":"Data 2024","sumber":"Tirto (Kep. Rektor UNS 416/2024)","periode":"2024"},{"program":"UKT Universitas Brawijaya - semua prodi","jenis":"PTN","biaya_min":500000,"biaya_max":33500000,"satuan":"per semester","durasi":"8 semester","catatan":"Data 2024","sumber":"Tirto","periode":"2024"},{"program":"UKT Undip - semua prodi","jenis":"PTN","biaya_min":500000,"biaya_max":22000000,"satuan":"per semester","durasi":"8 semester","catatan":"Data 2024; batas atas umum non-kedokteran ±Rp9,5 jt (2026)","sumber":"Tirto; Mamikos (Januari 2026)","periode":"2024-2026"},{"program":"UKT IPB - program sarjana","jenis":"PTN","biaya_min":2400000,"biaya_max":12000000,"satuan":"per semester","durasi":"8 semester","catatan":"Kisaran umum","sumber":"Sevima; Mamikos","periode":"2026"},{"program":"UKT ITS - program sarjana","jenis":"PTN","biaya_min":500000,"biaya_max":7500000,"satuan":"per semester","durasi":"8 semester","catatan":"Kisaran umum; verifikasi di its.ac.id","sumber":"Sevima","periode":"kisaran umum"},{"program":"Telkom University - S1 Informatika (BPP)","jenis":"PTS","biaya_min":12000000,"biaya_max":13500000,"satuan":"BPP per semester","durasi":"8 semester","catatan":"Ditambah uang pangkal UP3/SDP2 sekali bayar","sumber":"hive.telkomuniversity.ac.id; Tirto","periode":"2025-2026"},{"program":"Akademi Militer / Akademi Kepolisian","jenis":"Ikatan dinas","biaya_min":0,"biaya_max":0,"satuan":"biaya pendidikan","durasi":"±4 tahun","catatan":"Biaya pendidikan ditanggung negara (ikatan dinas); seleksi sangat ketat","sumber":"Ketentuan umum pendidikan ikatan dinas TNI-Polri","periode":"2026"}],"biaya_hidup":{"meta":{"definisi":"Nilai konsumsi rata-rata per rumah tangga per bulan (bukan per orang)","sumber":"BPS - Survei Biaya Hidup (SBH) 2022, dirilis 12 Desember 2023 (via indonesiabaik.id, Kompas, CNBC Indonesia)","periode":"2022","penyesuaian_inflasi_ke_2025":"Faktor ±1,073 (inflasi 2023 2,61%, 2024 1,57%, 2025 2,92%). Estimasi kasar; bukan angka resmi BPS."},"data":[{"kota":"DKI Jakarta","per_rumah_tangga":14884110,"estimasi_2025":15965326},{"kota":"Kota Bekasi","per_rumah_tangga":14335418,"estimasi_2025":15376776},{"kota":"Kota Surabaya","per_rumah_tangga":13357752,"estimasi_2025":14328090},{"kota":"Kota Depok","per_rumah_tangga":12353767,"estimasi_2025":13251173},{"kota":"Kota Makassar","per_rumah_tangga":11504942,"estimasi_2025":12340687},{"kota":"Kota Tangerang","per_rumah_tangga":10964940,"estimasi_2025":11761458},{"kota":"Kota Bogor","per_rumah_tangga":10731158,"estimasi_2025":11510694},{"kota":"Kota Kendari","per_rumah_tangga":10233554,"estimasi_2025":10976943},{"kota":"Kota Batam","per_rumah_tangga":10000000,"pembulatan":true,"estimasi_2025":10726423},{"kota":"Kota Balikpapan","per_rumah_tangga":9800000,"pembulatan":true,"estimasi_2025":10511894},{"kota":"Cilacap (terendah dalam survei)","per_rumah_tangga":5400000,"pembulatan":true,"estimasi_2025":5792268}]},"inflasi":{"meta":{"sumber":"BPS (inflasi Desember year-on-year); 2025 via Kontan/Bisnis.com 5 Jan 2026; Agustus 2026 via Databoks","sasaran_bi":"Sasaran inflasi Bank Indonesia 2,5% ± 1%","asumsi_simulasi_myCITA":"3,2% per tahun (mendekati inflasi terkini); dapat diubah"},"data":[{"periode":"2020","inflasi_yoy_persen":1.68},{"periode":"2021","inflasi_yoy_persen":1.87},{"periode":"2022","inflasi_yoy_persen":5.51},{"periode":"2023","inflasi_yoy_persen":2.61},{"periode":"2024","inflasi_yoy_persen":1.57},{"periode":"2025","inflasi_yoy_persen":2.92},{"periode":"Agustus 2026 (terkini)","inflasi_yoy_persen":3.19}]},"ump_2026":{"meta":{"sumber":"Keputusan gubernur masing-masing provinsi; rekap FSP KEP SPSI dan Kompas.com (Januari 2026), dilengkapi rekap FMIPA UNESA untuk Gorontalo, Maluku, Maluku Utara","periode":"Berlaku 1 Januari 2026","catatan":"Beberapa rekap berbeda tipis (mis. NTT tercatat Rp2.630.162 di satu sumber dan Rp2.455.898 di sumber lain). Verifikasi ke SK Gubernur sebelum dipakai resmi."},"data":[{"provinsi":"DKI Jakarta","ump":5729876},{"provinsi":"Papua Selatan","ump":4508850},{"provinsi":"Papua Pegunungan","ump":4508714},{"provinsi":"Papua","ump":4436283},{"provinsi":"Papua Tengah","ump":4295848},{"provinsi":"Kepulauan Bangka Belitung","ump":4035000},{"provinsi":"Sulawesi Utara","ump":4002630},{"provinsi":"Sumatera Selatan","ump":3942963},{"provinsi":"Aceh","ump":3932552},{"provinsi":"Sulawesi Selatan","ump":3921088},{"provinsi":"Kepulauan Riau","ump":3879520},{"provinsi":"Papua Barat","ump":3840947},{"provinsi":"Riau","ump":3780495},{"provinsi":"Kalimantan Utara","ump":3775243},{"provinsi":"Papua Barat Daya","ump":3766000},{"provinsi":"Kalimantan Timur","ump":3762431},{"provinsi":"Kalimantan Tengah","ump":3686138},{"provinsi":"Kalimantan Selatan","ump":3686138},{"provinsi":"Maluku Utara","ump":3552840},{"provinsi":"Jambi","ump":3471497},{"provinsi":"Gorontalo","ump":3405144},{"provinsi":"Maluku","ump":3334499},{"provinsi":"Sulawesi Barat","ump":3315935},{"provinsi":"Sulawesi Tenggara","ump":3306496},{"provinsi":"Sumatera Utara","ump":3228949},{"provinsi":"Bali","ump":3207459},{"provinsi":"Sumatera Barat","ump":3182955},{"provinsi":"Sulawesi Tengah","ump":3179565},{"provinsi":"Banten","ump":3100881},{"provinsi":"Kalimantan Barat","ump":3054552},{"provinsi":"Lampung","ump":3047734},{"provinsi":"Bengkulu","ump":2827250},{"provinsi":"Nusa Tenggara Barat","ump":2673861},{"provinsi":"Nusa Tenggara Timur","ump":2630162},{"provinsi":"Jawa Timur","ump":2446880},{"provinsi":"DI Yogyakarta","ump":2417495},{"provinsi":"Jawa Tengah","ump":2327386},{"provinsi":"Jawa Barat","ump":2317601}]},"umk_2026":{"meta":{"sumber":"Kementerian Ketenagakerjaan via Tempo (26-27 Desember 2025); Kepgub Jawa Barat No. 561.7/Kep.862-Kesra/2025; CNN Indonesia","periode":"Berlaku 1 Januari 2026"},"data":[{"wilayah":"Kota Bekasi","provinsi":"Jawa Barat","umk":5999443},{"wilayah":"Kabupaten Bekasi","provinsi":"Jawa Barat","umk":5938885},{"wilayah":"Kabupaten Karawang","provinsi":"Jawa Barat","umk":5886853},{"wilayah":"Kota Depok","provinsi":"Jawa Barat","umk":5522662},{"wilayah":"Kota Cilegon","provinsi":"Banten","umk":5469922},{"wilayah":"Kota Bogor","provinsi":"Jawa Barat","umk":5437203},{"wilayah":"Kota Tangerang","provinsi":"Banten","umk":5399405},{"wilayah":"Kota Surabaya","provinsi":"Jawa Timur","umk":5288796},{"wilayah":"Kota Tangerang Selatan","provinsi":"Banten","umk":5247870},{"wilayah":"Kabupaten Tangerang","provinsi":"Banten","umk":5210377},{"wilayah":"Kabupaten Bogor","provinsi":"Jawa Barat","umk":5161769},{"wilayah":"Kabupaten Purwakarta","provinsi":"Jawa Barat","umk":5052856},{"wilayah":"Kota Bandung","provinsi":"Jawa Barat","umk":4737678},{"wilayah":"Kota Serang","provinsi":"Banten","umk":4665927},{"wilayah":"Kota Cimahi","provinsi":"Jawa Barat","umk":4090568}]},"bisnis":[{"id":"laundry_rumahan","omzet_min":6000000,"omzet_max":13500000,"margin_min":0.3,"margin_max":0.5,"kata_minat":["jasa","pelayanan","rumahan","usaha kecil","laundry"],"dasar_angka":"Omzet dihitung dari asumsi sumber: Rp10-15 rb/kg × 20-30 kg/hari × 30 hari; margin 30-50% dari cuciqu.com","usaha":"Laundry kiloan rumahan","bidang":"Jasa","modal_min":7000000,"modal_max":18000000,"biaya_operasional_bulanan":"Rp3-4,5 jt (tanpa sewa tempat)","model_pendapatan":"Tarif per kg (umumnya Rp6-15 rb/kg tergantung lokasi)","estimasi_balik_modal":"6-14 bulan","margin":"30-50% laba bersih (operasi sehat)","skill_dibutuhkan":["pelayanan pelanggan","manajemen operasional","pembukuan sederhana"],"risiko":["persaingan lokal","kerusakan mesin","ketergantungan cuaca jika tanpa pengering"],"sumber":"VIVA Tangerang; cuciqu.com (2026); ottodigital.id","periode":"2025-2026"},{"id":"laundry_profesional_kecil","omzet_min":12000000,"omzet_max":24000000,"margin_min":0.2,"margin_max":0.35,"kata_minat":["jasa","pelayanan","laundry","mengelola karyawan"],"dasar_angka":"Omzet dan margin langsung dari sumber (laundry.matik.id 2026)","usaha":"Laundry kiloan skala kecil profesional","bidang":"Jasa","modal_min":20000000,"modal_max":40000000,"biaya_operasional_bulanan":"±Rp8-10 jt (bahan, gaji, sewa, listrik)","model_pendapatan":"Kapasitas 50-100 kg/hari, omzet ±Rp12-24 jt/bulan","estimasi_balik_modal":"8-18 bulan (patokan aman)","margin":"20-35% laba bersih","skill_dibutuhkan":["manajemen karyawan","pemasaran lokal","pengendalian biaya"],"risiko":["sewa tempat","fluktuasi pelanggan","biaya listrik & air"],"sumber":"laundry.matik.id - Analisa Usaha Laundry Kiloan 2026","periode":"2026"},{"id":"bengkel_rumahan","omzet_min":3900000,"omzet_max":10400000,"margin_min":0.25,"margin_max":0.4,"kata_minat":["otomotif","mesin","motor","bengkel","memperbaiki"],"dasar_angka":"ASUMSI myCITA: 3-4 motor/hari × Rp50-100 rb (tarif servis ringan dari sumber) × 26 hari; margin 25-40% asumsi karena belum ada data terverifikasi","usaha":"Bengkel motor rumahan","bidang":"Otomotif","modal_min":5000000,"modal_max":15000000,"biaya_operasional_bulanan":"Kecil (tanpa sewa); stok oli/sparepart fast moving","model_pendapatan":"Jasa servis ringan (±Rp50-150 rb/motor) + penjualan sparepart","estimasi_balik_modal":"8-12 bulan","margin":"Bervariasi; belum ada data margin terverifikasi","skill_dibutuhkan":["keterampilan mekanik","diagnosis kerusakan","pelayanan pelanggan"],"risiko":["lokasi kurang strategis","persaingan bengkel sekitar","modal stok sparepart"],"sumber":"setupbengkel.com; Liputan6 (2025); OJC Auto Course","periode":"2025-2026"},{"id":"bengkel_kecil_ruko","omzet_min":9000000,"omzet_max":30000000,"margin_min":0.2,"margin_max":0.35,"kata_minat":["otomotif","mesin","motor","bengkel","memperbaiki","mengelola karyawan"],"dasar_angka":"Omzet dari rentang yang dilaporkan sumber; margin 20-35% ASUMSI myCITA","usaha":"Bengkel motor kecil-menengah (ruko)","bidang":"Otomotif","modal_min":25000000,"modal_max":70000000,"biaya_operasional_bulanan":"Sewa Rp10-30 jt/tahun, gaji mekanik ±Rp2-5 jt/orang, listrik Rp0,5-1,5 jt","model_pendapatan":"10-15 motor/hari; omzet dilaporkan bervariasi ±Rp9-30 jt/bulan tergantung lokasi & layanan","estimasi_balik_modal":"6-12 bulan","margin":"Bervariasi","skill_dibutuhkan":["keterampilan mekanik","manajemen stok sparepart","manajemen karyawan","pemasaran"],"risiko":["sewa dan izin","modal stok","ketergantungan pada mekanik terampil"],"sumber":"foliopos.com (2026); setupbengkel.com; bikincabang.id; liputan6.com","periode":"2025-2026"},{"id":"toko_kelontong_rumahan","usaha":"Toko kelontong rumahan","bidang":"Perdagangan","modal_min":2000000,"modal_max":5000000,"omzet_min":3000000,"omzet_max":6000000,"margin_min":0.15,"margin_max":0.25,"kata_minat":["dagang","jualan","kelontong","sembako","rumahan","usaha kecil"],"skill_dibutuhkan":["pencatatan stok & kas","negosiasi dengan pemasok","pelayanan pelanggan"],"risiko":["persaingan minimarket","barang kedaluwarsa","kasbon pelanggan"],"biaya_operasional_bulanan":"Listrik dan kemasan; tanpa sewa jika di rumah","model_pendapatan":"Selisih harga grosir dan eceran","estimasi_balik_modal":"-","margin":"15-25%","dasar_angka":"Modal & omzet dari CNBC Indonesia (Januari 2026); margin 15-25% dari UKM Indonesia","sumber":"CNBC Indonesia; UKM Indonesia","periode":"2026"},{"id":"warung_sembako","usaha":"Warung sembako / warung Madura","bidang":"Perdagangan","modal_min":13000000,"modal_max":21500000,"omzet_min":20000000,"omzet_max":36000000,"margin_min":0.15,"margin_max":0.25,"kata_minat":["dagang","jualan","kelontong","sembako","warung","usaha kecil"],"skill_dibutuhkan":["pencatatan stok & kas","negosiasi dengan pemasok","jam buka panjang / shift"],"risiko":["persaingan ketat","modal stok besar","kelelahan jika buka 24 jam"],"biaya_operasional_bulanan":"Sewa tempat, listrik, kulkas","model_pendapatan":"Volume tinggi dengan margin tipis","estimasi_balik_modal":"±3-5 bulan","margin":"15-25%","dasar_angka":"Modal Rp13-20 jt (CNBC Indonesia, Agustus 2026) dan Rp21,5 jt (UKM Indonesia); omzet contoh Rp36 jt/bulan; omzet minimum ASUMSI myCITA","sumber":"CNBC Indonesia; UKM Indonesia","periode":"2026"},{"id":"warkop","usaha":"Warung kopi (warkop / warmindo)","bidang":"Makanan & Minuman","modal_min":5000000,"modal_max":10000000,"omzet_min":9000000,"omzet_max":15000000,"margin_min":0.3,"margin_max":0.4,"kata_minat":["kopi","minuman","makanan","nongkrong","kuliner","warkop"],"skill_dibutuhkan":["meracik kopi & mi","pelayanan pelanggan","pencatatan kas"],"risiko":["lokasi kurang ramai","persaingan kafe","jam kerja panjang"],"biaya_operasional_bulanan":"Sewa 3x4 m Rp2,5-4 jt/tahun, bahan baku, listrik","model_pendapatan":"Penjualan kopi, mi instan, gorengan","estimasi_balik_modal":"2-3 bulan (jika pendapatan harian ≥Rp300 rb)","margin":"30-40%","dasar_angka":"Modal contoh Rp10 jt (OCBC); pendapatan harian ≥Rp300 rb dan balik modal 2-3 bulan (Metro TV, 2026); omzet maksimum dan margin ASUMSI myCITA","sumber":"OCBC; Metro TV","periode":"2026"},{"id":"kopi_keliling","usaha":"Kopi keliling","bidang":"Makanan & Minuman","modal_min":1000000,"modal_max":2500000,"omzet_min":6000000,"omzet_max":12000000,"margin_min":0.4,"margin_max":0.55,"kata_minat":["kopi","minuman","keliling","kuliner"],"skill_dibutuhkan":["meracik kopi","pemasaran lokal","manajemen waktu"],"risiko":["cuaca","izin berjualan","persaingan"],"biaya_operasional_bulanan":"Bahan baku harian, bensin","model_pendapatan":"Kopi Rp5-15 rb per gelas","estimasi_balik_modal":"-","margin":"40-55%","dasar_angka":"Modal Rp1-2,5 jt dan omzet Rp6-12 jt/bulan (Medcom, September 2026); margin dari contoh laba Rp300-400 rb per Rp700 rb omzet harian","sumber":"Medcom","periode":"2026"},{"id":"es_teh_jumbo","usaha":"Es teh jumbo / minuman kekinian","bidang":"Makanan & Minuman","modal_min":1000000,"modal_max":20000000,"omzet_min":6000000,"omzet_max":15000000,"margin_min":0.35,"margin_max":0.5,"kata_minat":["minuman","es teh","kuliner","kekinian"],"skill_dibutuhkan":["meracik minuman","pemilihan lokasi","pencatatan kas"],"risiko":["tren cepat berubah","persaingan gerai","musim hujan"],"biaya_operasional_bulanan":"Bahan baku, sewa lapak","model_pendapatan":"Penjualan per cup","estimasi_balik_modal":"1-3 bulan (klaim franchisor)","margin":"35-50%","dasar_angka":"Paket franchise Rp1-9 jt, gerai lengkap ±Rp20 jt, laba klaim franchisor Rp3,3-7,7 jt/bulan (Detik; OCBC); usaha rumahan laba ±Rp2,3 jt (UNP Kediri, 2026); omzet & margin disetarakan ASUMSI myCITA","sumber":"Detik Finance; OCBC; UNP Kediri","periode":"2026"},{"id":"warung_makan","usaha":"Warung makan (warteg)","bidang":"Makanan & Minuman","modal_min":15000000,"modal_max":22000000,"omzet_min":20000000,"omzet_max":27000000,"margin_min":0.15,"margin_max":0.25,"kata_minat":["masak","makanan","kuliner","warteg","warung"],"skill_dibutuhkan":["memasak","manajemen bahan baku","kebersihan makanan"],"risiko":["bahan baku naik","makanan tidak habis","persaingan"],"biaya_operasional_bulanan":"Bahan baku ±Rp500 rb/hari, sewa, gas","model_pendapatan":"60 porsi × Rp15 rb per hari","estimasi_balik_modal":"±4-5 bulan","margin":"15-25%","dasar_angka":"Modal ±Rp22 jt, omzet ±Rp27 jt/bulan, laba ±Rp5 jt bulan pertama (Amartha, Juni 2026); batas bawah ASUMSI myCITA","sumber":"Amartha","periode":"2026"},{"id":"gorengan","usaha":"Jualan gorengan","bidang":"Makanan & Minuman","modal_min":1000000,"modal_max":2000000,"omzet_min":9000000,"omzet_max":20000000,"margin_min":0.2,"margin_max":0.25,"kata_minat":["masak","makanan","gorengan","jajanan","kuliner"],"skill_dibutuhkan":["memasak","manajemen bahan baku"],"risiko":["minyak goreng naik","cuaca","persaingan"],"biaya_operasional_bulanan":"Minyak, tepung, gas","model_pendapatan":"Rp1-2 rb per biji, 300-500 biji per hari","estimasi_balik_modal":"-","margin":"20-25%","dasar_angka":"Omzet Rp300 rb-1 jt per hari dan laba bersih ±25% (Kontan Momsmoney, 2026); omzet maksimum dibatasi ASUMSI myCITA","sumber":"Kontan Momsmoney","periode":"2026"},{"id":"frozen_food","usaha":"Frozen food rumahan","bidang":"Makanan & Minuman","modal_min":1500000,"modal_max":3000000,"omzet_min":2000000,"omzet_max":5000000,"margin_min":0.3,"margin_max":0.45,"kata_minat":["masak","makanan","frozen food","rumahan","jualan online"],"skill_dibutuhkan":["memasak","pengemasan","jualan online"],"risiko":["listrik freezer","produk rusak","persaingan"],"biaya_operasional_bulanan":"Bahan baku, kemasan, listrik freezer","model_pendapatan":"Rp15-35 rb per pack, 100-200 pack per bulan","estimasi_balik_modal":"2-4 bulan","margin":"30-45%","dasar_angka":"Modal Rp1,5-3 jt, laba Rp700 rb-1,5 jt, balik modal 2-4 bulan (Itera Blog 2026); margin 20-50% (Kontan Momsmoney)","sumber":"Itera; Kontan Momsmoney","periode":"2026"},{"id":"konter_pulsa","usaha":"Konter pulsa, paket data & token listrik","bidang":"Jasa & Digital","modal_min":2000000,"modal_max":5000000,"omzet_min":10000000,"omzet_max":30000000,"margin_min":0.05,"margin_max":0.1,"kata_minat":["pulsa","paket data","digital","jualan","usaha kecil"],"skill_dibutuhkan":["pencatatan transaksi","pelayanan pelanggan"],"risiko":["margin tipis","saldo deposit tertahan","persaingan aplikasi"],"biaya_operasional_bulanan":"Deposit saldo, listrik","model_pendapatan":"Keuntungan 5-10% per transaksi","estimasi_balik_modal":"-","margin":"5-10%","dasar_angka":"Margin 5-10% per transaksi (Kontan Momsmoney, 2026); modal dan omzet ASUMSI myCITA","sumber":"Kontan Momsmoney","periode":"2026"},{"id":"agen_brilink","usaha":"Agen BRILink / agen laku pandai","bidang":"Jasa & Digital","modal_min":6000000,"modal_max":10000000,"omzet_min":2000000,"omzet_max":5000000,"margin_min":0.8,"margin_max":0.9,"kata_minat":["perbankan","agen","transfer","pulsa","brilink","jasa"],"skill_dibutuhkan":["ketelitian transaksi","pelayanan pelanggan","pengelolaan saldo"],"risiko":["salah transfer","keamanan uang tunai","target transaksi bulanan"],"biaya_operasional_bulanan":"Listrik, kertas struk","model_pendapatan":"Biaya admin Rp5-10 rb per transaksi","estimasi_balik_modal":"Modal tetap utuh sebagai saldo","margin":"80-90%","dasar_angka":"Modal minimal Rp6 jt (Rp3 jt jaminan + saldo) dan keuntungan ±Rp3 jt/bulan pada 20 transaksi/hari (IDX Channel); agen melaporkan Rp3-5 jt/bulan (Investortrust); 'omzet' = pendapatan fee; margin ASUMSI myCITA","sumber":"IDX Channel; Investortrust","periode":"2026"},{"id":"warung_sayur","usaha":"Warung / jualan sayur","bidang":"Perdagangan Pangan","modal_min":1000000,"modal_max":3000000,"omzet_min":6000000,"omzet_max":10500000,"margin_min":0.2,"margin_max":0.3,"kata_minat":["sayur","dagang","pangan","pasar","jualan"],"skill_dibutuhkan":["belanja di pasar induk","menjaga kesegaran","pelayanan pelanggan"],"risiko":["sayur cepat layu","harga fluktuatif","bangun subuh"],"biaya_operasional_bulanan":"Belanja harian, kemasan","model_pendapatan":"Selisih harga pasar induk dan eceran","estimasi_balik_modal":"-","margin":"20-30%","dasar_angka":"Modal Rp1-3 jt dan contoh 50 paket × Rp7 rb per hari (Smartlegal); margin dan batas bawah omzet ASUMSI myCITA","sumber":"Smartlegal","periode":"2026"},{"id":"lapak_buah","usaha":"Lapak buah segar","bidang":"Perdagangan Pangan","modal_min":3000000,"modal_max":8000000,"omzet_min":6000000,"omzet_max":15000000,"margin_min":0.2,"margin_max":0.3,"kata_minat":["buah","dagang","pangan","jualan"],"skill_dibutuhkan":["memilih buah berkualitas","menjaga kesegaran","pelayanan pelanggan"],"risiko":["buah busuk","harga musiman","persaingan"],"biaya_operasional_bulanan":"Belanja stok, sewa lapak","model_pendapatan":"Selisih harga grosir dan eceran","estimasi_balik_modal":"-","margin":"20-30%","dasar_angka":"ASUMSI myCITA: belum ada data modal dan omzet lapak buah yang terverifikasi","sumber":"ASUMSI myCITA","periode":"2026"},{"id":"lapak_ayam_daging","usaha":"Lapak ayam potong / daging eceran","bidang":"Perdagangan Pangan","modal_min":5000000,"modal_max":15000000,"omzet_min":15000000,"omzet_max":40000000,"margin_min":0.1,"margin_max":0.2,"kata_minat":["ayam","daging","pangan","pasar","dagang"],"skill_dibutuhkan":["memotong & menimbang","kebersihan pangan","relasi pemasok"],"risiko":["daging tidak habis","harga fluktuatif","butuh freezer"],"biaya_operasional_bulanan":"Stok harian, freezer, sewa lapak","model_pendapatan":"Selisih harga per kg","estimasi_balik_modal":"-","margin":"10-20%","dasar_angka":"ASUMSI myCITA: belum ada data lapak eceran terverifikasi; harga ayam hidup ±Rp25-40 rb/kg (Gopay; CIMB Niaga)","sumber":"ASUMSI myCITA; Gopay; CIMB Niaga","periode":"2026"},{"id":"ternak_ayam_potong","usaha":"Ternak ayam potong skala kecil","bidang":"Peternakan","modal_min":16900000,"modal_max":35500000,"omzet_min":20000000,"omzet_max":36000000,"margin_min":0.15,"margin_max":0.44,"kata_minat":["ternak","ayam","peternakan","desa"],"skill_dibutuhkan":["pemeliharaan ternak","kebersihan kandang","relasi pembeli"],"risiko":["ayam mati/penyakit","harga pakan naik","harga jual turun saat panen"],"biaya_operasional_bulanan":"Pakan, obat, listrik, penjaga kandang","model_pendapatan":"Panen tiap ±35 hari","estimasi_balik_modal":"1-3 siklus","margin":"15-44%","dasar_angka":"Modal Rp16,9 jt (CIMB Niaga) sampai Rp35,5 jt dengan laba Rp18,75 jt per siklus 35 hari dari omzet Rp42,75 jt (IDX Channel); margin pesimis ASUMSI myCITA","sumber":"CIMB Niaga; IDX Channel","periode":"2026"}]}''')
+
+# Sinonim agar input bebas pengguna cocok dengan istilah database
+SINONIM = {
+    "excel": ["excel", "spreadsheet", "google sheets", "sheets", "microsoft office", "ms office"],
+    "statistik": ["statistik", "statistics", "statistic", "probabilitas"],
+    "ml": ["machine learning", "scikit", "pemodelan prediktif"],
+    "desain": ["desain", "canva", "design", "grafis"],
+    "ai": ["artificial intelligence", "kecerdasan buatan", "deep learning"],
+    "sql": ["sql", "query", "database", "basis data"],
+    "python": ["python", "pandas"],
+    "stok": ["stok", "stock", "inventory", "inventori", "persediaan", "gudang"],
+    "kepemimpinan": ["kepemimpinan", "memimpin", "leader", "leadership", "koordinasi tim", "mengelola tim"],
+    "k3": ["k3", "keselamatan", "safety", "hse"],
+    "dashboard": ["dashboard", "power bi", "tableau", "looker", "visualisasi", "visualization", "data viz"],
+    "erp": ["erp", "sap", "odoo", "wms"],
+    "figma": ["figma", "desain ui", "wireframe", "prototype"],
+    "pemrograman": ["pemrograman", "coding", "programming", "javascript", "java", "golang", "php"],
+    "listrik": ["listrik", "elektrik", "wiring", "instalasi"],
+    "mesin": ["mesin", "mekanik", "otomotif", "servis", "bengkel"],
+    "pemasaran": ["pemasaran", "marketing", "iklan", "ads", "media sosial", "konten", "seo"],
+    "perencanaan": ["perencanaan", "planning", "jadwal", "forecast"],
+}
+MINAT_KATA = {
+    "supervisor_gudang": ["gudang", "logistik", "memimpin", "operasional", "tim", "lapangan"],
+    "staff_ppic": ["perencanaan", "angka", "manufaktur", "produksi", "pabrik", "logistik", "excel"],
+    "supply_chain_analyst": ["angka", "analisis", "data", "logistik", "komputer", "excel", "rantai pasok", "supply chain"],
+    "data_analyst": ["angka", "data", "komputer", "matematika", "analisis", "teknologi", "memecahkan masalah"],
+    "data_engineer": ["komputer", "pemrograman", "data", "teknologi", "sistem", "coding"],
+    "data_scientist": ["matematika", "statistik", "data", "komputer", "teknologi", "ai", "machine learning", "memecahkan masalah", "analisis"],
+    "software_engineer": ["komputer", "pemrograman", "teknologi", "membuat", "aplikasi", "coding", "game", "memecahkan masalah", "matematika", "website"],
+    "uiux_designer": ["desain", "kreatif", "gambar", "aplikasi", "seni", "empati", "teknologi", "memecahkan masalah"],
+    "digital_marketing": ["kreatif", "media sosial", "konten", "pemasaran", "komunikasi", "bisnis", "jualan"],
+    "teknisi_listrik": ["listrik", "teknik", "praktik", "memperbaiki", "mesin"],
+    "teknisi_mekanik": ["otomotif", "mesin", "motor", "mobil", "praktik", "memperbaiki", "bengkel"],
+}
+PENGALAMAN_RELEVAN = {  # bidang pengalaman -> bobot relevansi per profesi
+    "supervisor_gudang": {"gudang": 1.0, "logistik": 1.0, "produksi": 0.6, "manufaktur": 0.6},
+    "staff_ppic": {"gudang": 0.8, "logistik": 0.8, "produksi": 1.0, "manufaktur": 1.0},
+    "supply_chain_analyst": {"gudang": 0.8, "logistik": 1.0, "produksi": 0.6, "pengadaan": 1.0, "manufaktur": 0.6},
+    "data_analyst": {"admin": 0.5, "logistik": 0.4, "gudang": 0.3, "keuangan": 0.5, "data": 1.0, "it": 0.6},
+    "data_engineer": {"it": 1.0, "data": 0.8, "software": 0.8},
+    "data_scientist": {"data": 1.0, "it": 0.7, "software": 0.6},
+    "software_engineer": {"it": 1.0, "software": 1.0},
+    "uiux_designer": {"desain": 1.0, "kreatif": 0.8, "it": 0.4},
+    "digital_marketing": {"pemasaran": 1.0, "penjualan": 0.7, "kreatif": 0.6},
+    "teknisi_listrik": {"listrik": 1.0, "maintenance": 0.8, "produksi": 0.5, "manufaktur": 0.5},
+    "teknisi_mekanik": {"otomotif": 1.0, "maintenance": 0.8, "mesin": 1.0, "produksi": 0.5, "manufaktur": 0.5},
+}
+BUTUH_S1 = {"data_engineer", "software_engineer", "data_scientist"}  # umumnya diminta S1/setara (tetap bisa via jalur non-gelar)
+JALUR_BELAJAR = {  # (nama program di database, wajib?) — dipakai untuk estimasi biaya
+    "supervisor_gudang": [("Sertifikasi BNSP (skema umum)", True)],
+    "staff_ppic": [("Sertifikasi BNSP (skema umum)", True), ("Universitas Terbuka - S1 (umum)", False)],
+    "supply_chain_analyst": [("Google Data Analytics Professional Certificate (Coursera)", True), ("Sertifikasi BNSP Data Analyst", True), ("Universitas Terbuka - S1 (umum)", False)],
+    "data_analyst": [("Bootcamp Data Analyst (umum)", True), ("Sertifikasi BNSP Data Analyst", True), ("Universitas Terbuka - S1 Sains Data", False)],
+    "data_engineer": [("Bootcamp Data Analyst (umum)", True), ("Universitas Terbuka - S1 Sistem Informasi", False)],
+    "data_scientist": [("Sertifikasi BNSP Data Analyst", False), ("Universitas Terbuka - S1 Sains Data", False)],
+    "software_engineer": [("Universitas Terbuka - S1 Sistem Informasi", False)],
+    "uiux_designer": [("Sertifikasi BNSP (skema umum)", False)],
+    "digital_marketing": [("Sertifikasi BNSP (skema umum)", True)],
+    "teknisi_listrik": [("Sertifikasi BNSP (skema umum)", True)],
+    "teknisi_mekanik": [("Sertifikasi BNSP (skema umum)", True)],
+}
+DURASI_BELAJAR_BULAN = {  # asumsi umum waktu persiapan sebelum melamar level awal (bukan data eksternal)
+    "data_scientist": 9, "supervisor_gudang": 3, "staff_ppic": 4, "supply_chain_analyst": 6, "data_analyst": 6, "data_engineer": 12,
+    "software_engineer": 12, "uiux_designer": 6, "digital_marketing": 4, "teknisi_listrik": 6, "teknisi_mekanik": 6,
+}
+TAHAP_TAHUN = {"entry": (0, 2), "mid": (2, 5), "senior": (5, None)}  # asumsi umum lama tiap jenjang
+
+
+def _norm(s) -> str:
+    return re.sub(r"\s+", " ", str(s or "").lower()).strip()
+
+
+STOPWORD = {"dasar", "lanjutan", "untuk", "dengan", "kerja", "target", "pemahaman", "pengetahuan", "microsoft",
+            "konsep", "satu", "bahasa", "umum", "seperti", "manajemen", "ketelitian", "pencatatan", "alur"}
+
+
+def _konsep(teks: str) -> set:
+    t = _norm(teks)
+    hasil = {k for k, kata in SINONIM.items() if any(w in t for w in kata)}
+    hasil |= {w for w in re.findall(r"[a-z0-9]+", t) if len(w) >= 4 and w not in STOPWORD}
+    return hasil
+
+
+def _cocok(skill_user: list, skill_db: str) -> bool:
+    kd = _konsep(skill_db)
+    return any(_konsep(s) & kd for s in skill_user)
+
+
+def _level(lv: str) -> str:
+    l = _norm(lv)
+    if "senior" in l or "lead" in l:
+        return "senior"
+    if "mid" in l and "entry" not in l:
+        return "mid"
+    if "semua" in l:
+        return "mid"
+    return "entry"
+
+
+def _nilai_tengah(g: dict) -> float:
+    if g.get("median"):
+        return float(g["median"])
+    vals = [v for v in (g.get("min"), g.get("max")) if v]
+    return sum(vals) / len(vals) if vals else 0.0
+
+
+def _jalur_pendapatan(pid: str, prof: dict) -> dict:
+    rows = [g for g in DB_EKSTERNAL["gaji"] if g["id"] in prof.get("id_gaji", [])]
+    tahap = {}
+    for g in rows:
+        lv = _level(g["level"])
+        tahap.setdefault(lv, []).append(g)
+    out = []
+    for lv in ("entry", "mid", "senior"):
+        if lv not in tahap:
+            continue
+        gs = tahap[lv]
+        mins = [g["min"] for g in gs if g.get("min")]
+        maxs = [g["max"] for g in gs if g.get("max")]
+        out.append({
+            "tahap": lv,
+            "rentang_min": bulat(min(mins)) if mins else None,
+            "rentang_max": bulat(max(maxs)) if maxs else None,
+            "nilai_tengah": bulat(sum(_nilai_tengah(g) for g in gs) / len(gs)),
+            "perkiraan_tahun_ke": "%d-%s" % (TAHAP_TAHUN[lv][0], TAHAP_TAHUN[lv][1] or "seterusnya"),
+            "sumber": sorted({f'{g["sumber"]} ({g["periode"]})' for g in gs}),
+        })
+    # isi celah: bila hanya ada satu tahap 'semua level', pakai sebagai mid saja
+    return {"tahapan": out}
+
+
+def _biaya_belajar(pid: str) -> dict:
+    progs = {b["program"]: b for b in DB_EKSTERNAL["biaya_pendidikan"]}
+    wajib, opsional = [], []
+    for nama, wjb in JALUR_BELAJAR.get(pid, []):
+        b = progs.get(nama)
+        if not b:
+            continue
+        item = {"program": nama, "jenis": b["jenis"], "biaya_min": b["biaya_min"], "biaya_max": b["biaya_max"],
+                "satuan": b["satuan"], "durasi": b["durasi"], "sumber": f'{b["sumber"]} ({b["periode"]})'}
+        (wajib if wjb else opsional).append(item)
+    tot_min = sum((x["biaya_min"] or 0) for x in wajib if "per semester" not in x["satuan"])
+    tot_max = sum((x["biaya_max"] or 0) for x in wajib if "per semester" not in x["satuan"])
+    catatan = []
+    if any(x["biaya_min"] is None for x in wajib):
+        catatan.append("Sebagian program berbiaya langganan (lihat satuan), belum termasuk di total.")
+    if not wajib:
+        prof = next((x for x in DB_EKSTERNAL["profesi"] if x["id"] == pid), {})
+        pend = prof.get("pendidikan_umum", "")
+        if any(k in pend for k in ("Kedokteran", "Keperawatan", "Farmasi", "Psikologi", "PPG", "Akademi", "Tamtama", "Kependidikan", "Teknik Industri", "Akuntansi")):
+            catatan.append(f"Jalur utama lewat pendidikan formal: {pend}. Lihat rekomendasi_pendidikan untuk jurusan dan biaya kuliah.")
+        else:
+            catatan.append("Jalur utama lewat portofolio dan belajar mandiri; biaya bootcamp spesifik belum ada di database.")
+    return {"jalur_utama": wajib, "opsional_jangka_panjang": opsional,
+            "estimasi_biaya_jalur_utama": {"min": bulat(tot_min), "max": bulat(tot_max)}, "catatan": catatan}
+
+
+def _rekomendasi_pendidikan(prof: dict) -> list:
+    progs = {b["program"]: b for b in DB_EKSTERNAL["biaya_pendidikan"]}
+    nama = prof["nama"]
+    out = []
+    for e in DB_EKSTERNAL["pendidikan"]:
+        if not any(pt in nama or nama.startswith(pt) for pt in e["profesi_terkait"]):
+            continue
+        j = e["jurusan"]
+        kunci = []
+        if "Sistem Informasi" in j:
+            kunci = ["Universitas Terbuka - S1 Sistem Informasi", "UKT Universitas Indonesia - S1"]
+        elif "Sains Data" in j:
+            kunci = ["Universitas Terbuka - S1 Sains Data", "UKT Universitas Indonesia - S1"]
+        elif j.startswith("S1"):
+            kunci = ["UKT Universitas Indonesia - S1", "Universitas Terbuka - S1 (umum)"]
+        elif j.startswith("D3"):
+            kunci = ["Universitas Terbuka - Diploma"]
+        elif "bootcamp" in j.lower():
+            kunci = ["Bootcamp Data Analyst (umum)", "Sertifikasi BNSP (skema umum)"]
+        biaya = [{"program": k, "biaya_min": progs[k]["biaya_min"], "biaya_max": progs[k]["biaya_max"], "satuan": progs[k]["satuan"],
+                  "sumber": f'{progs[k]["sumber"]} ({progs[k]["periode"]})'} for k in kunci if k in progs]
+        out.append({"jurusan": j, "skill_dibangun": e["skill_dibangun"], "biaya_referensi": biaya})
+    return out
+
+
+def _roadmap_karier(h: dict, prof: dict, pelajar: bool, pendidikan_rek: list) -> list:
+    porto = DB_EKSTERNAL.get("portofolio", {}).get(h["id"], [])
+    jenjang = prof["jenjang"]
+    tahap = h["jalur_pendapatan"]["tahapan"]
+    prep = h["perkiraan_persiapan_bulan"]
+    fases = []
+    if pelajar and prep >= 48:
+        jur = [p["jurusan"] for p in pendidikan_rek if p["jurusan"].startswith(("S1", "D3"))][:2]
+        fases += [
+            {"fase": "Pilih jurusan & persiapan masuk", "mulai_bulan": 0, "selesai_bulan": 6,
+             "fokus": ["Pertimbangkan jurusan: " + ", ".join(jur) if jur else "Pilih jurusan yang relevan", "Bandingkan biaya kuliah dan beasiswa", "Mulai portofolio kecil: " + (porto[0] if porto else "proyek pribadi")]},
+            {"fase": "Kuliah tahun 1-2", "mulai_bulan": 6, "selesai_bulan": 30,
+             "fokus": ["Kuasai dasar: " + ", ".join(h["skill_gap_wajib"][:2] or ["skill inti profesi"]), "Ikut komunitas/lomba sesuai bidang", "Selesaikan portofolio pertama"]},
+            {"fase": "Kuliah tahun 3-4 + magang", "mulai_bulan": 30, "selesai_bulan": prep,
+             "fokus": ["Magang di bidang " + prof["bidang"], "Portofolio lanjutan: " + "; ".join(porto[1:3]) if len(porto) > 1 else "Portofolio lanjutan", "Siapkan CV dan profil LinkedIn/GitHub"]},
+        ]
+    else:
+        gap = h["skill_gap_wajib"][:3]
+        dalam = h.get("skill_perlu_diperdalam", [])[:3]
+        fokus1 = (["Pelajari: " + ", ".join(gap)] if gap else []) + (["Perdalam: " + ", ".join(dalam)] if dalam else [])
+        fases += [
+            {"fase": "Tutup skill gap", "mulai_bulan": 0, "selesai_bulan": max(1, prep - 2),
+             "fokus": (fokus1 or ["Skill wajib sudah terpenuhi; perdalam skill pendukung"]) + ["Tetap bekerja di pekerjaan sekarang selama belajar"]},
+            {"fase": "Portofolio & melamar", "mulai_bulan": max(1, prep - 2), "selesai_bulan": prep,
+             "fokus": ["Selesaikan portofolio: " + "; ".join(porto[:2]) if porto else "Kumpulkan bukti hasil kerja", "Lamar posisi " + jenjang[0]]},
+        ]
+    awal = TAHAP_TAHUN[tahap[0]["tahap"]][0] if tahap else 0
+    idx = {"entry": 0, "mid": 1, "senior": 2}
+    for i, t in enumerate(tahap):
+        mulai = prep + (TAHAP_TAHUN[t["tahap"]][0] - awal) * 12
+        selesai = prep + ((TAHAP_TAHUN[tahap[i + 1]["tahap"]][0] - awal) * 12) if i + 1 < len(tahap) else None
+        fases.append({"fase": jenjang[min(idx[t["tahap"]], len(jenjang) - 1)], "mulai_bulan": mulai, "selesai_bulan": selesai,
+                      "fokus": [f"Perkiraan gaji {rp(t['rentang_min'])} - {rp(t['rentang_max'])}/bulan"], "pendapatan": {"min": t["rentang_min"], "max": t["rentang_max"]}})
+    return fases
+
+
+
+JURUSAN_DEF = [
+    ("informatika", "S1 Teknik Informatika / Ilmu Komputer", ["teknologi", "komputer", "pemrograman", "coding", "memecahkan masalah", "matematika", "aplikasi", "website"],
+     ["python", "pemrograman", "website", "coding"], ["software_engineer", "data_engineer", "data_scientist"]),
+    ("sistem_informasi", "S1 Sistem Informasi", ["teknologi", "bisnis", "data", "memecahkan masalah", "komputer", "desain", "organisasi"],
+     ["excel", "office", "public speaking", "website", "python"], ["data_analyst", "uiux_designer", "software_engineer"]),
+    ("sains_data", "S1 Sains Data / Statistika", ["matematika", "data", "angka", "statistik", "analisis", "memecahkan masalah"],
+     ["python", "excel", "statistik"], ["data_scientist", "data_analyst"]),
+    ("dkv", "S1 Desain Komunikasi Visual", ["desain", "kreatif", "gambar", "seni"], ["canva", "figma", "desain"], ["uiux_designer", "digital_marketing"]),
+]
+
+
+def _rekomendasi_jurusan(minat, skill, aktivitas, hasil_karier, kota):
+    skor_karier = {h["id"]: h["skor_kecocokan"] for h in hasil_karier}
+    teks_skill = " ".join(skill) + " " + aktivitas
+    kota_n = _norm(kota)
+    out = []
+    for rid, nama, kw_minat, kw_skill, karier in JURUSAN_DEF:
+        hit_m = sorted({m for m in minat for k in kw_minat if k in m or m in k})
+        hit_s = sorted({k for k in kw_skill if k in teks_skill})
+        rel = sorted((skor_karier.get(c, 0) for c in karier), reverse=True)[:2]
+        skor = 40 * min(1.0, len(hit_m) / 3) + 20 * min(1.0, len(hit_s) / 2) + 40 * (sum(rel) / (100 * len(rel)) if rel else 0)
+        kampus = []
+        for u in DB_EKSTERNAL.get("universitas", []):
+            if rid in u["rumpun"]:
+                kampus.append({**{k: u[k] for k in ("nama", "kota", "jenis", "qs_2026", "prodi", "biaya_min", "biaya_max", "satuan", "catatan", "sumber", "periode")},
+                               "di_kota_pengguna": bool(kota_n) and _norm(u["kota"]).split("/")[0] in kota_n})
+        def _qs(k):
+            m_ = re.match(r"\d+", str(k["qs_2026"]))
+            return int(m_.group()) if m_ else 9999
+        kampus.sort(key=lambda k: (k["nama"].startswith("Universitas Terbuka"), _qs(k), not k["di_kota_pengguna"]))
+        out.append({"id": rid, "jurusan": nama, "skor_kecocokan": bulat(skor), "minat_cocok": hit_m, "skill_pendukung": hit_s,
+                    "karier_terkait": [h["profesi"] for h in hasil_karier if h["id"] in karier], "kampus": kampus})
+    out.sort(key=lambda j: -j["skor_kecocokan"])
+    return out
+
+
+def _batas_bawah_wilayah(kota: str):
+    k = _norm(kota)
+    if not k:
+        return None
+    umk = DB_EKSTERNAL["umk_2026"]["data"]
+    for u in umk:  # 1) cocok nama lengkap (mis. "kabupaten bekasi")
+        if _norm(u["wilayah"]) in k:
+            return {"jenis": "UMK 2026", "wilayah": u["wilayah"], "nilai": u["umk"]}
+    pref_kab = "kab" in k
+    for u in umk:  # 2) tanpa awalan, utamakan jenis wilayah yang sama (kota/kabupaten)
+        nama = _norm(u["wilayah"]).replace("kota ", "").replace("kabupaten ", "")
+        if nama and nama in k and (("kabupaten" in _norm(u["wilayah"])) == pref_kab):
+            return {"jenis": "UMK 2026", "wilayah": u["wilayah"], "nilai": u["umk"]}
+    for u in DB_EKSTERNAL["ump_2026"]["data"]:
+        if _norm(u["provinsi"]) in k or ("jakarta" in k and "jakarta" in _norm(u["provinsi"])):
+            return {"jenis": "UMP 2026", "wilayah": u["provinsi"], "nilai": u["ump"]}
+    return None
+
+
+def analisis_karier(d: dict, profil_tersimpan=None) -> dict:
+    minat = [_norm(x) for x in (d.get("minat") or [])]
+    skill, skill_dasar = [], []
+    for x in (d.get("skill") or []):
+        nama = x.get("nama") if isinstance(x, dict) else x
+        teks = _norm(f'{nama} {x.get("level", "") if isinstance(x, dict) else ""}')
+        lv = [v for k, v in (("basic", 1), ("dasar", 1), ("pemula", 1), ("beginner", 1), ("intermediate", 2), ("menengah", 2), ("advanced", 3), ("mahir", 3), ("expert", 3)) if k in teks]
+        level = sum(lv) / len(lv) if lv else 2
+        bersih = re.sub(r"\b(basic|dasar|pemula|beginner|intermediate|menengah|advanced|mahir|expert)\b|[–-]", " ", _norm(nama))
+        bersih = re.sub(r"\s+", " ", bersih).strip()
+        (skill_dasar if level < 2 else skill).append(bersih or _norm(nama))
+    pengalaman = d.get("pengalaman") or []
+    pendidikan = _norm(d.get("pendidikan_terakhir") or (profil_tersimpan or {}).get("pendidikan_terakhir"))
+    pend_profil = _norm((profil_tersimpan or {}).get("pendidikan_terakhir"))
+    if pend_profil and pendidikan and pendidikan in pend_profil:
+        pendidikan = pend_profil  # mis. Agent mengirim "SMA" padahal profil tersimpan "SMA kelas 3"
+    kota = d.get("kota") or (profil_tersimpan or {}).get("kota") or ""
+    target = _norm(d.get("target_profesi"))
+    bidang_exp = {}
+    tahun_total = 0.0
+    for p in pengalaman:
+        if not isinstance(p, dict):
+            continue
+        b = _norm(p.get("bidang") or p.get("nama"))
+        th = angka(p.get("tahun"))
+        tahun_total += th
+        if any(w in b for w in ("coding", "website", "pemrograman", "programming", "aplikasi")):
+            bidang_exp["it"] = bidang_exp.get("it", 0) + max(th, 1)
+        if any(w in b for w in ("desain", "design", "grafis")):
+            bidang_exp["desain"] = bidang_exp.get("desain", 0) + max(th, 1)
+        for key in ("gudang", "logistik", "produksi", "manufaktur", "pengadaan", "admin", "keuangan", "data", "it",
+                    "software", "desain", "kreatif", "pemasaran", "penjualan", "listrik", "maintenance", "otomotif", "mesin"):
+            if key in b:
+                bidang_exp[key] = bidang_exp.get(key, 0) + th
+    if bidang_exp.get("gudang") or bidang_exp.get("logistik"):
+        skill = skill + [_norm(s) for s in DB_EKSTERNAL["skill_transferable_logistik"]]
+    s1 = any(w in pendidikan for w in ("s1", "sarjana", "s2", "d4"))
+    status = _norm(d.get("status"))
+    usia_profil = angka((profil_tersimpan or {}).get("usia"))
+    pelajar = ("pelajar" in status or "siswa" in status or "kelas" in pendidikan
+               or (bool(usia_profil) and usia_profil <= 19 and any(w in pendidikan for w in ("sma", "smk", "ma "))))
+
+    hasil = []
+    for prof in DB_EKSTERNAL["profesi"]:
+        pid = prof["id"]
+        sk = next((s for s in DB_EKSTERNAL["skill"] if s["profesi"].split(" / ")[0] in prof["nama"]), None) or {"wajib": [], "pendukung": []}
+        kata = MINAT_KATA.get(pid, []) + [_norm(x) for x in prof.get("minat_cocok", [])]
+        hit_minat = sorted({m for m in minat for k in kata if k in m or m in k})
+        s_minat = 35 * min(1.0, len(hit_minat) / 2) if minat else 15
+        punya = [w for w in sk["wajib"] if _cocok(skill, w)]
+        perdalam = [w for w in sk["wajib"] if w not in punya and _cocok(skill_dasar, w)]
+        gap_wajib = [w for w in sk["wajib"] if w not in punya and w not in perdalam]
+        punya_p = [w for w in sk["pendukung"] if _cocok(skill + skill_dasar, w)]
+        gap_pendukung = [w for w in sk["pendukung"] if w not in punya_p]
+        s_skill = 35 * ((len(punya) + 0.5 * len(perdalam)) / len(sk["wajib"]) if sk["wajib"] else 0)
+        rel = max((PENGALAMAN_RELEVAN.get(pid, {}).get(b, 0) * min(1.0, th / 3) for b, th in bidang_exp.items()), default=0)
+        s_exp = 20 * rel
+        s_pend = 10 if (s1 or pid not in BUTUH_S1) else 5
+        if pelajar:  # rumus khusus pelajar: minat & potensi lebih berbobot daripada skill kerja
+            s_minat = 50 * min(1.0, len(hit_minat) / 3) if minat else 20
+            s_skill = min(25.0, 25 * ((len(punya) + 0.5 * len(perdalam)) / len(sk["wajib"]) if sk["wajib"] else 0) + 5 * min(1.0, len(punya_p) / 2))
+            s_exp = 15 * rel
+            s_pend = 10
+        skor = s_minat + s_skill + s_exp + s_pend
+        is_target = bool(target) and (target in _norm(prof["nama"]) or _norm(prof["nama"]) in target)
+        alasan = []
+        if hit_minat:
+            alasan.append("Cocok dengan minatmu: " + ", ".join(hit_minat) + ".")
+        if punya:
+            alasan.append(f"Kamu sudah punya {len(punya)} dari {len(sk['wajib'])} skill wajib.")
+        if perdalam:
+            alasan.append("Perlu diperdalam (masih level dasar): " + ", ".join(perdalam) + ".")
+        if rel >= 0.6:
+            alasan.append("Pengalaman kerjamu sangat relevan, jadi bisa masuk tanpa mulai dari nol.")
+        elif rel > 0:
+            alasan.append("Sebagian pengalaman kerjamu bisa dipakai sebagai nilai tambah.")
+        if pid in BUTUH_S1 and not s1 and not pelajar:
+            alasan.append("Umumnya diminta S1/setara; bisa ditempuh bertahap (kuliah sambil kerja) atau lewat portofolio.")
+        hasil.append({
+            "id": pid, "profesi": prof["nama"], "bidang": prof["bidang"], "skor_kecocokan": bulat(skor), "target_pengguna": is_target,
+            "alasan": alasan, "deskripsi": prof["deskripsi"], "jenjang_karier": prof["jenjang"], "pendidikan_umum": prof["pendidikan_umum"],
+            "skill_sudah_dimiliki": punya + punya_p, "skill_perlu_diperdalam": perdalam, "skill_gap_wajib": gap_wajib, "skill_gap_pendukung": gap_pendukung,
+            "jalur_pendapatan": _jalur_pendapatan(pid, prof), "jalur_belajar": _biaya_belajar(pid),
+            "perkiraan_persiapan_bulan": (54 if prof["pendidikan_umum"].startswith("S1") or pid in BUTUH_S1 else 12) if pelajar
+                                         else (DURASI_BELAJAR_BULAN.get(pid, 6) if gap_wajib
+                                               else max(3, round(DURASI_BELAJAR_BULAN.get(pid, 6) * 0.5)) if perdalam else 3),
+            "_prof": prof,
+        })
+    for h in hasil:
+        prof = h.pop("_prof")
+        h["rekomendasi_pendidikan"] = _rekomendasi_pendidikan(prof)
+        h["portofolio_disarankan"] = DB_EKSTERNAL.get("portofolio", {}).get(h["id"], [])
+        h["_prof_ref"] = prof
+    hasil.sort(key=lambda h: (-h["target_pengguna"], -h["skor_kecocokan"]))
+    top = hasil[:3]
+    catatan_target = None
+    if target and not any(h["target_pengguna"] for h in hasil):
+        catatan_target = (f"Profesi '{d.get('target_profesi')}' belum ada di database myCITA. Ditampilkan profesi terdekat "
+                          "berdasarkan minat dan skill; data profesi ini bisa ditambahkan ke database.")
+
+    kerja = (profil_tersimpan or {}).get("pekerjaan") or []
+    penghasilan_kini = angka(d.get("penghasilan_sekarang")) or (max(p.get("penghasilan", 0) for p in kerja) if kerja else 0)
+    batas = _batas_bawah_wilayah(kota)
+    for h in top:
+        tahap = h["jalur_pendapatan"]["tahapan"]
+        jadwal = [{"mulai_bulan": 0, "penghasilan": bulat(penghasilan_kini), "keterangan": "penghasilan pekerjaan utama saat ini"}] if penghasilan_kini else []
+        bln = h["perkiraan_persiapan_bulan"]
+        awal = TAHAP_TAHUN[tahap[0]["tahap"]][0] if tahap else 0
+        for t in tahap:
+            mulai = bln + (TAHAP_TAHUN[t["tahap"]][0] - awal) * 12
+            nilai = t["nilai_tengah"]
+            if batas and nilai < batas["nilai"]:
+                nilai = batas["nilai"]
+            jadwal.append({"mulai_bulan": mulai, "penghasilan": nilai, "keterangan": f"perkiraan tahap {t['tahap']} (nilai tengah rentang)"})
+        h["roadmap_karier"] = _roadmap_karier(h, h["_prof_ref"], pelajar, h["rekomendasi_pendidikan"])
+        h["jadwal_pendapatan_untuk_simulasi"] = jadwal
+        h["simulasi_siap_pakai"] = {"jadwal_pendapatan": jadwal}
+        if penghasilan_kini and tahap:
+            selisih = bulat(tahap[0]["nilai_tengah"] - penghasilan_kini)
+            h["selisih_tahap_awal_vs_sekarang"] = selisih
+            if selisih < 0:
+                h["alasan"].append(f"Perhatian: gaji tahap awal diperkirakan lebih rendah {rp(-selisih)}/bulan dari pekerjaan utamamu sekarang sebelum naik di tahap berikutnya.")
+    for h in hasil:
+        h.pop("_prof_ref", None)
+    rek_jurusan = _rekomendasi_jurusan(minat, skill + skill_dasar, " ".join(_norm(p.get("bidang") if isinstance(p, dict) else p) for p in pengalaman), hasil, kota) if pelajar else []
+    return {
+        "rekomendasi_jurusan": rek_jurusan,
+        "mode_pelajar": pelajar,
+        "rekomendasi": top,
+        "profesi_lain": [{"profesi": h["profesi"], "skor_kecocokan": h["skor_kecocokan"]} for h in hasil[3:]],
+        "konteks_wilayah": batas,
+        "catatan_target": catatan_target,
+        "total_pengalaman_tahun": tahun_total,
+        "catatan_metode": [
+            ("Mode pelajar: skor kecocokan 0-100 = minat (50), skill dan potensi (25), aktivitas relevan (15), kesiapan pendidikan (10)." if pelajar else
+             "Skor kecocokan 0-100: minat (35), skill wajib yang sudah dimiliki (35), relevansi pengalaman (20), kesesuaian pendidikan (10)."),
+            "Jadwal pendapatan menggantikan penghasilan pekerjaan utama saja; pendapatan sampingan dan pasangan tetap dihitung terpisah. Rentang gaji dari database eksternal myCITA beserta sumbernya; jadwal pendapatan memakai nilai tengah rentang dan asumsi umum lama jenjang (entry 0-2 th, mid 2-5 th, senior 5+ th).",
+            "Rekomendasi tidak memakai jenis kelamin, usia, agama, atau asal daerah sebagai faktor.",
+        ],
+        "sumber_data": "Database Eksternal myCITA v1.0 (Oktober 2026)",
+    }
+
+
+
+# ---------------------------- myCITA USAHA ----------------------------
+RAMP_AWAL, RAMP_BULAN = 0.30, 6  # bulan 1 = 30% dari kondisi stabil, stabil penuh di bulan ke-6 (asumsi konservatif)
+PENGALAMAN_USAHA = {
+    "laundry_rumahan": ["jasa", "pelayanan", "laundry", "admin"],
+    "laundry_profesional_kecil": ["jasa", "pelayanan", "laundry", "supervisor", "memimpin", "operasional"],
+    "bengkel_rumahan": ["otomotif", "mesin", "bengkel", "mekanik", "maintenance"],
+    "bengkel_kecil_ruko": ["otomotif", "mesin", "bengkel", "mekanik", "maintenance", "supervisor"],
+}
+ROADMAP_USAHA = [
+    {"fase": "Bulan 0-1: Persiapan", "langkah": ["Riset lokasi, calon pelanggan, dan pesaing sekitar", "Urus NIB lewat OSS untuk usaha mikro", "Siapkan alat dan pisahkan rekening usaha dari rekening pribadi"]},
+    {"fase": "Bulan 1-3: Uji pasar", "langkah": ["Mulai promosi lokal (WhatsApp, Google Maps, media sosial)", "Catat setiap pemasukan dan pengeluaran harian", "Kumpulkan masukan pelanggan pertama"]},
+    {"fase": "Bulan 4-6: Stabilkan", "langkah": ["Evaluasi harga, biaya, dan jam operasional", "Bangun pelanggan tetap (program langganan/loyalitas)", "Sisihkan dana cadangan usaha"]},
+    {"fase": "Bulan 7-12: Evaluasi & kembangkan", "langkah": ["Bandingkan laba nyata dengan skenario myCITA", "Jika laba stabil, pertimbangkan tambah kapasitas atau layanan", "Jika di bawah skenario pesimis, tinjau ulang lokasi atau model usaha"]},
+]
+
+
+def _simulasi_skenario(omzet: float, margin: float, modal: float, maks: int = 60) -> dict:
+    laba_stabil = omzet * margin
+    kumulatif, bep, jadwal, tahun1 = 0.0, None, [], 0.0
+    for m in range(1, maks + 1):
+        f = min(1.0, RAMP_AWAL + (1 - RAMP_AWAL) * (m - 1) / (RAMP_BULAN - 1))
+        laba = laba_stabil * f
+        kumulatif += laba
+        if m <= 12:
+            tahun1 += laba
+        if m <= RAMP_BULAN:
+            jadwal.append({"mulai_bulan": m - 1, "nilai": bulat(laba)})
+        if bep is None and kumulatif >= modal:
+            bep = m
+    return {"omzet_bulanan_stabil": bulat(omzet), "margin_persen": round(margin * 100), "laba_bulanan_stabil": bulat(laba_stabil),
+            "laba_tahun_pertama": bulat(tahun1), "balik_modal_bulan": bep,
+            "balik_modal": f"{bep} bulan" if bep else "lebih dari 5 tahun", "_jadwal": jadwal}
+
+
+def analisis_usaha(d: dict, profil=None) -> dict:
+    minat = [_norm(x) for x in (d.get("minat") or [])]
+    skill = [_norm(x) for x in (d.get("skill") or [])]
+    exp = " ".join(_norm(p.get("bidang") if isinstance(p, dict) else p) for p in (d.get("pengalaman") or []))
+    modal_ada = angka(d.get("modal_tersedia"))
+    waktu = "penuh" if "penuh" in _norm(d.get("waktu")) else "sampingan"
+    pilihan = _norm(d.get("usaha_pilihan"))
+    kerja = (profil or {}).get("pekerjaan") or []
+    utama_kini = angka(d.get("penghasilan_sekarang")) or (max(p.get("penghasilan", 0) for p in kerja) if kerja else 0)
+
+    hasil = []
+    for b in DB_EKSTERNAL["bisnis"]:
+        cocok_minat = sorted({m for m in minat for k in b.get("kata_minat", []) if k in m or m in k})
+        punya = [s for s in b["skill_dibutuhkan"] if _cocok(skill + ([exp] if exp else []), s)]
+        rel = any(k in exp for k in PENGALAMAN_USAHA.get(b["id"], []))
+        s_modal = 40.0 if modal_ada >= b["modal_min"] else 40.0 * (modal_ada / b["modal_min"]) if b["modal_min"] else 0
+        s_minat = 30 * min(1.0, len(cocok_minat) / 2) if minat else 10
+        s_skill = 30 * (len(punya) / len(b["skill_dibutuhkan"])) if b["skill_dibutuhkan"] else 0
+        if rel:
+            s_skill = min(30.0, s_skill + 10)
+        skor = bulat(s_modal + s_minat + s_skill)
+        modal_pakai = min(max(modal_ada, b["modal_min"]), b["modal_max"]) if modal_ada else (b["modal_min"] + b["modal_max"]) / 2
+        kurang = max(0.0, b["modal_min"] - modal_ada)
+        omzet_mid = (b["omzet_min"] + b["omzet_max"]) / 2
+        margin_mid = (b["margin_min"] + b["margin_max"]) / 2
+        sk = {
+            "pesimis": _simulasi_skenario(b["omzet_min"], b["margin_min"], modal_pakai),
+            "moderat": _simulasi_skenario(omzet_mid, margin_mid, modal_pakai),
+            "optimis": _simulasi_skenario(b["omzet_max"], b["margin_max"], modal_pakai),
+        }
+        jadwal_sk = {k: v.pop("_jadwal") for k, v in sk.items()}
+        jadwal_mod = jadwal_sk["moderat"]
+        alasan = []
+        if modal_ada > b["modal_max"]:
+            alasan.append(f"Modalmu {rp(modal_ada)} melebihi kebutuhan modal awal ({rp(b['modal_min'])}-{rp(b['modal_max'])}); sisanya bisa jadi dana cadangan usaha.")
+        elif modal_ada >= b["modal_min"]:
+            alasan.append(f"Modalmu {rp(modal_ada)} sudah masuk kisaran modal awal {rp(b['modal_min'])}-{rp(b['modal_max'])}.")
+        elif modal_ada:
+            alasan.append(f"Modalmu masih kurang {rp(kurang)} dari modal minimal {rp(b['modal_min'])}. Simulasi mengasumsikan kekurangan ini sudah tertutup (misalnya dari tabungan tambahan), jadi siapkan dulu sebelum memulai.")
+        if cocok_minat:
+            alasan.append("Sesuai minatmu: " + ", ".join(cocok_minat) + ".")
+        if rel:
+            alasan.append("Pengalaman kerjamu relevan dengan usaha ini.")
+        if waktu == "penuh" and sk["pesimis"]["laba_bulanan_stabil"] < utama_kini:
+            alasan.append(f"Perhatian: pada skenario pesimis laba stabil {rp(sk['pesimis']['laba_bulanan_stabil'])}/bulan, di bawah gaji utamamu sekarang. Pertimbangkan mulai sebagai usaha sampingan.")
+        biaya_awal = modal_pakai  # seluruh modal awal dihitung keluar dari tabungan
+        def _sim(jd):
+            if waktu == "sampingan":
+                return {"pendapatan_tambahan_jadwal": jd, "biaya_awal": bulat(biaya_awal)}
+            return {"jadwal_pendapatan": [{"mulai_bulan": j["mulai_bulan"], "penghasilan": j["nilai"]} for j in jd], "biaya_awal": bulat(biaya_awal)}
+        simulasi = _sim(jadwal_mod)
+        simulasi_per_skenario = {k: _sim(v) for k, v in jadwal_sk.items()}
+        is_pilihan = bool(pilihan) and (pilihan in _norm(b["usaha"]) or pilihan == b["id"])
+        hasil.append({
+            "id": b["id"], "usaha": b["usaha"], "bidang": b["bidang"], "skor_kecocokan": skor, "pilihan_pengguna": is_pilihan,
+            "alasan": alasan, "modal_awal": {"min": b["modal_min"], "max": b["modal_max"], "dipakai_simulasi": bulat(modal_pakai), "kekurangan": bulat(kurang)},
+            "biaya_operasional_bulanan": b["biaya_operasional_bulanan"], "model_pendapatan": b["model_pendapatan"],
+            "skenario": sk, "balik_modal_menurut_sumber": b["estimasi_balik_modal"],
+            "modal_belum_cukup": kurang > 0, "skill_sudah_dimiliki": punya, "skill_gap": [s for s in b["skill_dibutuhkan"] if s not in punya],
+            "risiko": b["risiko"], "dasar_angka": b["dasar_angka"], "sumber": f'{b["sumber"]} ({b["periode"]})',
+            "roadmap_usaha": ROADMAP_USAHA, "mode": waktu, "simulasi_siap_pakai": simulasi,
+            "simulasi_siap_pakai_per_skenario": simulasi_per_skenario,
+        })
+    hasil.sort(key=lambda h: (-h["pilihan_pengguna"], -h["skor_kecocokan"]))
+    return {
+        "rekomendasi": hasil[:3],
+        "usaha_lain": [{"usaha": h["usaha"], "skor_kecocokan": h["skor_kecocokan"]} for h in hasil[3:]],
+        "mode": waktu,
+        "catatan_metode": [
+            "Skor kecocokan 0-100: kecukupan modal (40), minat (30), skill & pengalaman (30).",
+            "Skenario: pesimis = omzet & margin terendah, moderat = nilai tengah, optimis = tertinggi dari database. Masa rintisan: bulan 1 baru 30% dari kondisi stabil, stabil di bulan ke-6.",
+            "simulasi_siap_pakai (skenario moderat) atau simulasi_siap_pakai_per_skenario (pesimis/moderat/optimis) bisa langsung dikirim ke analisis_keuangan_mycita. Untuk usaha sampingan paruh waktu/akhir pekan, gunakan skenario pesimis sebagai acuan.",
+        ],
+        "catatan_database": "Template usaha masih terbatas (laundry dan bengkel motor). Angka yang ditandai ASUMSI myCITA belum memiliki sumber terverifikasi.",
+        "sumber_data": "Database Eksternal myCITA v1.0 (Oktober 2026)",
+    }
+
+
+class MyCITAUsaha(Component):
+    display_name = "myCITA Usaha"
+    description = (
+        "Eksplorasi usaha myCITA untuk calon pengusaha: mencocokkan minat, skill, pengalaman, dan modal pengguna dengan template "
+        "usaha di database; menghasilkan rekomendasi usaha, kebutuhan/kekurangan modal, simulasi skenario pesimis-moderat-optimis "
+        "(laba bulanan, laba tahun pertama, balik modal dengan masa rintisan), risiko, skill gap, roadmap usaha 12 bulan, dan "
+        "simulasi_siap_pakai untuk analisis_keuangan_mycita. Input JSON: user_id, minat[], skill[], pengalaman[], modal_tersedia, "
+        "waktu ('sampingan' atau 'penuh'), opsional usaha_pilihan. Bukan janji keuntungan."
+    )
+    icon = "store"
+    name = "MyCITAUsaha"
+
+    inputs = [
+        MessageTextInput(
+            name="input_json",
+            display_name="Profil Usaha (JSON)",
+            info='Contoh {"user_id": "rudi", "minat": ["otomotif"], "skill": ["servis motor"], "modal_tersedia": 15000000, "waktu": "sampingan"}',
+            tool_mode=True,
+        ),
+        StrInput(name="db_path", display_name="Lokasi Database", value="", advanced=True,
+                 info="Kosongkan untuk memakai ~/.mycita/mycita.db. Harus sama di semua komponen myCITA."),
+    ]
+    outputs = [Output(display_name="Hasil", name="hasil", method="eksplorasi_usaha_mycita")]
+
+    def eksplorasi_usaha_mycita(self) -> Message:
+        try:
+            data = parse_input(self.input_json)
+            uid = str(data.get("user_id") or "").strip().lower().replace(" ", "_")
+            profil = baca_data(uid, "profil", self.db_path) if uid else None
+            hasil = analisis_usaha(data, profil)
+            payload = {"status": "ok", "user_id": uid or None,
+                       "pesan": "Eksplorasi usaha selesai: " + ", ".join(r["usaha"] for r in hasil["rekomendasi"]) + ".", **hasil,
+                       "disclaimer": "Simulasi usaha adalah skenario berdasarkan data referensi, bukan jaminan keuntungan. Hasil nyata sangat bergantung pada lokasi dan pengelolaan."}
+            if uid:
+                simpan_data(uid, "usaha", {"input": data, "hasil": hasil}, self.db_path)
+        except Exception as e:  # noqa: BLE001
+            payload = galat(str(e))
+        return hasil_message(self, payload)

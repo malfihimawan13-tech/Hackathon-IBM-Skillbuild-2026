@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "mycita": {
+      "type": "streamable-http",
+      "url": "http://localhost:PORT/api/v1/mcp/project/PROJECT_ID/streamable",
+      "headers": {
+        "x-api-key": "API_KEY_LANGFLOW_KAMU"
+      },
+      "alwaysAllow": [],
+      "disabled": false
+    }
+  }
+}

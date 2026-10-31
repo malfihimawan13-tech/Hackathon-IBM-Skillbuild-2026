@@ -1,0 +1,11 @@
+Tempel salah satu kalimat ini di Playground flow 7_konsultasi_coach_mycita (setelah flow 1-3 dan flow 5 dijalankan untuk user tersebut; untuk Agus cukup flow 1-3):
+
+user budi: aku mau pindah ke data science, tapi takut gaji awal turun. Aku juga mau menikah 3 tahun lagi dan beli mobil. Gimana aturnya?
+
+user agus: kami mau punya rumah Rp600 juta dalam 7 tahun. Bengkel dan kelontong istri sebaiknya diapakan?
+
+user dini: aku sebentar lagi lulus SMA, suka teknologi dan matematika. Jurusan dan kampus apa yang cocok?
+
+Pertanyaan lanjutan (sesi yang sama dengan pertanyaan Budi di atas):
+user budi: kalau aku juga buka usaha kopi sampingan di akhir pekan dengan modal 3 juta, apa dampaknya?
+(Hasil yang diharapkan: kopi keliling; dengan skenario pesimis digabung jalur Data Scientist, mobil sekitar 4 tahun 1 bulan dan menikah 2 tahun 8 bulan.)

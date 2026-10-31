@@ -1,0 +1,8 @@
+{
+  "user_id": "budi",
+  "aksi": "simpan",
+  "target": [
+    {"nama": "Toyota Avanza", "target_tahun": 5, "prioritas": 1},
+    {"nama": "Menikah (intimate)", "harga": 150000000, "target_tahun": 4, "prioritas": 2}
+  ]
+}

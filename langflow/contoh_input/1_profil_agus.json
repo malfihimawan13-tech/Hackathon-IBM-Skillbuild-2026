@@ -1,0 +1,21 @@
+{
+  "user_id": "agus",
+  "nama": "Agus",
+  "usia": 38,
+  "kota": "Bekasi",
+  "status_pernikahan": "menikah",
+  "jumlah_anak": 2,
+  "pekerjaan": [
+    {
+      "nama": "Pemilik bengkel motor",
+      "jenis": "usaha",
+      "penghasilan": 11000000,
+      "penghasilan_min": 11000000,
+      "lama_kerja_bulan": 120
+    }
+  ],
+  "pasangan": {
+    "nama": "Istri (usaha kelontong)",
+    "penghasilan": 3000000
+  }
+}
