@@ -1,0 +1,292 @@
+{
+ "budi": [
+  [
+   "Dasar",
+   "Tanpa perubahan",
+   [
+    "3 tahun",
+    "22 tahun 1 bulan"
+   ],
+   100,
+   2000000
+  ],
+  [
+   "Penghasilan",
+   "Penghasilan -10%",
+   [
+    "5 tahun 10 bulan",
+    "lebih dari 50 tahun"
+   ],
+   98,
+   1250000
+  ],
+  [
+   "Penghasilan",
+   "Penghasilan +10%",
+   [
+    "3 tahun",
+    "12 tahun 6 bulan"
+   ],
+   100,
+   2750000
+  ],
+  [
+   "Kenaikan harga mobil per tahun",
+   "0%/tahun",
+   [
+    "3 tahun",
+    "12 tahun 6 bulan"
+   ],
+   100,
+   2000000
+  ],
+  [
+   "Kenaikan harga mobil per tahun",
+   "3%/tahun",
+   [
+    "3 tahun",
+    "22 tahun 1 bulan"
+   ],
+   100,
+   2000000
+  ],
+  [
+   "Kenaikan harga mobil per tahun",
+   "6%/tahun",
+   [
+    "3 tahun",
+    "lebih dari 50 tahun"
+   ],
+   100,
+   2000000
+  ],
+  [
+   "Kenaikan harga mobil per tahun",
+   "10%/tahun",
+   [
+    "3 tahun",
+    "lebih dari 50 tahun"
+   ],
+   100,
+   2000000
+  ],
+  [
+   "Inflasi umum",
+   "0%",
+   [
+    "3 tahun",
+    "12 tahun 2 bulan"
+   ],
+   100,
+   2000000
+  ],
+  [
+   "Inflasi umum",
+   "3.2%",
+   [
+    "3 tahun",
+    "24 tahun 7 bulan"
+   ],
+   100,
+   2000000
+  ],
+  [
+   "Inflasi umum",
+   "6%",
+   [
+    "3 tahun",
+    "lebih dari 50 tahun"
+   ],
+   100,
+   2000000
+  ],
+  [
+   "Gaji awal Data Scientist",
+   "batas bawah Rp7 jt",
+   [
+    "3 tahun",
+    "5 tahun 8 bulan"
+   ],
+   100,
+   2000000
+  ],
+  [
+   "Gaji awal Data Scientist",
+   "nilai tengah Rp9 jt",
+   [
+    "3 tahun",
+    "5 tahun 6 bulan"
+   ],
+   100,
+   2000000
+  ],
+  [
+   "Gaji awal Data Scientist",
+   "batas atas Rp11 jt",
+   [
+    "3 tahun",
+    "5 tahun"
+   ],
+   100,
+   2000000
+  ],
+  [
+   "Skenario usaha kopi (gabung dengan karier)",
+   "pesimis",
+   [
+    "2 tahun 8 bulan",
+    "4 tahun 1 bulan"
+   ],
+   100,
+   2000000
+  ],
+  [
+   "Skenario usaha kopi (gabung dengan karier)",
+   "moderat",
+   [
+    "1 tahun 8 bulan",
+    "3 tahun 4 bulan"
+   ],
+   100,
+   2000000
+  ],
+  [
+   "Skenario usaha kopi (gabung dengan karier)",
+   "optimis",
+   [
+    "1 tahun",
+    "2 tahun 9 bulan"
+   ],
+   100,
+   2000000
+  ]
+ ],
+ "agus": [
+  [
+   "Dasar",
+   "Tanpa perubahan",
+   [
+    "22 tahun 2 bulan"
+   ],
+   84,
+   5500000
+  ],
+  [
+   "Kenaikan laba usaha",
+   "+0% (semua usaha digabung)",
+   [
+    "8 tahun 11 bulan"
+   ],
+   84,
+   8300000
+  ],
+  [
+   "Kenaikan laba usaha",
+   "+10% (semua usaha digabung)",
+   [
+    "12 tahun"
+   ],
+   84,
+   6900000
+  ],
+  [
+   "Kenaikan laba usaha",
+   "+20% (semua usaha digabung)",
+   [
+    "8 tahun 11 bulan"
+   ],
+   84,
+   8300000
+  ],
+  [
+   "Kenaikan laba usaha",
+   "+30% (semua usaha digabung)",
+   [
+    "7 tahun 1 bulan"
+   ],
+   84,
+   9700000
+  ],
+  [
+   "Kenaikan harga rumah per tahun",
+   "2%/tahun",
+   [
+    "12 tahun 1 bulan"
+   ],
+   84,
+   5500000
+  ],
+  [
+   "Kenaikan harga rumah per tahun",
+   "4%/tahun",
+   [
+    "22 tahun 2 bulan"
+   ],
+   84,
+   5500000
+  ],
+  [
+   "Kenaikan harga rumah per tahun",
+   "6%/tahun",
+   [
+    "lebih dari 50 tahun"
+   ],
+   84,
+   5500000
+  ],
+  [
+   "Kenaikan harga rumah per tahun",
+   "8%/tahun",
+   [
+    "lebih dari 50 tahun"
+   ],
+   84,
+   5500000
+  ],
+  [
+   "Penghasilan",
+   "Penghasilan -10%",
+   [
+    "lebih dari 50 tahun"
+   ],
+   84,
+   3880000
+  ],
+  [
+   "Penghasilan",
+   "Penghasilan +10%",
+   [
+    "11 tahun 4 bulan"
+   ],
+   84,
+   7120000
+  ],
+  [
+   "Imbal hasil tabungan",
+   "0%/tahun",
+   [
+    "22 tahun 2 bulan"
+   ],
+   84,
+   5500000
+  ],
+  [
+   "Imbal hasil tabungan",
+   "3%/tahun",
+   [
+    "13 tahun"
+   ],
+   84,
+   5500000
+  ],
+  [
+   "Imbal hasil tabungan",
+   "5%/tahun",
+   [
+    "11 tahun 2 bulan"
+   ],
+   84,
+   5500000
+  ]
+ ]
+}
